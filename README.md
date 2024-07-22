@@ -31,7 +31,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/Malikibrahim10203/m-vas/">
-    <img src="asset-readme/icon-512.png" alt="Logo" width="80" height="80">
+    <img src="assets-readme/icon-512.png" alt="Logo" width="80" height="80">
   </a>
 
   <h3 align="center">VAS Mobile Apps</h3>
