@@ -15,6 +15,13 @@ Widget ImageSplash(image,width){
   );
 }
 
+Widget ImageGetStarted(width){
+  return Image.asset(
+    "assets/images/get_started.png",
+    width: width,
+  );
+}
+
 Widget TextSplash(head, main){
   return Column(
     children: [
