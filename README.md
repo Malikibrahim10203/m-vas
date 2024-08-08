@@ -37,7 +37,7 @@
   <h3 align="center">VAS Mobile Apps</h3>
 
   <p align="center">
-    An awesome README template to jumpstart my projects!
+    An awesome README to jumpstart my projects!
     <br />
     <a href="https://github.com/othneildrew/Best-README-Template"><strong>Explore the docs »</strong></a>
     <br />
