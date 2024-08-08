@@ -186,6 +186,89 @@ Widget CertificateStatusProgress(height, width) {
   );
 }
 
+Widget CertificateStatusNotActive(height, width) {
+  return Container(
+    padding: EdgeInsets.all(15),
+    width: width * 0.9,
+    height: height * 0.23,
+    decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.15),
+            spreadRadius: 5,
+            blurRadius: 20,
+            offset: Offset(0, 3),
+          ),
+        ],
+        borderRadius: BorderRadius.all(Radius.circular(10))
+    ),
+    child: Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              "You have not activated e-KYC!",
+              style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: tertiaryColor
+              ),
+            ),
+          ],
+        ),
+        SizedBox(
+          height: 10,
+        ),
+        Row(
+          children: [
+            Text(
+              "Please activate e-KYC immediately before placing a\n e-Signature",
+              style: GoogleFonts.roboto(
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(
+          height: 10,
+        ),
+        Expanded(
+          child: Container(
+            height: height * 0.1,
+            child: Column(
+              children: [
+                Container(
+                  height: height * 0.05,
+                  width: width * 0.85,
+                  child: ElevatedButton(
+                    onPressed: (){
+
+                    },
+                    child: Text(
+                      "Activate e-Kyc",
+                      style: TextStyle(
+                          color: Colors.white
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xff0081F1),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5)
+                        )
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        )
+      ],
+    ),
+  );
+}
+
 // Menu Active
 Widget MenuActive() {
   return Container(

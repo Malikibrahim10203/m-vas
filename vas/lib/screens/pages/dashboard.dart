@@ -162,7 +162,7 @@ class _DashboardState extends State<Dashboard> {
             Container(
                 padding: EdgeInsets.all(15),
                 width: size.width * 1,
-                height: 620,
+                height: 650,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   boxShadow: [
@@ -300,7 +300,7 @@ class _DashboardState extends State<Dashboard> {
                     SizedBox(
                       height: 10,
                     ),
-                    CertificateStatusActive(heightScreen, widthScreen),
+                    CertificateStatusNotActive(heightScreen, widthScreen),
                     SizedBox(
                       height: 20,
                     ),
