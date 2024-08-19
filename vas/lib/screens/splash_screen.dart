@@ -18,32 +18,35 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     size = MediaQuery.of(context).size;
-    return Scaffold(
-      body: PageView(
-        controller: _pageController,
-        children: [
-          _buildPage(
-            title: 'Stamp E-Materai',
-            description: 'Lorem ipsum dolor sit amet, consectetur \nadipiscing elit, sed do eiusmod tempor.',
-            image: 'splash-1',
-            sizing: 0.25,
-          ),
-          _buildPage(
-            title: 'E-Sign',
-            description: 'Lorem ipsum dolor sit amet, consectetur \nadipiscing elit, sed do eiusmod tempor.',
-            image: 'splash-3',
-            sizing: 0.30,
-          ),
-          _buildPage(
-            title: 'Organize File',
-            description: 'Lorem ipsum dolor sit amet, consectetur \nadipiscing elit, sed do eiusmod tempor.',
-            image: 'splash-2',
-            isLastPage: true,
-            sizing: 0.40,
-          ),
-        ],
+    return WillPopScope(
+      onWillPop: () async => false,
+      child: Scaffold(
+        body: PageView(
+          controller: _pageController,
+          children: [
+            _buildPage(
+              title: 'Stamp E-Materai',
+              description: 'Lorem ipsum dolor sit amet, consectetur \nadipiscing elit, sed do eiusmod tempor.',
+              image: 'splash-1',
+              sizing: 0.25,
+            ),
+            _buildPage(
+              title: 'E-Sign',
+              description: 'Lorem ipsum dolor sit amet, consectetur \nadipiscing elit, sed do eiusmod tempor.',
+              image: 'splash-3',
+              sizing: 0.30,
+            ),
+            _buildPage(
+              title: 'Organize File',
+              description: 'Lorem ipsum dolor sit amet, consectetur \nadipiscing elit, sed do eiusmod tempor.',
+              image: 'splash-2',
+              isLastPage: true,
+              sizing: 0.40,
+            ),
+          ],
+        ),
+        bottomNavigationBar: _bottomSplash(),
       ),
-      bottomNavigationBar: _bottomSplash(),
     );
   }
 

@@ -169,7 +169,7 @@ class _OtpCodeState extends State<OtpCode> {
             child: ElevatedButton(
               onPressed: (){
                 final otpValues = _otpControllers.map((controller) => controller.text).toList();
-                Navigator.push(context, MaterialPageRoute(builder: (context)=>ChangePassword(otp: otpValues.join())));
+                Navigator.push(context, MaterialPageRoute(builder: (context)=>ChangePassword(token: otpValues.join())));
               },
               child: Text(
                 "Verification",
