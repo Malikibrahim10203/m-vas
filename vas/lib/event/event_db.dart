@@ -108,33 +108,22 @@ class EventDB {
 
   static Future<User?> getUser(String token, String email, String password) async {
     User? user;
-    int count = 0;
 
-    while(count < 2){
-      try {
-        var response = await http.get(Uri.parse(Api.get_user), headers: {
-          'token': token
-        });
+    try {
+      var response = await http.get(Uri.parse(Api.get_user), headers: {
+        'token': token
+      });
 
-        var responseBody = jsonDecode(response.body);
-        if (responseBody != null && responseBody['data'] != null) {
-          user = User.fromJson(responseBody['data']);
-        } else {
-          print("Data is null or invalid");
-        }
-      } catch(e) {
-        print("S: $e");
-      }
-
-      if(user == null){
-        EventPref.clear();
-        getlogin(email, password);
-
-        count++;
+      var responseBody = jsonDecode(response.body);
+      if (responseBody != null && responseBody['data'] != null) {
+        user = User.fromJson(responseBody['data']);
       } else {
-        break;
+        print("Data is null or invalid");
       }
+    } catch(e) {
+      print("S: $e");
     }
+
     return user;
   }
 
@@ -142,7 +131,7 @@ class EventDB {
     Quota? specificQuota;
     int count = 1;
 
-    while (count <= 3) {
+    while (count <= 2) {
       try {
         var response = await http.get(Uri.parse(Api.check_quota), headers: {
           'token': token,
@@ -187,7 +176,6 @@ class EventDB {
       } else {
         print('Retrying... ($count)');
         print("Token: $token");
-        count++;
       }
     }
 

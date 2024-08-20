@@ -52,9 +52,10 @@ class _DashboardState extends State<Dashboard> {
     fullName = (await EventDB.getUser(token??'', email??'', password??''))?.fullName;
     officeName = (await EventDB.getUser(token??'', email??'', password??''))?.officeName;
     certificate = 1;
-    setState(() {
 
-    });
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   void getModule() async {
@@ -62,21 +63,21 @@ class _DashboardState extends State<Dashboard> {
     signM = (await EventDB.getModule(token??''))?.signM;
     stampM = (await EventDB.getModule(token??''))?.stampM;
 
-    setState(() {
-
-    });
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   void getQuota() async {
     token = (await EventPref.getCredential())?.data.token;
     saldoEMet = (await EventDB.getQuota(token??'', "1"))?.remaining;
-
     saldoESign = (await EventDB.getQuota(token??'', "2"))?.remaining;
 
-    setState(() {
-
-    });
+    if (mounted) {
+      setState(() {});
+    }
   }
+
 
 
   @override
@@ -88,6 +89,9 @@ class _DashboardState extends State<Dashboard> {
   void initState() {
     // TODO: implement initState
     getUser();
+    if(fullName == null) {
+      getUser();
+    }
     getQuota();
     getModule();
     super.initState();
@@ -377,7 +381,10 @@ class _DashboardState extends State<Dashboard> {
                       SizedBox(
                         height: 10,
                       ),
-                      certificate==0?CertificateStatusActive(heightScreen, widthScreen):certificate==1?CertificateStatusNotActive(heightScreen, widthScreen, context):CertificateStatusProgress(heightScreen, widthScreen),
+                      signM==true?
+                        certificate==0?CertificateStatusActive(heightScreen, widthScreen):
+                        certificate==1?CertificateStatusNotActive(heightScreen, widthScreen, context):
+                        CertificateStatusProgress(heightScreen, widthScreen): Container(),
                       SizedBox(
                         height: 20,
                       ),
