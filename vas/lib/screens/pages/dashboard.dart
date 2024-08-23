@@ -25,6 +25,9 @@ class _DashboardState extends State<Dashboard> {
   String? email;
   String? password;
   String? token;
+  var statusRegistrationPeruri;
+  var data;
+  var province_id;
 
   bool? signM, stampM, officeM;
 
@@ -49,9 +52,16 @@ class _DashboardState extends State<Dashboard> {
     token = (await EventPref.getCredential())?.data.token;
     email = (await EventPref.getCredential())?.email;
     password = (await EventPref.getCredential())?.password;
+    statusRegistrationPeruri = (await EventDB.getUser(token??'', email??'', password??''))?.statusRegistrationPeruri;
     fullName = (await EventDB.getUser(token??'', email??'', password??''))?.fullName;
     officeName = (await EventDB.getUser(token??'', email??'', password??''))?.officeName;
     certificate = 1;
+
+    if(fullName==null) {
+      data = await EventDB.getlogin(email??'', password??'');
+      token = data.data.token;
+      print(data.data.token);
+    }
 
     if (mounted) {
       setState(() {});
@@ -85,13 +95,11 @@ class _DashboardState extends State<Dashboard> {
     super.dispose();
   }
 
+
   @override
   void initState() {
     // TODO: implement initState
     getUser();
-    if(fullName == null) {
-      getUser();
-    }
     getQuota();
     getModule();
     super.initState();
@@ -382,7 +390,7 @@ class _DashboardState extends State<Dashboard> {
                         height: 10,
                       ),
                       signM==true?
-                        certificate==0?CertificateStatusActive(heightScreen, widthScreen):
+                        statusRegistrationPeruri==null?CertificateStatusActive(heightScreen, widthScreen):
                         certificate==1?CertificateStatusNotActive(heightScreen, widthScreen, context):
                         CertificateStatusProgress(heightScreen, widthScreen): Container(),
                       SizedBox(
@@ -494,7 +502,7 @@ class _DashboardState extends State<Dashboard> {
         floatingActionButton: FloatingActionButton(
           shape: CircleBorder(),
           onPressed: () async {
-
+            EventDB.getProvinces();
           },
           child: Container(
             width: 35,

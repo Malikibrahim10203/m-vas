@@ -107,10 +107,13 @@ Widget CertificateStatusNotActive(height, width, context) {
         ),
         Row(
           children: [
-            Text(
-              "Please activate e-KYC immediately before placing a e-Signature",
-              style: GoogleFonts.roboto(
-                  fontSize: 12
+            Container(
+              child: Text(
+                overflow: TextOverflow.clip,
+                "Please activate e-KYC immediately before placing a e-Signature",
+                style: GoogleFonts.roboto(
+                    fontSize: 12
+                ),
               ),
             ),
           ],
@@ -274,7 +277,7 @@ Widget CertificateStatusActive(height, width) {
             Text(
               "Your e-kyc data has been successfully submitted, \nthe digital certificate has been issued",
               style: GoogleFonts.roboto(
-                  fontSize: 12
+                  fontSize: 12,
               ),
             ),
           ],

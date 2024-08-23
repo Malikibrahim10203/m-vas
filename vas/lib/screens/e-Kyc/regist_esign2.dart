@@ -5,8 +5,6 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_stepindicator/flutter_stepindicator.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
-import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 import 'package:vas/event/event_db.dart';
 import 'package:vas/models/district.dart';
 import 'package:vas/models/province.dart';
@@ -25,13 +23,15 @@ class RegistEsign extends StatefulWidget {
 }
 
 class _RegistEsignState extends State<RegistEsign> {
+
   int page = 0;
   int counter = 2;
-  List list = [0, 1, 2];
+  List list = [0,1,2];
 
   bool isPersonalInformation = true;
   bool isOfficeInformation = false;
   bool isUploadDocument = false;
+
 
   var firstName = TextEditingController();
   var lastName = TextEditingController();
@@ -50,6 +50,8 @@ class _RegistEsignState extends State<RegistEsign> {
   var departement = TextEditingController();
   var role = TextEditingController();
 
+
+
   var formKey = GlobalKey<FormState>();
 
   late Size size;
@@ -64,7 +66,10 @@ class _RegistEsignState extends State<RegistEsign> {
 
   Map? bodyCollection;
 
+
+
   File? imageKTP, imageNPWP, imageSelfie;
+
 
   Future<void> _pickImageKTP() async {
     final picker = ImagePicker();
@@ -77,8 +82,11 @@ class _RegistEsignState extends State<RegistEsign> {
       final sizeImage = await pickedFile.length();
       const maxFormatImages = 1 * 1024 * 1024; // 1 MB
 
+
+
       // Read the image bytes
       Uint8List imagesBytes = await filePath.readAsBytes();
+
 
       setState(() {
         imageKTP = File(pickedFile.path);
@@ -116,8 +124,11 @@ class _RegistEsignState extends State<RegistEsign> {
       final sizeImage = await pickedFile.length();
       const maxFormatImages = 1 * 1024 * 1024; // 1 MB
 
+
+
       // Read the image bytes
       Uint8List imagesBytes = await filePath.readAsBytes();
+
 
       setState(() {
         imageNPWP = File(pickedFile.path);
@@ -155,8 +166,11 @@ class _RegistEsignState extends State<RegistEsign> {
       final sizeImage = await pickedFile.length();
       const maxFormatImages = 1 * 1024 * 1024; // 1 MB
 
+
+
       // Read the image bytes
       Uint8List imagesBytes = await filePath.readAsBytes();
+
 
       setState(() {
         imageSelfie = File(pickedFile.path);
@@ -200,18 +214,24 @@ class _RegistEsignState extends State<RegistEsign> {
     List<District>? regionsData = await EventDB.getDistrict(province_id);
     setState(() {
       regionDistrict = regionsData;
+      print(regionDistrict);
     });
   }
+
 
   @override
   void initState() {
     // TODO: implement initState
     _fetchProvinces();
+    if(selectedProvince!=null) {
+      _fetchDistrict(selectedProvince!);
+    }
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
+
     size = MediaQuery.of(context).size;
     widthScreen = size.width;
     heightScreen = size.height;
@@ -219,15 +239,14 @@ class _RegistEsignState extends State<RegistEsign> {
     const List<String> list = <String>['One', 'Two', 'Three', 'Four'];
     String province = list.first;
 
+
+
     return Scaffold(
       appBar: AppBar(
         elevation: 1,
         backgroundColor: Colors.white,
         shadowColor: Colors.black87,
-        title: Text(
-          "Registration e-Kyc",
-          style: TextStyle(fontSize: 18),
-        ),
+        title: Text("Registration e-Kyc",style: TextStyle(fontSize: 18),),
         leading: IconButton(
           onPressed: () {
             if (page == 0) {
@@ -245,7 +264,9 @@ class _RegistEsignState extends State<RegistEsign> {
               });
             }
           },
-          icon: Icon(Icons.close),
+          icon: Icon(
+              Icons.close
+          ),
         ),
       ),
       body: SingleChildScrollView(
@@ -266,14 +287,12 @@ class _RegistEsignState extends State<RegistEsign> {
                         padding: const EdgeInsets.symmetric(horizontal: 18),
                         child: FlutterStepIndicator(
                           height: 40,
-                          paddingLine:
-                          const EdgeInsets.symmetric(horizontal: 0),
+                          paddingLine: const EdgeInsets.symmetric(horizontal: 0),
                           positiveColor: bluePrimary,
                           progressColor: const Color(0xFFEA9C00),
                           negativeColor: const Color(0xFFD5D5D5),
                           padding: const EdgeInsets.all(4),
-                          list: list,
-                          division: counter,
+                          list: list,division: counter,
                           onChange: (i) {},
                           page: page,
                           onClickItem: (p0) {
@@ -314,15 +333,13 @@ class _RegistEsignState extends State<RegistEsign> {
             Form(
               key: formKey,
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Visibility(
                     visible: isPersonalInformation,
                     child: Column(
                       children: [
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 18),
+                          padding: EdgeInsets.symmetric(horizontal: 20.0),
                           child: Column(
                             children: [
                               Row(
@@ -330,30 +347,21 @@ class _RegistEsignState extends State<RegistEsign> {
                                   Text("First Name"),
                                 ],
                               ),
-                              SizedBox(
-                                height: 5,
-                              ),
                               Row(
                                 children: [
                                   SizedBox(
                                     height: size.height * 0.065,
-                                    width: size.width * 0.905,
+                                    width: size.width* 0.9,
                                     child: TextFormField(
                                       controller: firstName,
                                       decoration: InputDecoration(
                                         border: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              width: 1.5,
-                                              color: Color(0xffB8B8B8)),
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(10)),
+                                          borderSide: BorderSide(width: 1.5, color: Color(0xffB8B8B8)),
+                                          borderRadius: BorderRadius.all(Radius.circular(10)),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              width: 1,
-                                              color: Color(0xffB8B8B8)),
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(10)),
+                                          borderSide: BorderSide(width: 1, color: Color(0xffB8B8B8)),
+                                          borderRadius: BorderRadius.all(Radius.circular(10)),
                                         ),
                                       ),
                                     ),
@@ -367,7 +375,7 @@ class _RegistEsignState extends State<RegistEsign> {
                           height: 10,
                         ),
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 18),
+                          padding: EdgeInsets.symmetric(horizontal: 20.0),
                           child: Column(
                             children: [
                               Row(
@@ -375,30 +383,21 @@ class _RegistEsignState extends State<RegistEsign> {
                                   Text("Last Name"),
                                 ],
                               ),
-                              SizedBox(
-                                height: 5,
-                              ),
                               Row(
                                 children: [
                                   SizedBox(
                                     height: size.height * 0.065,
-                                    width: size.width * 0.905,
+                                    width: size.width* 0.9,
                                     child: TextFormField(
                                       controller: lastName,
                                       decoration: InputDecoration(
                                         border: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              width: 1.5,
-                                              color: Color(0xffB8B8B8)),
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(10)),
+                                          borderSide: BorderSide(width: 1.5, color: Color(0xffB8B8B8)),
+                                          borderRadius: BorderRadius.all(Radius.circular(10)),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              width: 1,
-                                              color: Color(0xffB8B8B8)),
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(10)),
+                                          borderSide: BorderSide(width: 1, color: Color(0xffB8B8B8)),
+                                          borderRadius: BorderRadius.all(Radius.circular(10)),
                                         ),
                                       ),
                                     ),
@@ -412,7 +411,7 @@ class _RegistEsignState extends State<RegistEsign> {
                           height: 10,
                         ),
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 18),
+                          padding: EdgeInsets.symmetric(horizontal: 20.0),
                           child: Column(
                             children: [
                               Row(
@@ -420,31 +419,22 @@ class _RegistEsignState extends State<RegistEsign> {
                                   Text("Phone Number"),
                                 ],
                               ),
-                              SizedBox(
-                                height: 5,
-                              ),
                               Row(
                                 children: [
                                   SizedBox(
                                     height: size.height * 0.065,
-                                    width: size.width * 0.905,
+                                    width: size.width* 0.9,
                                     child: TextFormField(
                                       controller: phoneNumber,
                                       keyboardType: TextInputType.number,
                                       decoration: InputDecoration(
                                         border: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              width: 1.5,
-                                              color: Color(0xffB8B8B8)),
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(10)),
+                                          borderSide: BorderSide(width: 1.5, color: Color(0xffB8B8B8)),
+                                          borderRadius: BorderRadius.all(Radius.circular(10)),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              width: 1,
-                                              color: Color(0xffB8B8B8)),
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(10)),
+                                          borderSide: BorderSide(width: 1, color: Color(0xffB8B8B8)),
+                                          borderRadius: BorderRadius.all(Radius.circular(10)),
                                         ),
                                       ),
                                     ),
@@ -458,7 +448,7 @@ class _RegistEsignState extends State<RegistEsign> {
                           height: 10,
                         ),
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 18),
+                          padding: EdgeInsets.symmetric(horizontal: 20.0),
                           child: Column(
                             children: [
                               Row(
@@ -466,31 +456,22 @@ class _RegistEsignState extends State<RegistEsign> {
                                   Text("E-mail"),
                                 ],
                               ),
-                              SizedBox(
-                                height: 5,
-                              ),
                               Row(
                                 children: [
                                   SizedBox(
                                     height: size.height * 0.065,
-                                    width: size.width * 0.905,
+                                    width: size.width* 0.9,
                                     child: TextFormField(
                                       controller: eMail,
                                       keyboardType: TextInputType.emailAddress,
                                       decoration: InputDecoration(
                                         border: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              width: 1.5,
-                                              color: Color(0xffB8B8B8)),
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(10)),
+                                          borderSide: BorderSide(width: 1.5, color: Color(0xffB8B8B8)),
+                                          borderRadius: BorderRadius.all(Radius.circular(10)),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              width: 1,
-                                              color: Color(0xffB8B8B8)),
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(10)),
+                                          borderSide: BorderSide(width: 1, color: Color(0xffB8B8B8)),
+                                          borderRadius: BorderRadius.all(Radius.circular(10)),
                                         ),
                                       ),
                                     ),
@@ -504,41 +485,31 @@ class _RegistEsignState extends State<RegistEsign> {
                           height: 10,
                         ),
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 18),
+                          padding: EdgeInsets.symmetric(horizontal: 20.0),
                           child: Column(
                             children: [
                               Row(
                                 children: [
-                                  Text("* ",
-                                      style: TextStyle(color: Colors.red)),
+                                  Text("* ", style: TextStyle(color: Colors.red)),
                                   Text("NIK"),
                                 ],
-                              ),
-                              SizedBox(
-                                height: 5,
                               ),
                               Row(
                                 children: [
                                   SizedBox(
                                     height: size.height * 0.065,
-                                    width: size.width * 0.905,
+                                    width: size.width* 0.9,
                                     child: TextFormField(
                                       controller: nik,
                                       keyboardType: TextInputType.number,
                                       decoration: InputDecoration(
                                         border: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              width: 1.5,
-                                              color: Color(0xffB8B8B8)),
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(10)),
+                                          borderSide: BorderSide(width: 1.5, color: Color(0xffB8B8B8)),
+                                          borderRadius: BorderRadius.all(Radius.circular(10)),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              width: 1,
-                                              color: Color(0xffB8B8B8)),
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(10)),
+                                          borderSide: BorderSide(width: 1, color: Color(0xffB8B8B8)),
+                                          borderRadius: BorderRadius.all(Radius.circular(10)),
                                         ),
                                       ),
                                     ),
@@ -552,7 +523,7 @@ class _RegistEsignState extends State<RegistEsign> {
                           height: 10,
                         ),
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 18),
+                          padding: EdgeInsets.symmetric(horizontal: 20.0),
                           child: Column(
                             children: [
                               Row(
@@ -560,31 +531,22 @@ class _RegistEsignState extends State<RegistEsign> {
                                   Text("NPWP"),
                                 ],
                               ),
-                              SizedBox(
-                                height: 5,
-                              ),
                               Row(
                                 children: [
                                   SizedBox(
                                     height: size.height * 0.065,
-                                    width: size.width * 0.905,
+                                    width: size.width* 0.9,
                                     child: TextFormField(
                                       controller: npwp,
                                       keyboardType: TextInputType.number,
                                       decoration: InputDecoration(
                                         border: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              width: 1.5,
-                                              color: Color(0xffB8B8B8)),
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(10)),
+                                          borderSide: BorderSide(width: 1.5, color: Color(0xffB8B8B8)),
+                                          borderRadius: BorderRadius.all(Radius.circular(10)),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              width: 1,
-                                              color: Color(0xffB8B8B8)),
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(10)),
+                                          borderSide: BorderSide(width: 1, color: Color(0xffB8B8B8)),
+                                          borderRadius: BorderRadius.all(Radius.circular(10)),
                                         ),
                                       ),
                                     ),
@@ -598,31 +560,27 @@ class _RegistEsignState extends State<RegistEsign> {
                           height: 10,
                         ),
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 18),
+                          padding: EdgeInsets.symmetric(horizontal: 20.0),
                           child: Column(
                             children: [
                               Row(
                                 children: [
-                                  Text("* ",
-                                      style: TextStyle(color: Colors.red)),
+                                  Text("* ", style: TextStyle(color: Colors.red)),
                                   Text("Gender"),
                                 ],
-                              ),
-                              SizedBox(
-                                height: 5,
                               ),
                               Row(
                                 children: [
                                   SizedBox(
                                     height: size.height * 0.065,
-                                    width: size.width * 0.905,
+                                    width: size.width* 0.9,
                                     child: DropdownButtonFormField(
                                       decoration: InputDecoration(
                                           border: OutlineInputBorder(
-                                              borderRadius: BorderRadius.all(
-                                                  Radius.circular(10)),
-                                              borderSide:
-                                              BorderSide(width: 1))),
+                                              borderRadius: BorderRadius.all(Radius.circular(10)),
+                                              borderSide: BorderSide(width: 1)
+                                          )
+                                      ),
                                       value: province,
                                       onChanged: (String? value) {
                                         // This is called when the user selects an item.
@@ -630,13 +588,12 @@ class _RegistEsignState extends State<RegistEsign> {
                                           province = value!;
                                         });
                                       },
-                                      items: list.map<DropdownMenuItem<String>>(
-                                              (String value) {
-                                            return DropdownMenuItem<String>(
-                                              value: value,
-                                              child: Text(value),
-                                            );
-                                          }).toList(),
+                                      items: list.map<DropdownMenuItem<String>>((String value) {
+                                        return DropdownMenuItem<String>(
+                                          value: value,
+                                          child: Text(value),
+                                        );
+                                      }).toList(),
                                     ),
                                   ),
                                 ],
@@ -648,120 +605,81 @@ class _RegistEsignState extends State<RegistEsign> {
                           height: 10,
                         ),
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 18),
+                          padding: EdgeInsets.symmetric(horizontal: 20.0),
                           child: Column(
                             children: [
                               Row(
                                 children: [
+                                  Text("* ", style: TextStyle(color: Colors.red)),
                                   Text("Date of Birth"),
                                 ],
-                              ),
-                              SizedBox(
-                                height: 5,
-                              ),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: TextFormField(
-                                      controller: dateOfBirth,
-                                      decoration: InputDecoration(
-                                          border: OutlineInputBorder(
-                                            borderSide: BorderSide(
-                                                width: 1, color: Colors.grey),
-                                            borderRadius:
-                                            BorderRadius.circular(10),
-                                          ),
-                                          hintText: 'Select Date',
-                                          suffixIcon: Icon(Icons.calendar_month),
-                                      ),
-                                      readOnly: true,
-                                      onTap: () async {
-                                        DateTime? pickedDate = await showDatePicker(
-                                          context: context,
-                                          initialDate: DateTime.now(),
-                                          firstDate: DateTime(1900),
-                                          lastDate: DateTime(2100),
-                                        );
-                                        if(pickedDate != null) {
-                                          String formatDate = DateFormat('yyyy-MM-dd').format(pickedDate);
-                                          setState(() {
-                                            dateOfBirth.text = formatDate;
-                                          });
-                                        }
-
-                                      },
-                                    ),
-                                  )
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        SizedBox(
-                          height: 10,
-                        ),
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 18),
-                          child: Column(
-                            children: [
-                              Row(
-                                children: [
-                                  Text("* ",
-                                      style: TextStyle(color: Colors.red)),
-                                  Text("Province"),
-                                ],
-                              ),
-                              SizedBox(
-                                height: 5,
                               ),
                               Row(
                                 children: [
                                   SizedBox(
                                     height: size.height * 0.065,
-                                    width: size.width * 0.905,
-                                    child: regionProvinces == null
-                                        ? Container(
-                                      decoration: BoxDecoration(
-                                        border: Border.all(
-                                            width: 1, color: Colors.grey),
-                                        borderRadius:
-                                        BorderRadius.circular(10),
-                                      ),
-                                      child: Center(
-                                          child: Text(
-                                              "Loading Provinces...")),
-                                    )
-                                        : DropdownButtonFormField<int>(
+                                    width: size.width* 0.9,
+                                    child: TextFormField(
+                                      controller: dateOfBirth,
+                                      keyboardType: TextInputType.datetime,
                                       decoration: InputDecoration(
                                         border: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              width: 1,
-                                              color: Colors.grey),
-                                          borderRadius:
-                                          BorderRadius.circular(10),
+                                          borderSide: BorderSide(width: 1.5, color: Color(0xffB8B8B8)),
+                                          borderRadius: BorderRadius.all(Radius.circular(10)),
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(width: 1, color: Color(0xffB8B8B8)),
+                                          borderRadius: BorderRadius.all(Radius.circular(10)),
                                         ),
                                       ),
-                                      menuMaxHeight: heightScreen * 0.3,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(
+                          height: 10,
+                        ),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 20.0),
+                          child: Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Text("* ", style: TextStyle(color: Colors.red)),
+                                  Text("Province"),
+                                ],
+                              ),
+                              Row(
+                                children: [
+                                  SizedBox(
+                                    height: size.height * 0.065,
+                                    width: size.width* 0.9,
+                                    child: regionProvinces==null?
+                                    Container(decoration: BoxDecoration(border: Border.all(width: 1, color: Colors.grey), borderRadius: BorderRadius.circular(10)),):
+                                    DropdownButtonFormField<int>(
+                                      decoration: InputDecoration(
+                                        border: OutlineInputBorder(
+                                          borderSide: BorderSide(width: 1, color: Colors.grey),
+                                          borderRadius: BorderRadius.circular(10)
+                                        )
+                                      ),
                                       value: selectedProvince,
-                                      hint: Text("Select Province"),
-                                      items:
-                                      regionProvinces!.map((region) {
+                                      hint: Text("Select Province",),
+                                      items: regionProvinces!.map((region) {
                                         return DropdownMenuItem<int>(
                                           value: region.provinceId,
-                                          child: Text(region.provinceName,
-                                              style: TextStyle(
-                                                  fontWeight:
-                                                  FontWeight.w400)),
+                                          child: Text(region.provinceName, style: TextStyle(fontWeight: FontWeight.w400)),
                                         );
                                       }).toList(),
                                       onChanged: (newValue) async {
                                         setState(() {
-                                          selectedDistrict = null;
                                           selectedProvince = newValue;
-                                          if (selectedProvince != null) {
-                                            _fetchDistrict(
-                                                selectedProvince!);
+
+                                          if(selectedProvince != null) {
+                                            _fetchDistrict(selectedProvince!);
                                           }
                                           print(selectedProvince);
                                         });
@@ -773,76 +691,49 @@ class _RegistEsignState extends State<RegistEsign> {
                             ],
                           ),
                         ),
-                        SizedBox(height: 10),
+                        SizedBox(
+                          height: 10,
+                        ),
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 18),
+                          padding: EdgeInsets.symmetric(horizontal: 20.0),
                           child: Column(
                             children: [
                               Row(
                                 children: [
-                                  Text("* ",
-                                      style: TextStyle(color: Colors.red)),
+                                  Text("* ", style: TextStyle(color: Colors.red)),
                                   Text("District"),
                                 ],
-                              ),
-                              SizedBox(
-                                height: 5,
                               ),
                               Row(
                                 children: [
                                   SizedBox(
                                     height: size.height * 0.065,
-                                    width: size.width * 0.905,
-                                    child: selectedProvince == null
-                                        ? Container(
+                                    width: size.width* 0.9,
+                                    child: selectedProvince==null?
+                                    Container(
                                       decoration: BoxDecoration(
-                                        border: Border.all(
-                                            width: 1, color: Colors.grey),
-                                        borderRadius:
-                                        BorderRadius.circular(10),
+                                        border: Border.all(width: 1, color: Colors.grey),
+                                        borderRadius: BorderRadius.circular(10),
                                       ),
-                                      child: Center(
-                                          child: Text(
-                                              "Select a Province First")),
-                                    )
-                                        : regionDistrict == null
-                                        ? Container(
-                                      decoration: BoxDecoration(
-                                        border: Border.all(
-                                            width: 1,
-                                            color: Colors.grey),
-                                        borderRadius:
-                                        BorderRadius.circular(10),
-                                      ),
-                                      child: Center(
-                                          child: Text(
-                                              "Loading Districts...")),
-                                    )
-                                        : DropdownButtonFormField<int>(
+                                      child: Center(child: Text("Select a Province First"))
+                                    ):
+                                    DropdownButtonFormField<int>(
                                       decoration: InputDecoration(
                                         border: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              width: 1,
-                                              color: Colors.grey),
-                                          borderRadius:
-                                          BorderRadius.circular(
-                                              10),
+                                          borderSide: BorderSide(width: 1, color: Colors.grey),
+                                          borderRadius: BorderRadius.circular(10),
                                         ),
                                       ),
-                                      menuMaxHeight:
-                                      heightScreen * 0.3,
                                       value: selectedDistrict,
-                                      hint:
-                                      Text("--Select District--"),
-                                      items: regionDistrict!
-                                          .map((region) {
+                                      hint: Text("Select District"),
+                                      items: regionDistrict!.map((region) {
                                         return DropdownMenuItem<int>(
                                           value: region.kabId,
                                           child: Text(
                                             region.kabName,
                                             style: TextStyle(
-                                              fontWeight:
-                                              FontWeight.w400,
+                                              fontWeight: FontWeight.w400,
+                                              color: Colors.grey,
                                             ),
                                           ),
                                         );
@@ -850,7 +741,6 @@ class _RegistEsignState extends State<RegistEsign> {
                                       onChanged: (newValue) {
                                         setState(() {
                                           selectedDistrict = newValue;
-                                          print(selectedDistrict);
                                         });
                                       },
                                     ),
@@ -864,40 +754,30 @@ class _RegistEsignState extends State<RegistEsign> {
                           height: 10,
                         ),
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 18),
+                          padding: EdgeInsets.symmetric(horizontal: 20.0),
                           child: Column(
                             children: [
                               Row(
                                 children: [
-                                  Text("* ",
-                                      style: TextStyle(color: Colors.red)),
+                                  Text("* ", style: TextStyle(color: Colors.red)),
                                   Text("Village"),
                                 ],
-                              ),
-                              SizedBox(
-                                height: 5,
                               ),
                               Row(
                                 children: [
                                   SizedBox(
                                     height: size.height * 0.065,
-                                    width: size.width * 0.905,
+                                    width: size.width* 0.9,
                                     child: TextFormField(
                                       controller: village,
                                       decoration: InputDecoration(
                                         border: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              width: 1.5,
-                                              color: Color(0xffB8B8B8)),
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(10)),
+                                          borderSide: BorderSide(width: 1.5, color: Color(0xffB8B8B8)),
+                                          borderRadius: BorderRadius.all(Radius.circular(10)),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              width: 1,
-                                              color: Color(0xffB8B8B8)),
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(10)),
+                                          borderSide: BorderSide(width: 1, color: Color(0xffB8B8B8)),
+                                          borderRadius: BorderRadius.all(Radius.circular(10)),
                                         ),
                                       ),
                                     ),
@@ -911,40 +791,30 @@ class _RegistEsignState extends State<RegistEsign> {
                           height: 10,
                         ),
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 18),
+                          padding: EdgeInsets.symmetric(horizontal: 20.0),
                           child: Column(
                             children: [
                               Row(
                                 children: [
-                                  Text("* ",
-                                      style: TextStyle(color: Colors.red)),
+                                  Text("* ", style: TextStyle(color: Colors.red)),
                                   Text("Address"),
                                 ],
-                              ),
-                              SizedBox(
-                                height: 5,
                               ),
                               Row(
                                 children: [
                                   SizedBox(
                                     height: size.height * 0.065,
-                                    width: size.width * 0.905,
+                                    width: size.width* 0.9,
                                     child: TextFormField(
                                       controller: address,
                                       decoration: InputDecoration(
                                         border: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              width: 1.5,
-                                              color: Color(0xffB8B8B8)),
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(10)),
+                                          borderSide: BorderSide(width: 1.5, color: Color(0xffB8B8B8)),
+                                          borderRadius: BorderRadius.all(Radius.circular(10)),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              width: 1,
-                                              color: Color(0xffB8B8B8)),
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(10)),
+                                          borderSide: BorderSide(width: 1, color: Color(0xffB8B8B8)),
+                                          borderRadius: BorderRadius.all(Radius.circular(10)),
                                         ),
                                       ),
                                     ),
@@ -961,40 +831,30 @@ class _RegistEsignState extends State<RegistEsign> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Container(
-                              padding: EdgeInsets.symmetric(horizontal: 18),
+                              padding: EdgeInsets.symmetric(horizontal: 20.0),
                               child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
                                     children: [
                                       Text("RT"),
                                     ],
                                   ),
-                                  SizedBox(
-                                    height: 5,
-                                  ),
                                   Row(
                                     children: [
                                       SizedBox(
                                         height: size.height * 0.065,
-                                        width: size.width * 0.4,
+                                        width: size.width* 0.4,
                                         child: TextFormField(
                                           controller: rt,
                                           keyboardType: TextInputType.number,
                                           decoration: InputDecoration(
                                             border: OutlineInputBorder(
-                                              borderSide: BorderSide(
-                                                  width: 1.5,
-                                                  color: Color(0xffB8B8B8)),
-                                              borderRadius: BorderRadius.all(
-                                                  Radius.circular(10)),
+                                              borderSide: BorderSide(width: 1.5, color: Color(0xffB8B8B8)),
+                                              borderRadius: BorderRadius.all(Radius.circular(10)),
                                             ),
                                             enabledBorder: OutlineInputBorder(
-                                              borderSide: BorderSide(
-                                                  width: 1,
-                                                  color: Color(0xffB8B8B8)),
-                                              borderRadius: BorderRadius.all(
-                                                  Radius.circular(10)),
+                                              borderSide: BorderSide(width: 1, color: Color(0xffB8B8B8)),
+                                              borderRadius: BorderRadius.all(Radius.circular(10)),
                                             ),
                                           ),
                                         ),
@@ -1005,40 +865,30 @@ class _RegistEsignState extends State<RegistEsign> {
                               ),
                             ),
                             Container(
-                              padding: EdgeInsets.symmetric(horizontal: 18),
+                              padding: EdgeInsets.symmetric(horizontal: 20.0),
                               child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
                                     children: [
                                       Text("RW"),
                                     ],
                                   ),
-                                  SizedBox(
-                                    height: 5,
-                                  ),
                                   Row(
                                     children: [
                                       SizedBox(
                                         height: size.height * 0.065,
-                                        width: size.width * 0.4,
+                                        width: size.width* 0.4,
                                         child: TextFormField(
                                           controller: rw,
                                           keyboardType: TextInputType.number,
                                           decoration: InputDecoration(
                                             border: OutlineInputBorder(
-                                              borderSide: BorderSide(
-                                                  width: 1.5,
-                                                  color: Color(0xffB8B8B8)),
-                                              borderRadius: BorderRadius.all(
-                                                  Radius.circular(10)),
+                                              borderSide: BorderSide(width: 1.5, color: Color(0xffB8B8B8)),
+                                              borderRadius: BorderRadius.all(Radius.circular(10)),
                                             ),
                                             enabledBorder: OutlineInputBorder(
-                                              borderSide: BorderSide(
-                                                  width: 1,
-                                                  color: Color(0xffB8B8B8)),
-                                              borderRadius: BorderRadius.all(
-                                                  Radius.circular(10)),
+                                              borderSide: BorderSide(width: 1, color: Color(0xffB8B8B8)),
+                                              borderRadius: BorderRadius.all(Radius.circular(10)),
                                             ),
                                           ),
                                         ),
@@ -1055,24 +905,29 @@ class _RegistEsignState extends State<RegistEsign> {
                         ),
                         SizedBox(
                           height: size.height * 0.06,
-                          width: size.width * 0.905,
+                          width: size.width * 0.9,
                           child: ElevatedButton(
-                            onPressed: () {
+                            onPressed: (){
                               setState(() {
                                 isPersonalInformation = false;
                                 isOfficeInformation = true;
                                 page = 1;
                               });
                             },
-                            child: Text("Next",
+                            child: Text(
+                                "Next",
                                 style: GoogleFonts.roboto(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w500,
-                                    fontSize: 14)),
+                                    fontSize: 14
+                                )
+                            ),
                             style: ElevatedButton.styleFrom(
                                 backgroundColor: Color(0xff0081F1),
                                 shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10))),
+                                    borderRadius: BorderRadius.circular(10)
+                                )
+                            ),
                           ),
                         ),
                         SizedBox(
@@ -1086,7 +941,7 @@ class _RegistEsignState extends State<RegistEsign> {
                     child: Column(
                       children: [
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 18),
+                          padding: EdgeInsets.symmetric(horizontal: 20.0),
                           child: Column(
                             children: [
                               Row(
@@ -1098,23 +953,17 @@ class _RegistEsignState extends State<RegistEsign> {
                                 children: [
                                   SizedBox(
                                     height: size.height * 0.065,
-                                    width: size.width * 0.905,
+                                    width: size.width* 0.9,
                                     child: TextFormField(
                                       controller: office,
                                       decoration: InputDecoration(
                                         border: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              width: 1.5,
-                                              color: Color(0xffB8B8B8)),
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(10)),
+                                          borderSide: BorderSide(width: 1.5, color: Color(0xffB8B8B8)),
+                                          borderRadius: BorderRadius.all(Radius.circular(10)),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              width: 1,
-                                              color: Color(0xffB8B8B8)),
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(10)),
+                                          borderSide: BorderSide(width: 1, color: Color(0xffB8B8B8)),
+                                          borderRadius: BorderRadius.all(Radius.circular(10)),
                                         ),
                                       ),
                                     ),
@@ -1128,7 +977,7 @@ class _RegistEsignState extends State<RegistEsign> {
                           height: 10,
                         ),
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 18),
+                          padding: EdgeInsets.symmetric(horizontal: 20.0),
                           child: Column(
                             children: [
                               Row(
@@ -1140,23 +989,17 @@ class _RegistEsignState extends State<RegistEsign> {
                                 children: [
                                   SizedBox(
                                     height: size.height * 0.065,
-                                    width: size.width * 0.905,
+                                    width: size.width* 0.9,
                                     child: TextFormField(
                                       controller: departement,
                                       decoration: InputDecoration(
                                         border: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              width: 1.5,
-                                              color: Color(0xffB8B8B8)),
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(10)),
+                                          borderSide: BorderSide(width: 1.5, color: Color(0xffB8B8B8)),
+                                          borderRadius: BorderRadius.all(Radius.circular(10)),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              width: 1,
-                                              color: Color(0xffB8B8B8)),
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(10)),
+                                          borderSide: BorderSide(width: 1, color: Color(0xffB8B8B8)),
+                                          borderRadius: BorderRadius.all(Radius.circular(10)),
                                         ),
                                       ),
                                     ),
@@ -1170,13 +1013,12 @@ class _RegistEsignState extends State<RegistEsign> {
                           height: 10,
                         ),
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 18),
+                          padding: EdgeInsets.symmetric(horizontal: 20.0),
                           child: Column(
                             children: [
                               Row(
                                 children: [
-                                  Text("* ",
-                                      style: TextStyle(color: Colors.red)),
+                                  Text("* ", style: TextStyle(color: Colors.red)),
                                   Text("Role"),
                                 ],
                               ),
@@ -1184,14 +1026,14 @@ class _RegistEsignState extends State<RegistEsign> {
                                 children: [
                                   SizedBox(
                                     height: size.height * 0.065,
-                                    width: size.width * 0.905,
+                                    width: size.width* 0.9,
                                     child: DropdownButtonFormField(
                                       decoration: InputDecoration(
                                           border: OutlineInputBorder(
-                                              borderRadius: BorderRadius.all(
-                                                  Radius.circular(10)),
-                                              borderSide:
-                                              BorderSide(width: 1))),
+                                              borderRadius: BorderRadius.all(Radius.circular(10)),
+                                              borderSide: BorderSide(width: 1)
+                                          )
+                                      ),
                                       value: province,
                                       onChanged: (String? value) {
                                         // This is called when the user selects an item.
@@ -1199,13 +1041,12 @@ class _RegistEsignState extends State<RegistEsign> {
                                           province = value!;
                                         });
                                       },
-                                      items: list.map<DropdownMenuItem<String>>(
-                                              (String value) {
-                                            return DropdownMenuItem<String>(
-                                              value: value,
-                                              child: Text(value),
-                                            );
-                                          }).toList(),
+                                      items: list.map<DropdownMenuItem<String>>((String value) {
+                                        return DropdownMenuItem<String>(
+                                          value: value,
+                                          child: Text(value),
+                                        );
+                                      }).toList(),
                                     ),
                                   ),
                                 ],
@@ -1214,28 +1055,33 @@ class _RegistEsignState extends State<RegistEsign> {
                           ),
                         ),
                         SizedBox(
-                          height: heightScreen * 0.35,
+                          height: 10,
                         ),
                         SizedBox(
                           height: size.height * 0.06,
-                          width: size.width * 0.905,
+                          width: size.width * 0.9,
                           child: ElevatedButton(
-                            onPressed: () {
+                            onPressed: (){
                               setState(() {
                                 isOfficeInformation = false;
                                 isUploadDocument = true;
                                 page = 2;
                               });
                             },
-                            child: Text("Next",
+                            child: Text(
+                                "Next",
                                 style: GoogleFonts.roboto(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w500,
-                                    fontSize: 14)),
+                                    fontSize: 14
+                                )
+                            ),
                             style: ElevatedButton.styleFrom(
                                 backgroundColor: Color(0xff0081F1),
                                 shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10))),
+                                    borderRadius: BorderRadius.circular(10)
+                                )
+                            ),
                           ),
                         ),
                       ],
@@ -1251,41 +1097,35 @@ class _RegistEsignState extends State<RegistEsign> {
                             children: [
                               Row(
                                 children: [
-                                  Text("*",
-                                      style: TextStyle(color: Colors.red)),
+                                  Text("*", style: TextStyle(color: Colors.red)),
                                   Text(" Upload KTP"),
                                 ],
                               ),
                               SizedBox(
                                 height: 30,
                               ),
-                              imageKTP == null
-                                  ? Image.asset(
-                                "assets/images/card.png",
-                                width: 200,
-                              )
-                                  : Container(
+                              imageKTP==null?
+                              Image.asset("assets/images/card.png", width: 200,):
+                              Container(
                                 width: 300,
                                 height: 200,
                                 decoration: BoxDecoration(
                                     image: DecorationImage(
                                       fit: BoxFit.cover,
                                       image: FileImage(imageKTP!),
-                                    )),
+                                    )
+                                ),
                               ),
                               SizedBox(
                                 height: 30,
                               ),
                               Text(
                                 "Format : jpg, jpeg, pdf | Max : 1 Mb",
-                                style: TextStyle(fontWeight: FontWeight.w500),
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w500
+                                ),
                               ),
-                              alertImage == true
-                                  ? Text(
-                                "Maximal file 1 MB or Follow the format file.",
-                                style: TextStyle(color: Colors.red),
-                              )
-                                  : Container(),
+                              alertImage==true? Text("Maximal file 1 MB or Follow the format file.", style: TextStyle(color: Colors.red),): Container(),
                               SizedBox(
                                 height: 30,
                               ),
@@ -1296,16 +1136,15 @@ class _RegistEsignState extends State<RegistEsign> {
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.all(
-                                            Radius.circular(10)),
+                                        borderRadius: BorderRadius.all(Radius.circular(10)),
                                         side: BorderSide(
-                                            color: bluePrimary, width: 1)),
+                                            color: bluePrimary,
+                                            width: 1
+                                        )
+                                    ),
                                   ),
-                                  onPressed: () => _pickImageKTP(),
-                                  child: Text(
-                                    "Upload KTP",
-                                    style: TextStyle(color: bluePrimary),
-                                  ),
+                                  onPressed: ()=>_pickImageKTP(),
+                                  child: Text("Upload KTP", style: TextStyle(color: bluePrimary),),
                                 ),
                               ),
                             ],
@@ -1317,7 +1156,9 @@ class _RegistEsignState extends State<RegistEsign> {
                         Container(
                           width: widthScreen * 1,
                           height: heightScreen * 0.005,
-                          decoration: BoxDecoration(color: Colors.black12),
+                          decoration: BoxDecoration(
+                              color: Colors.black12
+                          ),
                         ),
                         Container(
                           padding: EdgeInsets.all(20),
@@ -1331,26 +1172,26 @@ class _RegistEsignState extends State<RegistEsign> {
                               SizedBox(
                                 height: 30,
                               ),
-                              imageNPWP == null
-                                  ? Image.asset(
-                                "assets/images/card.png",
-                                width: 200,
-                              )
-                                  : Container(
+                              imageNPWP==null?
+                              Image.asset("assets/images/card.png", width: 200,):
+                              Container(
                                 width: 300,
                                 height: 200,
                                 decoration: BoxDecoration(
                                     image: DecorationImage(
                                       fit: BoxFit.cover,
                                       image: FileImage(imageNPWP!),
-                                    )),
+                                    )
+                                ),
                               ),
                               SizedBox(
                                 height: 30,
                               ),
                               Text(
                                 "Format : jpg, jpeg, pdf | Max : 1 Mb",
-                                style: TextStyle(fontWeight: FontWeight.w500),
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w500
+                                ),
                               ),
                               SizedBox(
                                 height: 30,
@@ -1365,16 +1206,15 @@ class _RegistEsignState extends State<RegistEsign> {
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.all(
-                                            Radius.circular(10)),
+                                        borderRadius: BorderRadius.all(Radius.circular(10)),
                                         side: BorderSide(
-                                            color: bluePrimary, width: 1)),
+                                            color: bluePrimary,
+                                            width: 1
+                                        )
+                                    ),
                                   ),
                                   onPressed: _pickImageNPWP,
-                                  child: Text(
-                                    "Upload NPWP",
-                                    style: TextStyle(color: bluePrimary),
-                                  ),
+                                  child: Text("Upload NPWP", style: TextStyle(color: bluePrimary),),
                                 ),
                               ),
                             ],
@@ -1386,7 +1226,9 @@ class _RegistEsignState extends State<RegistEsign> {
                         Container(
                           width: widthScreen * 1,
                           height: heightScreen * 0.005,
-                          decoration: BoxDecoration(color: Colors.black12),
+                          decoration: BoxDecoration(
+                              color: Colors.black12
+                          ),
                         ),
                         Container(
                           padding: EdgeInsets.all(20),
@@ -1394,34 +1236,33 @@ class _RegistEsignState extends State<RegistEsign> {
                             children: [
                               Row(
                                 children: [
-                                  Text("*",
-                                      style: TextStyle(color: Colors.red)),
+                                  Text("*", style: TextStyle(color: Colors.red)),
                                   Text(" Upload Selfie Photo"),
                                 ],
                               ),
                               SizedBox(
                                 height: 30,
                               ),
-                              imageSelfie == null
-                                  ? Image.asset(
-                                "assets/images/selfie.png",
-                                width: 200,
-                              )
-                                  : Container(
+                              imageSelfie==null?
+                              Image.asset("assets/images/selfie.png", width: 200,):
+                              Container(
                                 width: 300,
                                 height: 200,
                                 decoration: BoxDecoration(
                                     image: DecorationImage(
                                       fit: BoxFit.cover,
                                       image: FileImage(imageSelfie!),
-                                    )),
+                                    )
+                                ),
                               ),
                               SizedBox(
                                 height: 30,
                               ),
                               Text(
                                 "Format : jpg, jpeg, pdf | Max : 1 Mb",
-                                style: TextStyle(fontWeight: FontWeight.w500),
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w500
+                                ),
                               ),
                               SizedBox(
                                 height: 30,
@@ -1433,10 +1274,12 @@ class _RegistEsignState extends State<RegistEsign> {
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.all(
-                                            Radius.circular(10)),
+                                        borderRadius: BorderRadius.all(Radius.circular(10)),
                                         side: BorderSide(
-                                            color: bluePrimary, width: 1)),
+                                            color: bluePrimary,
+                                            width: 1
+                                        )
+                                    ),
                                   ),
                                   onPressed: () {
                                     showModalBottomSheet(
@@ -1449,14 +1292,12 @@ class _RegistEsignState extends State<RegistEsign> {
                                                 height: 20,
                                               ),
                                               ListTile(
-                                                leading: new Icon(
-                                                    Icons.file_upload_outlined),
+                                                leading: new Icon(Icons.file_upload_outlined),
                                                 title: new Text('Upload File'),
                                                 onTap: _pickImageSelfie,
                                               ),
                                               ListTile(
-                                                leading: new Icon(
-                                                    Icons.camera_alt_outlined),
+                                                leading: new Icon(Icons.camera_alt_outlined),
                                                 title: new Text('Camera'),
                                                 onTap: () {
                                                   Navigator.pop(context);
@@ -1466,31 +1307,27 @@ class _RegistEsignState extends State<RegistEsign> {
                                           );
                                         });
                                   },
-                                  child: Text(
-                                    "Upload Selfie",
-                                    style: TextStyle(color: bluePrimary),
-                                  ),
+                                  child: Text("Upload Selfie", style: TextStyle(color: bluePrimary),),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        SizedBox(
-                          height: 20,
-                        ),
                         Container(
                           width: widthScreen * 1,
                           height: heightScreen * 0.005,
-                          decoration: BoxDecoration(color: Colors.black12),
+                          decoration: BoxDecoration(
+                              color: Colors.black12
+                          ),
                         ),
                         SizedBox(
                           height: 20,
                         ),
                         SizedBox(
                           height: size.height * 0.06,
-                          width: size.width * 0.905,
+                          width: size.width * 0.9,
                           child: ElevatedButton(
-                            onPressed: () {
+                            onPressed: (){
                               setState(() {
                                 bodyCollection = {
                                   'firstName': firstName.text,
@@ -1517,20 +1354,26 @@ class _RegistEsignState extends State<RegistEsign> {
                               });
                               EventDB.check(bodyCollection);
                             },
-                            child: Text("Submit",
+                            child: Text(
+                                "Submit",
                                 style: GoogleFonts.roboto(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w500,
-                                    fontSize: 14)),
+                                    fontSize: 14
+                                )
+                            ),
                             style: ElevatedButton.styleFrom(
                                 backgroundColor: Color(0xff0081F1),
                                 shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10))),
+                                    borderRadius: BorderRadius.circular(10)
+                                )
+                            ),
                           ),
                         ),
                         SizedBox(
                           height: 20,
                         ),
+
                       ],
                     ),
                   ),
@@ -1542,4 +1385,5 @@ class _RegistEsignState extends State<RegistEsign> {
       ),
     );
   }
+
 }
