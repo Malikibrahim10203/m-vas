@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:vas/event/event_camerapref.dart';
 import 'package:vas/event/event_db.dart';
 import 'package:vas/event/event_pref.dart';
+import 'package:vas/models/module.dart';
 import 'package:vas/models/quota.dart';
+import 'package:vas/screens/e-Kyc/regist_esign.dart';
 import 'package:vas/widgets/components.dart';
 import 'package:intl/intl.dart';
 
@@ -29,6 +32,7 @@ class _DashboardState extends State<Dashboard> {
   var data;
   var province_id;
 
+  ModuleData? module;
   bool? signM, stampM, officeM;
 
   var saldoEMet;
@@ -48,7 +52,7 @@ class _DashboardState extends State<Dashboard> {
     });
   }
 
-  void getUser() async {
+  Future<void> getUser() async {
     token = (await EventPref.getCredential())?.data.token;
     email = (await EventPref.getCredential())?.email;
     password = (await EventPref.getCredential())?.password;
@@ -70,8 +74,9 @@ class _DashboardState extends State<Dashboard> {
 
   void getModule() async {
     token = (await EventPref.getCredential())?.data.token;
-    signM = (await EventDB.getModule(token??''))?.signM;
-    stampM = (await EventDB.getModule(token??''))?.stampM;
+    module = (await EventDB.getModule(token??''));
+    signM = module!.signM;
+    stampM = module!.stampM;
 
     if (mounted) {
       setState(() {});
@@ -102,6 +107,7 @@ class _DashboardState extends State<Dashboard> {
     getUser();
     getQuota();
     getModule();
+    CameraPref.clearCameraPreference();
     super.initState();
   }
 
@@ -502,7 +508,7 @@ class _DashboardState extends State<Dashboard> {
         floatingActionButton: FloatingActionButton(
           shape: CircleBorder(),
           onPressed: () async {
-            EventDB.getProvinces();
+            AlertSuccess(context, RegistEsign(), 'Registration Success', 'You have submit the data! Please check your email to activate your account');
           },
           child: Container(
             width: 35,

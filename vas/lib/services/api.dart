@@ -13,5 +13,6 @@ class Api {
   static String regist_peruri = "$_host/api/v1/sign/register";
 
   static String get_region = "$_host/api/v1/region";
+  static String get_peruri_jwt_token = "$_host/api/v1/sign/token";
 
 }

@@ -19,6 +19,7 @@ Color primaryColor4 = Color(0xff48A1D9);
 Color tertiaryColor = Color(0xffEAC100);
 Color tertiaryColor4 = Color(0xffFFFBEC);
 Color whiteColor = Color(0xffFFFFFF);
+Color primaryColor5 = Color(0xffD7ECF9);
 
 
 
@@ -110,7 +111,7 @@ Widget CertificateStatusNotActive(height, width, context) {
             Container(
               child: Text(
                 overflow: TextOverflow.clip,
-                "Please activate e-KYC immediately before placing a e-Signature",
+                "Please activate e-KYC immediately before placing a \ne-Signature",
                 style: GoogleFonts.roboto(
                     fontSize: 12
                 ),
@@ -384,6 +385,96 @@ Widget MenuActive() {
       ),
       trailing: Icon(Icons.keyboard_arrow_right_outlined,color: primaryColor2,),
     ),
+  );
+}
+
+Future<void> AlertSuccess(context, route, labelText, contentText) {
+  return showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return Dialog(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10)
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.topCenter,
+          children: <Widget>[
+            Container(
+              padding: const EdgeInsets.all(20.0),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: primaryColor4, width: 10)),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(10))
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  SizedBox(height: 30.0), // Add spacing for the floating icon
+                  Text(
+                    labelText,
+                    style: GoogleFonts.roboto(
+                        fontSize: 16.5,
+                        fontWeight: FontWeight.w600
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 20.0),
+                  Container(
+                    width: 300,
+                    height: 40,
+                    decoration: BoxDecoration(
+                        border: Border.all(width: 2,color: bluePrimary),
+                        color: primaryColor5,
+                    ),
+                    child: Center(
+                      child: Text(
+                        contentText,
+                        style: GoogleFonts.roboto(
+                            fontSize: 10,
+                            color: bluePrimary
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 20.0),
+                  Container(
+                    width: 300,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: bluePrimary,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(10))
+                          )
+                      ),
+                      onPressed: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context)=>route));
+                      },
+                      child: Text(
+                        'Done',
+                        style: TextStyle(
+                            color: Colors.white
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Floating Icon
+            Positioned(
+              top: -30.0,
+              child: CircleAvatar(
+                  backgroundColor: primaryColor2,
+                  radius: 30.0,
+                  child: Image.asset("assets/images/alert.png", width: 50,)
+              ),
+            ),
+          ],
+        ),
+      );
+    },
   );
 }
 

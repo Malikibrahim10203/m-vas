@@ -5,6 +5,7 @@ import 'package:vas/event/event_pref.dart';
 import 'package:vas/models/credential.dart';
 import 'package:vas/models/district.dart';
 import 'package:vas/models/module.dart';
+import 'package:vas/models/peruri_jwt_token.dart';
 import 'package:vas/models/quota.dart';
 import 'package:vas/models/province.dart';
 import 'package:vas/models/users.dart';
@@ -197,61 +198,100 @@ class EventDB {
     return module;
   }
 
-  static Future<void> RegisterPeruri(String token, String token_peruri, List body) async {
+  static Future<void> RegisterPeruri(
+      String token, String token_peruri, String password, Map<dynamic, dynamic>? data) async {
     try {
-      var response = await http.post(Uri.parse(Api.regist_peruri),
+      var response = await http.post(
+        Uri.parse(Api.regist_peruri),
         headers: {
           'token': token,
-          'token_peruri_sign': token_peruri
+          'token_peruri_sign': token_peruri,
         },
         body: {
-          'address': 'variable',
-          'date_of_birth': 'variable',
-          'district': 'variable',
-          'ktp': 'variable',
-          'ktp_photo': 'variable',
-          'npwp': 'variable',
-          'npwp_photo': 'variable',
-          'organization_unit': 'variable',
-          'password': 'variable',
-          'place_of_bith': 'variable',
-          'position': 'variable',
-          'province': 'variable',
-          'rt': 'variable',
-          'rw': 'variable',
-          'self_photo': 'variable',
-          'sub_district': 'variable',
-          'village': 'variable',
-          'work_unit': 'variable',
-        }
+          'address': data?['address'] ?? '',
+          'date_of_birth': data?['dateOfBirth'] ?? '',
+          'district': data?['district'].toString() ?? '',
+          'gender': data?['gender'] ?? '',
+          'ktp': (data?['nik'] ?? '').toString(),
+          'ktp_photo': data?['ktp_photo'] ?? '',
+          'npwp': (data?['npwp'] ?? '').toString(),
+          'npwp_photo': data?['npwp_photo'] ?? '',
+          'organization_unit': data?['departement'] ?? '',
+          'password': password,
+          'place_of_birth': data?['placeOfBirth'] ?? '',
+          'position': data?['role'] ?? '',
+          'province': data?['province'].toString() ?? '',
+          'rt': (data?['rt'] ?? '').toString(),
+          'rw': (data?['rw'] ?? '').toString(),
+          'self_photo': data?['selfie_photo'] ?? '',
+          'sub_district': '',
+          'village': data?['village'] ?? '',
+          'work_unit': data?['office'] ?? '',
+        },
       );
+
+      if (response.statusCode == 200) {
+        print('Success: ${response.body}');
+      } else {
+        print('Failed with status code: ${response.statusCode}');
+      }
     } catch (e) {
-      print(e);
+      print('Error: $e');
     }
+  }
+
+
+
+
+
+  static Future<PeruriJwtToken?> getPeruriJWTToken(String token) async {
+    PeruriJwtToken? tokenPeruri;
+
+    try {
+      var response = await http.get(Uri.parse(Api.get_peruri_jwt_token), headers: {
+        'token': token
+      });
+
+      if (response.statusCode == 200) {
+        var responseBody = jsonDecode(response.body);
+        if (responseBody != null && responseBody['data'] != null) {
+          tokenPeruri = PeruriJwtToken.fromJson(responseBody['data']);
+          print(tokenPeruri.expireAt);
+        } else {
+          print("Data is null or invalid");
+        }
+      } else {
+        print("Data is null or invalid");
+      }
+    } catch(e) {
+      print("Peruri JWT Token : $e");
+    }
+
+    return tokenPeruri;
   }
 
   static Future<void> check(Map? data) async {
 
-    print(data!['fisrtName']);
-    print(data!['lastName']);
-    print(data!['phoneNumber']);
-    print(data!['eMail']);
-    print(data!['nik']);
-    print(data!['npwp']);
-    print(data!['gender']);
-    print(data!['dateOfBirth']);
-    print(data!['province']);
-    print(data!['district']);
-    print(data!['village']);
-    print(data!['address']);
-    print(data!['rt']);
-    print(data!['rw']);
-    print(data!['office']);
-    print(data!['departement']);
-    print(data!['role']);
-    print(data!['ktp_photo']);
-    print(data!['npwp_photo']);
-    print(data!['selfie_photo']);
+    // print(data!['firstName']);
+    // print(data!['lastName']);
+    // print(data!['phoneNumber']);
+    // print();
+    // print();
+    // print();
+    // print();
+    // print();
+    // print();
+    // print();
+    // print();
+    // print();
+    // print();
+    // print();
+    // print();
+    // print();
+    // print();
+    // print();
+    // print();
+    // print();
   }
 
   static Future<List<Province>?> getProvinces() async {

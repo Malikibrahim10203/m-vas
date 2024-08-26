@@ -15,6 +15,7 @@ import 'package:uni_links/uni_links.dart';
 import 'package:vas/widgets/wait_screen.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
