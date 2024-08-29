@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:vas/event/event_pref.dart';
 import 'package:vas/models/credential.dart';
-import 'package:vas/models/users.dart';
 import 'package:vas/screens/auth/change_password.dart';
 import 'package:vas/screens/auth/forget_password.dart';
 import 'package:vas/screens/auth/login.dart';
 import 'package:vas/screens/auth/otp_code.dart';
+import 'package:vas/screens/e-Kyc/activate_account.dart';
 import 'package:vas/screens/get_started.dart';
 import 'package:vas/screens/pages/dashboard.dart';
 import 'package:vas/screens/splash_screen.dart';
@@ -32,7 +32,6 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    // SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [SystemUiOverlay.bottom]);
     initUniLinks();
   }
 
@@ -54,14 +53,20 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _handleDeepLink(String link) {
+    print('Received deep link: $link');
+    final uri = Uri.parse(link);
+    print('Parsed URI: $uri');
     if (link.contains('forgot-password')) {
-      final uri = Uri.parse(link);
       final itemId = uri.queryParameters['t'];
+      print('Item ID: $itemId');
       _navigatorKey.currentState?.pushNamed('/change_otp', arguments: itemId);
-    } else {
-      // Handle other links or default action
+    } else if (link.contains('registrationKYC')) {
+      final itemId = uri.queryParameters['token'];
+      print('Token: $itemId');
+      _navigatorKey.currentState?.pushNamed('/activate_account', arguments: itemId);
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -76,16 +81,12 @@ class _MyAppState extends State<MyApp> {
         future: EventPref.getCredential(),
         builder: (context, AsyncSnapshot<Credential?> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            // Tampilkan indikator pemuatan saat data sedang dimuat
             return CircularProgressIndicator();
           } else if (snapshot.hasError) {
-            // Tangani jika ada error saat memuat data
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (snapshot.data == null) {
-            // Tampilkan SplashScreen jika data tidak ada
             return SplashScreen();
           } else {
-            // Ambil token dari objek Credential dan kirimkan ke Dashboard
             final token = snapshot.data!.data.token;
             return Dashboard(token: token);
           }
@@ -95,7 +96,36 @@ class _MyAppState extends State<MyApp> {
         if (settings.name == '/change_otp') {
           final args = settings.arguments as String?;
           return MaterialPageRoute(
-            builder: (context) => ChangePassword(token: args),
+            builder: (context) => FutureBuilder<Credential?>(
+              future: EventPref.getCredential(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return CircularProgressIndicator();
+                } else if (snapshot.hasError || snapshot.data == null) {
+                  return Login(); // Redirect to login if not logged in
+                } else {
+                  final token = settings.arguments as String?;
+                  return ChangePassword(token: args);
+                }
+              },
+            ),
+          );
+        } else if (settings.name == '/activate_account') {
+          final args = settings.arguments as String?;
+          return MaterialPageRoute(
+            builder: (context) => FutureBuilder<Credential?>(
+              future: EventPref.getCredential(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return CircularProgressIndicator();
+                } else if (snapshot.hasError || snapshot.data == null) {
+                  return Login(); // Redirect to login if not logged in
+                } else {
+                  final token = settings.arguments as String?;
+                  return ActivateAccount(token: token);
+                }
+              },
+            ),
           );
         }
         return null;

@@ -113,19 +113,29 @@ class EventDB {
     User? user;
 
     try {
-      var response = await http.get(Uri.parse(Api.get_user), headers: {
-        'token': token
-      });
+      var response = await http.get(
+        Uri.parse(Api.get_user),
+        headers: {'token': token},
+      );
 
-      var responseBody = jsonDecode(response.body);
-      if (responseBody != null && responseBody['data'] != null) {
-        user = User.fromJson(responseBody['data']);
+      print("Response status: ${response.statusCode}");
+      print("Response body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        var responseBody = jsonDecode(response.body);
+        if (responseBody != null && responseBody['data'] != null) {
+          user = User.fromJson(responseBody['data']);
+          print(user.firstName);
+        } else {
+          print("Get User: Data is null or invalid");
+        }
       } else {
-        print("Data is null or invalid");
+        print("Get User: Status Code ${response.statusCode} - ${response.body}");
       }
-    } catch(e) {
-      print("S: $e");
+    } catch (e) {
+      print("Error: $e");
     }
+
 
     return user;
   }
@@ -198,8 +208,8 @@ class EventDB {
     return module;
   }
 
-  static Future<void> RegisterPeruri(
-      String token, String token_peruri, String password, Map<dynamic, dynamic>? data) async {
+  static Future<bool> RegisterPeruri(String token, String token_peruri, String password, Map<dynamic, dynamic>? data) async {
+    bool status = false;
     try {
       var response = await http.post(
         Uri.parse(Api.regist_peruri),
@@ -230,14 +240,20 @@ class EventDB {
         },
       );
 
+
       if (response.statusCode == 200) {
-        print('Success: ${response.body}');
+        var responseBody = jsonDecode(response.body);
+        if(responseBody['status'] == 'success') {
+          status = true;
+          print('Success: ${response.body}');
+        }
       } else {
         print('Failed with status code: ${response.statusCode}');
       }
     } catch (e) {
       print('Error: $e');
     }
+    return status;
   }
 
 
@@ -354,6 +370,123 @@ class EventDB {
 
    return regions;
   }
+
+  static Future<String>? SendOtp(String? token, String? tokenPeruri) async {
+    String? responseOtp;
+    try {
+      var response = await http.post(Uri.parse(Api.send_otp), headers: {
+        'token': token??'',
+        'token_peruri_sign': tokenPeruri??''
+      });
+      var responseBody = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        responseOtp = responseBody['status'];
+      } else {
+        responseOtp = responseBody['error'];
+      }
+    } catch (e) {
+      print("Send otp: $e");
+    }
+    return responseOtp!;
+  }
+
+  static Future<String>? ActivateEmail(String tokenLogin, String tokenEmail) async {
+    String? responseActivateEmail;
+    try {
+      var response = await http.post(Uri.parse(Api.activate_email), headers: {
+        'token': tokenLogin
+      },
+      body: {
+        'token': tokenEmail
+      });
+      var responseBody = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        responseActivateEmail = responseBody['error'];
+      } else {
+        responseActivateEmail = responseBody['error'];
+      }
+    } catch (e) {
+      print("Send otp: $e");
+    }
+    return responseActivateEmail!;
+  }
+
+  static Future<String>? ResendActivateEmail(String tokenLogin) async {
+    String? responseResendActivateEmail;
+    try {
+      var response = await http.post(Uri.parse(Api.resend_activate_email), headers: {
+        'token': tokenLogin
+      });
+
+      var responseBody = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        responseResendActivateEmail = responseBody['status'];
+      } else {
+        responseResendActivateEmail = responseBody['error'];
+      }
+    } catch (e) {
+      print("Resend Activate Email: $e");
+    }
+    return responseResendActivateEmail!;
+  }
+
+  static Future<String>? CheckOtp(String token, String tokenPeruri, String otp) async {
+    String? responseOtp;
+    try {
+      var response = await http.post(Uri.parse(Api.check_otp),
+        headers: {
+          'token': token,
+          'token_peruri_sign': tokenPeruri
+        },
+        body: {
+          'otp': otp
+        }
+      );
+
+      var responseBody = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        responseOtp = responseBody['status'];
+      } else {
+        responseOtp = responseBody['status'];
+      }
+    } catch (e) {
+      print("Check Otp otp: $e");
+    }
+    return responseOtp!;
+  }
+
+  static Future<String>? VideoKyc(String token, String tokenPeruri, String videoBase64, String otp) async {
+
+    String? messageResponse;
+
+    try {
+      var response = await http.post(Uri.parse(Api.regist_video_kyc),
+      headers: {
+        'token_peruri_sign': tokenPeruri,
+        'token': token,
+      },
+      body: {
+        'base64Vid': videoBase64,
+        'otp': otp
+      });
+
+      var responseBody = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        messageResponse = responseBody['status'];
+      } else {
+        messageResponse = responseBody['status'];
+      }
+    } catch (e) {
+      print("Regist eKyc Video: $e");
+    }
+
+    return messageResponse!;
+  }
+
+
+
+
 
   static Future<void> LogOut() async {
     EventPref.clear();

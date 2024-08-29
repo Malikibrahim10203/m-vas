@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:vas/event/event_camerapref.dart';
 import 'package:vas/event/event_db.dart';
 import 'package:vas/event/event_pref.dart';
 import 'package:vas/models/module.dart';
 import 'package:vas/models/quota.dart';
+import 'package:vas/models/users.dart';
 import 'package:vas/screens/e-Kyc/regist_esign.dart';
+import 'package:vas/screens/upload_document/upload_bulk.dart';
+import 'package:vas/screens/upload_document/upload_single.dart';
 import 'package:vas/widgets/components.dart';
 import 'package:intl/intl.dart';
 
@@ -31,6 +35,7 @@ class _DashboardState extends State<Dashboard> {
   var statusRegistrationPeruri;
   var data;
   var province_id;
+  var deptName;
 
   ModuleData? module;
   bool? signM, stampM, officeM;
@@ -52,14 +57,10 @@ class _DashboardState extends State<Dashboard> {
     });
   }
 
-  Future<void> getUser() async {
+  Future<void> getData() async {
     token = (await EventPref.getCredential())?.data.token;
     email = (await EventPref.getCredential())?.email;
     password = (await EventPref.getCredential())?.password;
-    statusRegistrationPeruri = (await EventDB.getUser(token??'', email??'', password??''))?.statusRegistrationPeruri;
-    fullName = (await EventDB.getUser(token??'', email??'', password??''))?.fullName;
-    officeName = (await EventDB.getUser(token??'', email??'', password??''))?.officeName;
-    certificate = 1;
 
     if(fullName==null) {
       data = await EventDB.getlogin(email??'', password??'');
@@ -67,33 +68,29 @@ class _DashboardState extends State<Dashboard> {
       print(data.data.token);
     }
 
-    if (mounted) {
-      setState(() {});
-    }
-  }
+    User? user = await EventDB.getUser(token??'', email??'', password??'');
+    statusRegistrationPeruri = user!.statusRegistrationPeruri;
+    fullName = user?.fullName;
+    officeName = user?.officeName;
+    deptName = user?.deptName;
 
-  void getModule() async {
-    token = (await EventPref.getCredential())?.data.token;
+    // Get Module
+    // token = (await EventPref.getCredential())?.data.token;
     module = (await EventDB.getModule(token??''));
     signM = module!.signM;
     stampM = module!.stampM;
 
-    if (mounted) {
-      setState(() {});
-    }
-  }
-
-  void getQuota() async {
-    token = (await EventPref.getCredential())?.data.token;
+    // Get Quota
+    // token = (await EventPref.getCredential())?.data.token;
     saldoEMet = (await EventDB.getQuota(token??'', "1"))?.remaining;
     saldoESign = (await EventDB.getQuota(token??'', "2"))?.remaining;
 
+    certificate = 1;
+
     if (mounted) {
       setState(() {});
     }
   }
-
-
 
   @override
   void dispose() {
@@ -104,9 +101,7 @@ class _DashboardState extends State<Dashboard> {
   @override
   void initState() {
     // TODO: implement initState
-    getUser();
-    getQuota();
-    getModule();
+    getData();
     CameraPref.clearCameraPreference();
     super.initState();
   }
@@ -395,9 +390,10 @@ class _DashboardState extends State<Dashboard> {
                       SizedBox(
                         height: 10,
                       ),
+
                       signM==true?
-                        statusRegistrationPeruri==null?CertificateStatusActive(heightScreen, widthScreen):
-                        certificate==1?CertificateStatusNotActive(heightScreen, widthScreen, context):
+                        statusRegistrationPeruri==null?CertificateStatusNotActive(heightScreen, widthScreen, context):
+                        statusRegistrationPeruri==1?CertificateStatusProgress(heightScreen, widthScreen):
                         CertificateStatusProgress(heightScreen, widthScreen): Container(),
                       SizedBox(
                         height: 20,
@@ -508,7 +504,60 @@ class _DashboardState extends State<Dashboard> {
         floatingActionButton: FloatingActionButton(
           shape: CircleBorder(),
           onPressed: () async {
-            AlertSuccess(context, RegistEsign(), 'Registration Success', 'You have submit the data! Please check your email to activate your account');
+            // AlertSuccess(context, RegistEsign(), 'Registration Success', 'You have submit the data! Please check your email to activate your account');
+            showModalBottomSheet(
+                context: context,
+                builder: (context) {
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 15),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Upload Document",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: (){
+                                Navigator.pop(context);
+                              },
+                              icon: Icon(Icons.close),
+                            ),
+                          ],
+                        ),
+                      ),
+                      ListTile(
+                        leading: new Icon(
+                            Icons.file_copy),
+                        title: new Text('Single File'),
+                        onTap: (){
+                          Navigator.push(context, MaterialPageRoute(builder: (context)=>UploadSingle()));
+                        },
+                      ),
+                      Divider(
+                        height: 2,
+                          color: Colors.grey
+                      ),
+                      ListTile(
+                        leading: new Icon(
+                            Icons.file_copy),
+                        title: new Text('Bulk File'),
+                        onTap: () async {
+                          Navigator.push(context, MaterialPageRoute(builder: (context)=>UploadBulk()));
+                        },
+                      ),
+                    ],
+                  );
+                });
           },
           child: Container(
             width: 35,

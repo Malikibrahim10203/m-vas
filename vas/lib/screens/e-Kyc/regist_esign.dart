@@ -14,7 +14,9 @@ import 'package:vas/event/event_db.dart';
 import 'package:vas/event/event_pref.dart';
 import 'package:vas/models/district.dart';
 import 'package:vas/models/province.dart';
+import 'package:vas/models/users.dart';
 import 'package:vas/screens/pages/camera_picture.dart';
+import 'package:vas/screens/pages/dashboard.dart';
 import 'package:vas/widgets/components.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -79,6 +81,8 @@ class _RegistEsignState extends State<RegistEsign> {
   String? password;
   String? token;
   var tokenPeruri;
+  var deptName;
+  var officeName;
 
   Future<void> _pickImageKTP() async {
     final picker = ImagePicker();
@@ -217,30 +221,34 @@ class _RegistEsignState extends State<RegistEsign> {
     });
   }
 
+
   Future<void> getUser() async {
+
     token = (await EventPref.getCredential())?.data.token;
     email = (await EventPref.getCredential())?.email;
     password = (await EventPref.getCredential())?.password;
-    var _firstname = (await EventDB.getUser(token??'', email??'', password??''))?.firstName;
-    var _lastname = (await EventDB.getUser(token??'', email??'', password??''))?.lastName;
-    var _phonenumber = (await EventDB.getUser(token??'', email??'', password??''))?.phone;
-    var _email = (await EventDB.getUser(token??'', email??'', password??''))?.email;
 
     if(firstName==null) {
       var data = await EventDB.getlogin(email??'', password??'');
       token = data!.data.token;
-      print(data.data.token);
+      print("${data.data.token}");
     }
+
+    User? user = await EventDB.getUser(token??'', email??'', password??'');
+
+    firstName = user?.firstName;
+    lastName = user?.lastName;
+    phoneNumber = user?.phone;
+    email = user?.email;
+    deptName = user?.deptName;
+    officeName = user?.officeName;
 
     if(token != null){
       tokenPeruri = (await EventDB.getPeruriJWTToken(token??''))?.tokenPeruriSign;
     }
 
     setState(() {
-      firstName = _firstname;
-      lastName = _lastname;
-      phoneNumber = _phonenumber;
-      eMail = _email;
+
     });
   }
 
@@ -570,7 +578,7 @@ class _RegistEsignState extends State<RegistEsign> {
                                     child: TextFormField(
                                       keyboardType: TextInputType.emailAddress,
                                       decoration: InputDecoration(
-                                        hintText: eMail,
+                                        hintText: email,
                                         fillColor: Colors.black12,
                                         filled: true,
                                         border: OutlineInputBorder(
@@ -1253,8 +1261,11 @@ class _RegistEsignState extends State<RegistEsign> {
                                     height: size.height * 0.065,
                                     width: size.width * 0.905,
                                     child: TextFormField(
-                                      controller: office,
+                                      readOnly: true,
                                       decoration: InputDecoration(
+                                        hintText: officeName,
+                                        fillColor: Colors.black12,
+                                        filled: true,
                                         border: OutlineInputBorder(
                                           borderSide: BorderSide(
                                               width: 1.5,
@@ -1270,6 +1281,19 @@ class _RegistEsignState extends State<RegistEsign> {
                                               Radius.circular(10)),
                                         ),
                                       ),
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Please enter a number';
+                                        }
+                                        final number = int.tryParse(value);
+                                        if (number == null) {
+                                          return 'Please enter a valid number';
+                                        }
+                                        if (number < 10) {
+                                          return 'Number must be at least 10';
+                                        }
+                                        return null;
+                                      },
                                     ),
                                   ),
                                 ],
@@ -1298,8 +1322,11 @@ class _RegistEsignState extends State<RegistEsign> {
                                     height: size.height * 0.065,
                                     width: size.width * 0.905,
                                     child: TextFormField(
-                                      controller: departement,
+                                      readOnly: true,
                                       decoration: InputDecoration(
+                                        hintText: deptName,
+                                        fillColor: Colors.black12,
+                                        filled: true,
                                         border: OutlineInputBorder(
                                           borderSide: BorderSide(
                                               width: 1.5,
@@ -1654,7 +1681,7 @@ class _RegistEsignState extends State<RegistEsign> {
                           height: size.height * 0.06,
                           width: size.width * 0.905,
                           child: ElevatedButton(
-                            onPressed: () {
+                            onPressed: () async {
                               setState(() {
                                 bodyCollection = {
                                   'firstName': firstName,
@@ -1672,15 +1699,22 @@ class _RegistEsignState extends State<RegistEsign> {
                                   'address': address.text,
                                   'rt': rt.text,
                                   'rw': rw.text,
-                                  'office': office.text,
-                                  'departement': departement.text,
+                                  'office': officeName,
+                                  'departement': deptName,
                                   'role': role.text,
                                   'ktp_photo': ktpBase64,
                                   'npwp_photo': npwpBase64,
                                   'selfie_photo': selfieBase64,
                                 };
                               });
-                              EventDB.RegisterPeruri(token??'', tokenPeruri??'', password??'', bodyCollection);
+                              var statusResponse = await EventDB.RegisterPeruri(token ?? '', tokenPeruri??'', password??'', bodyCollection);
+                              if(statusResponse == true) {
+                                print(statusResponse);
+                                AlertSuccess(context, Dashboard(token: token), "Registration Success", "You have submit the data! Please check your email to activate your account");
+                              } else {
+                                print(statusResponse);
+                                AlertFailed(context, "Failed to Register", "Please check your input again or re-register.");
+                              }
                             },
                             child: Text("Submit",
                                 style: GoogleFonts.roboto(
