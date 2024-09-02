@@ -516,50 +516,50 @@ class EventDB {
     return messageResponse!;
   }
 
-  // static Future<void> UploadDocSingle(String token, String docName, int? officeId, String description, String tags, String date, String filePath) async {
-  //   try {
-  //     // Convert file path to a File object
-  //     File file = File(filePath);
-  //
-  //     // Create multipart request
-  //     var request = http.MultipartRequest('POST', Uri.parse(Api.upload_single));
-  //
-  //     // Add headers (including token)
-  //     request.headers['Authorization'] = 'Bearer $token';
-  //     request.headers['Content-Type'] = 'multipart/form-data';
-  //
-  //     // Add fields to the request body
-  //     request.fields['doc_name'] = docName;
-  //     request.fields['office_id'] = officeId.toString();
-  //     request.fields['description'] = description;
-  //     request.fields['tags[]'] = tags; // Assuming tags is a JSON-formatted string
-  //     request.fields['date'] = date;
-  //
-  //     // Add the document file to the request body
-  //     request.files.add(
-  //       http.MultipartFile(
-  //         'file', // The key for the file on the server side
-  //         file.readAsBytes().asStream(),
-  //         file.lengthSync(),
-  //         filename: filePath.split("/").last,
-  //       ),
-  //     );
-  //
-  //     // Send the request
-  //     var response = await request.send();
-  //
-  //     // Handle the response
-  //     if (response.statusCode == 200) {
-  //       print("File uploaded successfully");
-  //     } else {
-  //       // Read the response body for more detailed information
-  //       var responseBody = await http.Response.fromStream(response);
-  //       print("File upload failed with status: ${response.statusCode}, body: ${responseBody.body}");
-  //     }
-  //   } catch (e) {
-  //     print("Error Fetch Upload Single: $e");
-  //   }
-  // }
+  static Future<void> UploadDocSingle(String token, String docName, int? officeId, String description, String tags, String date, String filePath) async {
+    try {
+      // Convert file path to a File object
+      File file = File(filePath);
+
+      // Create multipart request
+      var request = http.MultipartRequest('POST', Uri.parse(Api.upload_single));
+
+      // Add headers (including token)
+      request.headers['Authorization'] = 'Bearer $token';
+      request.headers['Content-Type'] = 'multipart/form-data';
+
+      // Add fields to the request body
+      request.fields['doc_name'] = docName;
+      request.fields['office_id'] = officeId.toString();
+      request.fields['description'] = description;
+      request.fields['tags[]'] = tags; // Assuming tags is a JSON-formatted string
+      request.fields['date'] = date;
+
+      // Add the document file to the request body
+      request.files.add(
+        http.MultipartFile(
+          'file', // The key for the file on the server side
+          file.readAsBytes().asStream(),
+          file.lengthSync(),
+          filename: filePath.split("/").last,
+        ),
+      );
+
+      // Send the request
+      var response = await request.send();
+
+      // Handle the response
+      if (response.statusCode == 200) {
+        print("File uploaded successfully");
+      } else {
+        // Read the response body for more detailed information
+        var responseBody = await http.Response.fromStream(response);
+        print("File upload failed with status: ${response.statusCode}, body: ${responseBody.body}");
+      }
+    } catch (e) {
+      print("Error Fetch Upload Single: $e");
+    }
+  }
 
 
 
