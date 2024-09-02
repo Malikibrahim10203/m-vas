@@ -644,6 +644,19 @@ class _RegistEsignState extends State<RegistEsign> {
                                               Radius.circular(10)),
                                         ),
                                       ),
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Please enter a number';
+                                        }
+                                        final number = int.tryParse(value);
+                                        if (number == null) {
+                                          return 'Please enter a valid number';
+                                        }
+                                        if (number < 10) {
+                                          return 'Number must be at least 10';
+                                        }
+                                        return null;
+                                      },
                                     ),
                                   ),
                                 ],
@@ -737,7 +750,12 @@ class _RegistEsignState extends State<RegistEsign> {
                                       items: <String>['M', 'F'].map<DropdownMenuItem<String>>((String value) {
                                             return DropdownMenuItem<String>(
                                               value: value,
-                                              child: Text(value),
+                                              child: Text(
+                                                value=="M"?"Male":value=="F"?"Female":"",
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w400
+                                                ),
+                                              ),
                                             );
                                           }).toList(),
                                     ),
@@ -823,7 +841,7 @@ class _RegistEsignState extends State<RegistEsign> {
                                           borderRadius:
                                           BorderRadius.circular(10),
                                         ),
-                                        hintText: 'Select Date',
+                                        hintText: 'dd/MM/yyyy',
                                         suffixIcon: Icon(Icons.calendar_month),
                                       ),
                                       readOnly: true,
@@ -1281,19 +1299,6 @@ class _RegistEsignState extends State<RegistEsign> {
                                               Radius.circular(10)),
                                         ),
                                       ),
-                                      validator: (value) {
-                                        if (value == null || value.isEmpty) {
-                                          return 'Please enter a number';
-                                        }
-                                        final number = int.tryParse(value);
-                                        if (number == null) {
-                                          return 'Please enter a valid number';
-                                        }
-                                        if (number < 10) {
-                                          return 'Number must be at least 10';
-                                        }
-                                        return null;
-                                      },
                                     ),
                                   ),
                                 ],
@@ -1707,14 +1712,111 @@ class _RegistEsignState extends State<RegistEsign> {
                                   'selfie_photo': selfieBase64,
                                 };
                               });
-                              var statusResponse = await EventDB.RegisterPeruri(token ?? '', tokenPeruri??'', password??'', bodyCollection);
-                              if(statusResponse == true) {
-                                print(statusResponse);
-                                AlertSuccess(context, Dashboard(token: token), "Registration Success", "You have submit the data! Please check your email to activate your account");
-                              } else {
-                                print(statusResponse);
-                                AlertFailed(context, "Failed to Register", "Please check your input again or re-register.");
-                              }
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return Dialog(
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10)
+                                    ),
+                                    child: Stack(
+                                      clipBehavior: Clip.none,
+                                      alignment: Alignment.topCenter,
+                                      children: <Widget>[
+                                        Container(
+                                          padding: const EdgeInsets.all(20.0),
+                                          width: double.infinity,
+                                          decoration: BoxDecoration(
+                                              border: Border(top: BorderSide(color: primaryColor4, width: 10)),
+                                              borderRadius: BorderRadius.vertical(top: Radius.circular(10))
+                                          ),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: <Widget>[
+                                              SizedBox(height: 30.0), // Add spacing for the floating icon
+                                              Text(
+                                                "labelText",
+                                                style: GoogleFonts.roboto(
+                                                    fontSize: 16.5,
+                                                    fontWeight: FontWeight.w600
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                              SizedBox(height: 20.0),
+                                              Text("Confirm"),
+                                              SizedBox(height: 20.0),
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  Container(
+                                                    width: 150,
+                                                    child: ElevatedButton(
+                                                      style: ElevatedButton.styleFrom(
+                                                          backgroundColor: Colors.white,
+                                                          shape: RoundedRectangleBorder(
+                                                              borderRadius: BorderRadius.all(Radius.circular(10)),
+                                                              side: BorderSide(width: 1, color: primaryColor2)
+                                                          )
+                                                      ),
+                                                      onPressed: () {
+                                                        Navigator.pop(context);
+                                                      },
+                                                      child: Text(
+                                                        'Back',
+                                                        style: TextStyle(
+                                                            color: primaryColor2
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Container(
+                                                    width: 150,
+                                                    child: ElevatedButton(
+                                                      style: ElevatedButton.styleFrom(
+                                                          backgroundColor: primaryColor2,
+                                                          shape: RoundedRectangleBorder(
+                                                              borderRadius: BorderRadius.all(Radius.circular(10))
+                                                          )
+                                                      ),
+                                                      onPressed: () async {
+                                                        var statusResponse = await EventDB.RegisterPeruri(token ?? '', tokenPeruri??'', password??'', bodyCollection);
+                                                        if(statusResponse == true) {
+                                                          print(statusResponse);
+                                                          Navigator.pop(context);
+                                                          AlertSuccess(context, Dashboard(token: token), "Registration Success", "You have submit the data! Please check your email \nto activate your account");
+                                                        } else {
+                                                          print(statusResponse);
+                                                          Navigator.pop(context);
+                                                          AlertFailed(context, "Failed to Register", "Please check your input again or re-register.");
+                                                        }
+                                                      },
+                                                      child: Text(
+                                                        'Confirm',
+                                                        style: TextStyle(
+                                                            color: Colors.white
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        // Floating Icon
+                                        Positioned(
+                                          top: -30.0,
+                                          child: CircleAvatar(
+                                              backgroundColor: primaryColor2,
+                                              radius: 30.0,
+                                              child: Image.asset("assets/images/alert.png", width: 50,)
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              );
                             },
                             child: Text("Submit",
                                 style: GoogleFonts.roboto(

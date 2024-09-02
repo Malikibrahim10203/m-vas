@@ -14,6 +14,7 @@ import 'package:flutter/services.dart';
 import 'package:uni_links/uni_links.dart';
 import 'package:vas/widgets/wait_screen.dart';
 
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
@@ -96,19 +97,7 @@ class _MyAppState extends State<MyApp> {
         if (settings.name == '/change_otp') {
           final args = settings.arguments as String?;
           return MaterialPageRoute(
-            builder: (context) => FutureBuilder<Credential?>(
-              future: EventPref.getCredential(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return CircularProgressIndicator();
-                } else if (snapshot.hasError || snapshot.data == null) {
-                  return Login(); // Redirect to login if not logged in
-                } else {
-                  final token = settings.arguments as String?;
-                  return ChangePassword(token: args);
-                }
-              },
-            ),
+            builder: (context) => ChangePassword(token: args),
           );
         } else if (settings.name == '/activate_account') {
           final args = settings.arguments as String?;

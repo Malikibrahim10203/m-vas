@@ -392,9 +392,9 @@ class _DashboardState extends State<Dashboard> {
                       ),
 
                       signM==true?
-                        statusRegistrationPeruri==null?CertificateStatusNotActive(heightScreen, widthScreen, context):
-                        statusRegistrationPeruri==1?CertificateStatusProgress(heightScreen, widthScreen):
-                        CertificateStatusProgress(heightScreen, widthScreen): Container(),
+                      statusRegistrationPeruri==null?CertificateStatusNotActive(heightScreen, widthScreen, context):
+                      statusRegistrationPeruri==1?CertificateStatusProgress(heightScreen, widthScreen):
+                      CertificateStatusProgress(heightScreen, widthScreen): Container(),
                       SizedBox(
                         height: 20,
                       ),
@@ -522,8 +522,8 @@ class _DashboardState extends State<Dashboard> {
                             Text(
                               "Upload Document",
                               style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600
                               ),
                             ),
                             IconButton(
@@ -544,7 +544,7 @@ class _DashboardState extends State<Dashboard> {
                         },
                       ),
                       Divider(
-                        height: 2,
+                          height: 2,
                           color: Colors.grey
                       ),
                       ListTile(
@@ -617,38 +617,38 @@ class _DashboardState extends State<Dashboard> {
   // Menu NotActive
   Widget Menu(logo,name) {
     return Container(
-        decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
-                spreadRadius: 5,
-                blurRadius: 20,
-                offset: Offset(0, 3),
-              ),
-            ],
-            borderRadius: BorderRadius.all(Radius.circular(10))
-        ),
-        child: ListTile(
-          leading: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: greyColor6,
-              borderRadius: BorderRadius.all(Radius.circular(5)),
+      decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 5,
+              blurRadius: 20,
+              offset: Offset(0, 3),
             ),
-            child: Container(
-              padding: EdgeInsets.all(10),
-              child: Image.asset(logo),
-            ),
+          ],
+          borderRadius: BorderRadius.all(Radius.circular(10))
+      ),
+      child: ListTile(
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: greyColor6,
+            borderRadius: BorderRadius.all(Radius.circular(5)),
           ),
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('${name}'),
-            ],
+          child: Container(
+            padding: EdgeInsets.all(10),
+            child: Image.asset(logo),
           ),
         ),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('${name}'),
+          ],
+        ),
+      ),
     );
   }
 }

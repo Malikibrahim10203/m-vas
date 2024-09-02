@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:vas/event/event_db.dart';
+import 'package:vas/widgets/components.dart';
 import 'package:vas/widgets/logovas.dart';
 
 class ChangePassword extends StatefulWidget {
@@ -20,6 +21,11 @@ class _ChangePasswordState extends State<ChangePassword> {
   var newPassword = TextEditingController();
   var confirmationPassword = TextEditingController();
   final formKey = GlobalKey<FormState>();
+
+  bool _isChecked = false;
+  bool passwordVisible = false;
+  bool passwordConfirmVisible = false;
+  bool isWrong = false;
 
   Widget indicator() {
     return newPassword.text == confirmationPassword.text? Container(
@@ -118,9 +124,20 @@ class _ChangePasswordState extends State<ChangePassword> {
                                   ),
                                   enabledBorder: OutlineInputBorder(
                                       borderSide: BorderSide(width: 1, color: Color(0xffB8B8B8)),
-                                      borderRadius: BorderRadius.all(Radius.circular(10))
+                                      borderRadius: BorderRadius.all(Radius.circular(10)),
+                                  ),
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      passwordVisible ? Icons.visibility : Icons.visibility_off,
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        passwordVisible = !passwordVisible;
+                                      });
+                                    },
                                   ),
                                 ),
+                                obscureText: !passwordVisible,
                               )
                           ),
                         ],
@@ -181,7 +198,18 @@ class _ChangePasswordState extends State<ChangePassword> {
                                       borderSide: BorderSide(width: 1, color: Color(0xffB8B8B8)),
                                       borderRadius: BorderRadius.all(Radius.circular(10))
                                   ),
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      passwordConfirmVisible ? Icons.visibility : Icons.visibility_off,
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        passwordConfirmVisible = !passwordConfirmVisible;
+                                      });
+                                    },
+                                  ),
                                 ),
+                                obscureText: !passwordConfirmVisible,
                               )
                           ),
                           indicator(),
@@ -212,6 +240,7 @@ class _ChangePasswordState extends State<ChangePassword> {
                 if (newPassword.text != confirmationPassword.text) {
                   print("Not Same");
                 } else {
+                  ModalSendEmail(context);
                   EventDB.ChangePassword(confirmationPassword.text, widget.token??"");
                 }
               },

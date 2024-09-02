@@ -1,10 +1,13 @@
 import 'dart:convert';
 import 'dart:ffi';
+import 'dart:io';
+import 'dart:nativewrappers/_internal/vm/lib/typed_data_patch.dart';
 import 'package:http/http.dart' as http;
 import 'package:vas/event/event_pref.dart';
 import 'package:vas/models/credential.dart';
 import 'package:vas/models/district.dart';
 import 'package:vas/models/module.dart';
+import 'package:vas/models/office.dart';
 import 'package:vas/models/peruri_jwt_token.dart';
 import 'package:vas/models/quota.dart';
 import 'package:vas/models/province.dart';
@@ -186,6 +189,9 @@ class EventDB {
   }
 
 
+
+
+
   static Future<ModuleData?> getModule(String token) async {
     ModuleData? module;
     try {
@@ -308,6 +314,32 @@ class EventDB {
     // print();
     // print();
     // print();
+  }
+
+  static Future<List<Office>?> getOffice(String token) async {
+    List<Office>? office;
+    try {
+      var response = await http.get(Uri.parse(Api.get_office), headers: {
+        'token': token
+      });
+
+      if(response.statusCode == 200) {
+        var responseBody = jsonDecode(response.body);
+
+        if(responseBody['data'] != null && responseBody['data'] is List) {
+          var officeDataList = List<Map<String, dynamic>>.from(responseBody['data']);
+          office = officeDataList.map((data)=>Office.fromJson(data)).toList();
+        } else {
+          print("Office data is not a list or is missing.");
+        }
+      } else {
+        print("Failed to load office. Status code: ${response.statusCode}");
+      }
+    } catch(e) {
+      print("Error fetching office: $e");
+    }
+
+    return office;
   }
 
   static Future<List<Province>?> getProvinces() async {
@@ -483,6 +515,51 @@ class EventDB {
 
     return messageResponse!;
   }
+
+  // static Future<void> UploadDocSingle(String token, String docName, int? officeId, String description, String tags, String date, String filePath) async {
+  //   try {
+  //     // Convert file path to a File object
+  //     File file = File(filePath);
+  //
+  //     // Create multipart request
+  //     var request = http.MultipartRequest('POST', Uri.parse(Api.upload_single));
+  //
+  //     // Add headers (including token)
+  //     request.headers['Authorization'] = 'Bearer $token';
+  //     request.headers['Content-Type'] = 'multipart/form-data';
+  //
+  //     // Add fields to the request body
+  //     request.fields['doc_name'] = docName;
+  //     request.fields['office_id'] = officeId.toString();
+  //     request.fields['description'] = description;
+  //     request.fields['tags[]'] = tags; // Assuming tags is a JSON-formatted string
+  //     request.fields['date'] = date;
+  //
+  //     // Add the document file to the request body
+  //     request.files.add(
+  //       http.MultipartFile(
+  //         'file', // The key for the file on the server side
+  //         file.readAsBytes().asStream(),
+  //         file.lengthSync(),
+  //         filename: filePath.split("/").last,
+  //       ),
+  //     );
+  //
+  //     // Send the request
+  //     var response = await request.send();
+  //
+  //     // Handle the response
+  //     if (response.statusCode == 200) {
+  //       print("File uploaded successfully");
+  //     } else {
+  //       // Read the response body for more detailed information
+  //       var responseBody = await http.Response.fromStream(response);
+  //       print("File upload failed with status: ${response.statusCode}, body: ${responseBody.body}");
+  //     }
+  //   } catch (e) {
+  //     print("Error Fetch Upload Single: $e");
+  //   }
+  // }
 
 
 

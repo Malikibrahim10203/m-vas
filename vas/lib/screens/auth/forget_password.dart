@@ -144,6 +144,7 @@ class _ForgetPasswordState extends State<ForgetPassword> {
                     isExist = true;
                     isWait = true;
                   });
+
                   ModalSendEmail(context);
                   Future.delayed(Duration(seconds: 2), () => Navigator.pushNamed(context,'/Login'));
                 }

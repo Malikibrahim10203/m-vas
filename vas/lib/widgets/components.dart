@@ -189,6 +189,7 @@ Widget CertificateStatusNotActive(height, width, context) {
                                     )
                                   ),
                                   onPressed: () {
+                                    Navigator.pop(context);
                                     Navigator.push(context, MaterialPageRoute(builder: (context)=>RegistEsign()));
                                   },
                                   child: Text(
@@ -295,7 +296,7 @@ Widget CertificateStatusProgress(height, width) {
   return Container(
     padding: EdgeInsets.all(15),
     width: width * 0.9,
-    height: height * 0.15,
+    height: height * 0.12,
     decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -339,9 +340,69 @@ Widget CertificateStatusProgress(height, width) {
         Row(
           children: [
             Text(
-              "Your e-kyc data has been successfully submitted, \nthe digital certificate has been issued",
+              "Registration Success, You have submit the data!\nPlease check your email to activate your account",
               style: GoogleFonts.roboto(
                   fontSize: 12
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+Widget CertificateStatusExpired(height, width) {
+  return Container(
+    padding: EdgeInsets.all(15),
+    width: width * 0.9,
+    height: 110,
+    decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.15),
+            spreadRadius: 5,
+            blurRadius: 20,
+            offset: Offset(0, 3),
+          ),
+        ],
+        borderRadius: BorderRadius.all(Radius.circular(10))
+    ),
+    child: Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              "Certificate status",
+              style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: primaryColor2
+              ),
+            ),
+            Container(
+              width: 80,
+              height: 15,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: textAlertColor2,
+                borderRadius: BorderRadius.all(Radius.circular(10)),
+              ),
+              child: Text("Expired", style: TextStyle(color: Colors.white, fontSize: 8),),
+            ),
+          ],
+        ),
+        SizedBox(
+          height: 10,
+        ),
+        Row(
+          children: [
+            Text(
+              "Your e-kyc data has been successfully submitted, \nthe digital certificate has been issued",
+              style: GoogleFonts.roboto(
+                fontSize: 12,
               ),
             ),
           ],
@@ -404,7 +465,6 @@ Future<void> AlertSuccess(context, route, labelText, contentText) {
           alignment: Alignment.topCenter,
           children: <Widget>[
             Container(
-              padding: const EdgeInsets.all(20.0),
               width: double.infinity,
               decoration: BoxDecoration(
                   border: Border(top: BorderSide(color: primaryColor4, width: 10)),
@@ -425,20 +485,23 @@ Future<void> AlertSuccess(context, route, labelText, contentText) {
                   SizedBox(height: 20.0),
                   Container(
                     width: 300,
-                    height: 40,
+                    height: 50,
                     decoration: BoxDecoration(
-                        border: Border.all(width: 2,color: bluePrimary),
+                        border: Border.all(width: 1,color: bluePrimary),
                         color: primaryColor5,
                     ),
                     child: Center(
-                      child: Text(
-                        contentText,
-                        style: GoogleFonts.roboto(
-                            fontSize: 10,
-                            color: bluePrimary
+                      child: Padding(
+                        padding: EdgeInsets.all(5),
+                        child: Text(
+                          contentText,
+                          style: GoogleFonts.roboto(
+                              fontSize: 10,
+                              color: bluePrimary
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
-                      ),
+                      )
                     ),
                   ),
                   SizedBox(height: 20.0),
@@ -461,6 +524,9 @@ Future<void> AlertSuccess(context, route, labelText, contentText) {
                         ),
                       ),
                     ),
+                  ),
+                  SizedBox(
+                    height: 20,
                   ),
                 ],
               ),
@@ -592,7 +658,118 @@ Future<void> ModalSendEmail(BuildContext context) {
   );
 }
 
+Future<void> ModalSK(context, route, labelText, contentText) {
+  return showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return Dialog(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10)
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.topCenter,
+          children: <Widget>[
+            Container(
+              padding: const EdgeInsets.all(20.0),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: primaryColor4, width: 10)),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(10))
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  SizedBox(height: 30.0), // Add spacing for the floating icon
+                  Text(
+                    labelText,
+                    style: GoogleFonts.roboto(
+                        fontSize: 16.5,
+                        fontWeight: FontWeight.w600
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 20.0),
+                  Row(
+                    children: [
+                      Checkbox(value: false, onChanged: (value) {
 
+                      },),
+                      Text(
+                        contentText,
+                        style: GoogleFonts.roboto(
+                            fontSize: 10,
+                            color: Colors.black
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 20.0),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        width: 150,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                                side: BorderSide(width: 1, color: primaryColor2)
+                              )
+                          ),
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          child: Text(
+                            'Back',
+                            style: TextStyle(
+                                color: primaryColor2
+                            ),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        width: 150,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: primaryColor2,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.all(Radius.circular(10))
+                              )
+                          ),
+                          onPressed: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (context)=>route));
+                          },
+                          child: Text(
+                            'Done',
+                            style: TextStyle(
+                                color: Colors.white
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            // Floating Icon
+            Positioned(
+              top: -30.0,
+              child: CircleAvatar(
+                  backgroundColor: primaryColor2,
+                  radius: 30.0,
+                  child: Image.asset("assets/images/alert.png", width: 50,)
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
 
 
 Future<void> ModalWait(BuildContext context) {

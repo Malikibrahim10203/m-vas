@@ -1,6 +1,13 @@
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:path/path.dart';
+import 'package:vas/event/event_db.dart';
+import 'package:vas/event/event_pref.dart';
+import 'package:vas/models/office.dart';
 import 'package:vas/widgets/components.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
 
 class UploadSingle extends StatefulWidget {
   const UploadSingle({super.key});
@@ -10,6 +17,58 @@ class UploadSingle extends StatefulWidget {
 }
 
 class _UploadSingleState extends State<UploadSingle> {
+
+  var _selectedFile;
+  var baseName;
+  var lastModified;
+  var token;
+
+  var docNameController = TextEditingController();
+  var descriptionController = TextEditingController();
+
+  var fileBinaries;
+
+  var dateController = TextEditingController();
+
+  Future<void> _pickFile() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'doc']
+    );
+
+    if (result != null) {
+      // _selectedFile = File(result.files.single.path!);
+      _selectedFile = result.files.single.path;
+      fileBinaries = await _selectedFile.readAsBytes();
+
+      setState(() {
+        baseName = basename(_selectedFile!.path);
+        print(fileBinaries);
+        print(baseName);
+      });
+    }
+  }
+
+  List<Office>? officeController;
+  int? selectedOffice;
+
+  void _fetchOffice() async {
+    token = (await EventPref.getCredential())?.data.token;
+    List<Office>? officeData = await EventDB.getOffice(token);
+    setState(() {
+      officeController = officeData;
+    });
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    _fetchOffice();
+    super.initState();
+  }
+
+
+
   @override
   Widget build(BuildContext context) {
     var size = MediaQuery.of(context).size;
@@ -57,6 +116,7 @@ class _UploadSingleState extends State<UploadSingle> {
                         height: size.height * 0.065,
                         width: size.width * 0.905,
                         child: TextFormField(
+                          controller: docNameController,
                           decoration: InputDecoration(
                             border: OutlineInputBorder(
                               borderSide: BorderSide(
@@ -103,22 +163,36 @@ class _UploadSingleState extends State<UploadSingle> {
                         height: size.height * 0.065,
                         width: size.width * 0.905,
                         child: TextFormField(
+                          controller: dateController,
                           decoration: InputDecoration(
                             border: OutlineInputBorder(
                               borderSide: BorderSide(
-                                  width: 1.5,
-                                  color: Color(0xffB8B8B8)),
-                              borderRadius: BorderRadius.all(
-                                  Radius.circular(10)),
+                                  width: 1, color: Colors.grey),
+                              borderRadius:
+                              BorderRadius.circular(10),
                             ),
-                            enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                  width: 1,
-                                  color: Color(0xffB8B8B8)),
-                              borderRadius: BorderRadius.all(
-                                  Radius.circular(10)),
-                            ),
+                            hintText: 'dd/MM/yyyy',
+                            suffixIcon: Icon(Icons.calendar_month),
                           ),
+                          readOnly: true,
+                          onTap: () async {
+
+                            DateTime now = DateTime.now();
+
+                            DateTime? pickedDate = await showDatePicker(
+                              context: context,
+                              initialDate: now,
+                              firstDate: DateTime(1900),
+                              lastDate: DateTime(2200),
+                            );
+                            if(pickedDate != null) {
+                              String formatDate = DateFormat('dd/MM/yyyy').format(pickedDate);
+                              setState(() {
+                                dateController.text = formatDate;
+                              });
+                            }
+
+                          },
                         ),
                       ),
                     ],
@@ -148,23 +222,50 @@ class _UploadSingleState extends State<UploadSingle> {
                       SizedBox(
                         height: size.height * 0.065,
                         width: size.width * 0.905,
-                        child: TextFormField(
+                        child: officeController == null
+                            ? Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                                width: 1, color: Colors.grey),
+                            borderRadius:
+                            BorderRadius.circular(10),
+                          ),
+                          child: Center(
+                              child: Text(
+                                  "Loading Office...")),
+                        )
+                            : DropdownButtonFormField<int>(
                           decoration: InputDecoration(
                             border: OutlineInputBorder(
                               borderSide: BorderSide(
-                                  width: 1.5,
-                                  color: Color(0xffB8B8B8)),
-                              borderRadius: BorderRadius.all(
-                                  Radius.circular(10)),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
                                   width: 1,
-                                  color: Color(0xffB8B8B8)),
-                              borderRadius: BorderRadius.all(
-                                  Radius.circular(10)),
+                                  color: Colors.grey),
+                              borderRadius:
+                              BorderRadius.circular(10),
                             ),
                           ),
+                          menuMaxHeight: size.height * 0.3,
+                          value: selectedOffice,
+                          hint: Text("Select Office"),
+                          items:
+                          officeController!.map((office) {
+                            return DropdownMenuItem<int>(
+                              value: office.officeId,
+                              child: Text(office.officeName,
+                                  style: TextStyle(
+                                      fontWeight:
+                                      FontWeight.w400)),
+                            );
+                          }).toList(),
+                          onChanged: (newValue) async {
+                            setState(() {
+                              selectedOffice = newValue;
+                              if (selectedOffice != null) {
+                                _fetchOffice();
+                              }
+                              print(selectedOffice);
+                            });
+                          },
                         ),
                       ),
                     ],
@@ -195,6 +296,7 @@ class _UploadSingleState extends State<UploadSingle> {
                         height: size.height * 0.065,
                         width: size.width * 0.905,
                         child: TextFormField(
+                          controller: descriptionController,
                           decoration: InputDecoration(
                             border: OutlineInputBorder(
                               borderSide: BorderSide(
@@ -240,7 +342,7 @@ class _UploadSingleState extends State<UploadSingle> {
                     height: 20,
                   ),
                   DottedBorder(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withOpacity(0.2),
                     strokeWidth: 2,
                     dashPattern: [10,10],
                     borderType: BorderType.RRect,
@@ -276,7 +378,7 @@ class _UploadSingleState extends State<UploadSingle> {
                                         borderRadius: BorderRadius.circular(10)
                                     )
                                 ),
-                                onPressed: () {},
+                                onPressed: _pickFile,
                                 child: Text(
                                   "Upload Document",
                                   style: TextStyle(
@@ -290,6 +392,34 @@ class _UploadSingleState extends State<UploadSingle> {
                       ),
                     ),
                   ),
+                  SizedBox(
+                    height: 20,
+                  ),
+                  _selectedFile != null?
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.file_present,
+                            size: 50,
+                            color: Colors.grey,
+                          ),
+                          SizedBox(
+                            width: 10,
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "$baseName",
+                              ),
+                              Text(
+                                "20 Mb",
+                              ),
+                            ],
+                          )
+                        ],
+                      ):
+                      Text("no data")
                 ],
               ),
             ),
@@ -305,8 +435,8 @@ class _UploadSingleState extends State<UploadSingle> {
               borderRadius: BorderRadius.circular(10)
             )
           ),
-          onPressed: () {
-
+          onPressed: () async {
+            // EventDB.UploadDocSingle(token, docNameController.text, selectedOffice, descriptionController.text, "tags", dateController.text, _selectedFile);
           },
           child: Text(
             "Kirim",
