@@ -13,11 +13,12 @@ Color greyColor3 = Color(0xff8B8B8B);
 Color greyColor6 = Color(0xffF5F5F5);
 Color bluePrimary = Color(0xff3A8FFF);
 Color indigoColor = Color(0xff3368FF);
-Color primaryColor2 = Color(0xff054BA6);
+Color primaryColor2 = Color(0xff2355DC);
 Color alertRedColor = Color(0xffFFE0E0);
 Color textAlertRedColor3 = Color(0xffFF7B7B);
 Color primaryColor4 = Color(0xff48A1D9);
-Color tertiaryColor = Color(0xffEAC100);
+Color tertiaryColor100 = Color(0xffEAC100);
+Color tertiaryColor50 = Color(0xffF4E080);
 Color tertiaryColor4 = Color(0xffFFFBEC);
 Color whiteColor = Color(0xffFFFFFF);
 Color primaryColor5 = Color(0xffD7ECF9);
@@ -101,7 +102,7 @@ Widget CertificateStatusNotActive(height, width, context) {
               style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
-                  color: tertiaryColor
+                  color: tertiaryColor100
               ),
             ),
           ],
@@ -164,7 +165,7 @@ Widget CertificateStatusNotActive(height, width, context) {
                                 width: 300,
                                 height: 40,
                                 decoration: BoxDecoration(
-                                  border: Border.all(width: 2,color: tertiaryColor),
+                                  border: Border.all(width: 2,color: tertiaryColor100),
                                   color: tertiaryColor4
                                 ),
                                 child: Center(
@@ -172,7 +173,7 @@ Widget CertificateStatusNotActive(height, width, context) {
                                     'For using e-Sign please register e-KYC first',
                                     style: GoogleFonts.roboto(
                                       fontSize: 10,
-                                      color: tertiaryColor
+                                      color: tertiaryColor100
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
@@ -207,7 +208,7 @@ Widget CertificateStatusNotActive(height, width, context) {
                         Positioned(
                           top: -30.0,
                           child: CircleAvatar(
-                            backgroundColor: tertiaryColor,
+                            backgroundColor: tertiaryColor100,
                             radius: 30.0,
                             child: Image.asset("assets/images/alert.png", width: 50,)
                           ),
@@ -327,7 +328,7 @@ Widget CertificateStatusProgress(height, width) {
               height: 15,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: tertiaryColor,
+                color: tertiaryColor100,
                 borderRadius: BorderRadius.all(Radius.circular(10)),
               ),
               child: Text("On Progress", style: TextStyle(color: Colors.white, fontSize: 8),),
@@ -569,7 +570,7 @@ Future<void> AlertFailed(context, labelText, contentText) {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  SizedBox(height: 30.0), // Add spacing for the floating icon
+                  SizedBox(height: 30.0),
                   Text(
                     labelText,
                     style: GoogleFonts.roboto(
@@ -781,5 +782,119 @@ Future<void> ModalWait(BuildContext context) {
   );
 }
 
+Future<void> ModalSuccessUpload(context, route, labelText, contentText) {
+  return showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return Dialog(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10)
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.topCenter,
+          children: <Widget>[
+            Container(
+              padding: const EdgeInsets.all(20.0),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: primaryColor4, width: 10)),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(10))
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  SizedBox(height: 30.0), // Add spacing for the floating icon
+                  Text(
+                    labelText,
+                    style: GoogleFonts.roboto(
+                        fontSize: 16.5,
+                        fontWeight: FontWeight.w600
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 20.0),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 300,
+                        child: Text(
+                          contentText,
+                          style: GoogleFonts.roboto(
+                              fontSize: 10,
+                              color: Colors.black
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 20.0),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        width: 160,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                                  side: BorderSide(width: 1, color: primaryColor2)
+                              )
+                          ),
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          child: Text(
+                            'Document Details',
+                            style: TextStyle(
+                              color: primaryColor2,
+                              fontSize: 12
 
+                            ),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        width: 150,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: primaryColor2,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.all(Radius.circular(10))
+                              )
+                          ),
+                          onPressed: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (context)=>route));
+                          },
+                          child: Text(
+                            'Done',
+                            style: TextStyle(
+                              color: Colors.white,
 
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            // Floating Icon
+            Positioned(
+              top: -30.0,
+              child: CircleAvatar(
+                  backgroundColor: primaryColor2,
+                  radius: 30.0,
+                  child: Image.asset("assets/images/alert.png", width: 50,)
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}

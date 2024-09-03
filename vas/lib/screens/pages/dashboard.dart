@@ -36,6 +36,7 @@ class _DashboardState extends State<Dashboard> {
   var data;
   var province_id;
   var deptName;
+  var signCertStatus;
 
   ModuleData? module;
   bool? signM, stampM, officeM;
@@ -62,17 +63,25 @@ class _DashboardState extends State<Dashboard> {
     email = (await EventPref.getCredential())?.email;
     password = (await EventPref.getCredential())?.password;
 
-    if(fullName==null) {
-      data = await EventDB.getlogin(email??'', password??'');
-      token = data.data.token;
-      print(data.data.token);
-    }
+    Future.delayed(Duration(seconds: 2), () async {
+      if(fullName==null) {
+        data = await EventDB.getlogin(email??'', password??'');
+        token = data.data.token;
+        print(data.data.token);
+      }
+    });
 
     User? user = await EventDB.getUser(token??'', email??'', password??'');
-    statusRegistrationPeruri = user!.statusRegistrationPeruri;
     fullName = user?.fullName;
     officeName = user?.officeName;
     deptName = user?.deptName;
+
+    signCertStatus = int.parse(user!.signCertStatus!);
+    statusRegistrationPeruri = user!.statusRegistrationPeruri;
+
+    print("statusRegistrationPeruri: $statusRegistrationPeruri");
+    print("signCertStatus: $signCertStatus");
+
 
     // Get Module
     // token = (await EventPref.getCredential())?.data.token;
@@ -112,6 +121,20 @@ class _DashboardState extends State<Dashboard> {
     size = MediaQuery.of(context).size;
     widthScreen = size.width;
     heightScreen = size.height;
+
+    Widget certificateStatusWidget;
+
+    if (statusRegistrationPeruri == null) {
+      certificateStatusWidget = CertificateStatusNotActive(heightScreen, widthScreen, context);
+    } else if (statusRegistrationPeruri > 2 && signCertStatus == null) {
+      certificateStatusWidget = CertificateStatusProgress(heightScreen, widthScreen);
+    } else if (statusRegistrationPeruri > 2 && (signCertStatus == 0 || signCertStatus == 2)) {
+      certificateStatusWidget = CertificateStatusActive(heightScreen, widthScreen);
+    } else if (statusRegistrationPeruri > 2 && signCertStatus == 1) {
+      certificateStatusWidget = CertificateStatusExpired(heightScreen, widthScreen);
+    } else {
+      certificateStatusWidget = Text("data");
+    }
 
     return WillPopScope(
       onWillPop: () async => true,
@@ -391,10 +414,13 @@ class _DashboardState extends State<Dashboard> {
                         height: 10,
                       ),
 
-                      signM==true?
-                      statusRegistrationPeruri==null?CertificateStatusNotActive(heightScreen, widthScreen, context):
-                      statusRegistrationPeruri==1?CertificateStatusProgress(heightScreen, widthScreen):
-                      CertificateStatusProgress(heightScreen, widthScreen): Container(),
+                      // signM==true?
+                      // statusRegistrationPeruri==null?CertificateStatusNotActive(heightScreen, widthScreen, context):
+                      // statusRegistrationPeruri==1?CertificateStatusProgress(heightScreen, widthScreen):
+                      // CertificateStatusProgress(heightScreen, widthScreen): Container(),
+
+                      certificateStatusWidget,
+
                       SizedBox(
                         height: 20,
                       ),
@@ -560,8 +586,8 @@ class _DashboardState extends State<Dashboard> {
                 });
           },
           child: Container(
-            width: 35,
-            height: 35,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
                 color: Color(0xff0081F1),
                 borderRadius: BorderRadius.all(Radius.circular(20))
@@ -569,7 +595,7 @@ class _DashboardState extends State<Dashboard> {
             child: Icon(
               Icons.file_upload_outlined,
               color: Colors.white,
-              size: 20,
+              size: 25,
             ),
           ),
           backgroundColor: Color(0xffEFF5FF),

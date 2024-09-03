@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
-import 'dart:nativewrappers/_internal/vm/lib/typed_data_patch.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:path/path.dart';
 import 'package:vas/event/event_pref.dart';
 import 'package:vas/models/credential.dart';
 import 'package:vas/models/district.dart';
@@ -17,6 +19,7 @@ import 'package:vas/screens/auth/login.dart';
 import 'package:vas/screens/pages/dashboard.dart';
 import 'package:vas/services/api.dart';
 import 'package:get/get.dart';
+import 'package:vas/widgets/components.dart';
 
 class EventDB {
   static Future<Credential?> getlogin(String email, String password) async {
@@ -516,49 +519,48 @@ class EventDB {
     return messageResponse!;
   }
 
-  static Future<void> UploadDocSingle(String token, String docName, int? officeId, String description, String tags, String date, String filePath) async {
+  static Future<bool> UploadDocSingle(String token, String docName, String officeId, String description, List<Map<String, dynamic>> tags, String date, String filePath) async {
+    bool status = false;
     try {
-      // Convert file path to a File object
+
       File file = File(filePath);
 
-      // Create multipart request
       var request = http.MultipartRequest('POST', Uri.parse(Api.upload_single));
 
-      // Add headers (including token)
-      request.headers['Authorization'] = 'Bearer $token';
       request.headers['Content-Type'] = 'multipart/form-data';
+      request.headers['token'] = token;
 
-      // Add fields to the request body
       request.fields['doc_name'] = docName;
-      request.fields['office_id'] = officeId.toString();
+      request.fields['office_id'] = officeId;
       request.fields['description'] = description;
-      request.fields['tags[]'] = tags; // Assuming tags is a JSON-formatted string
+      request.fields['tags'] = jsonEncode(tags);
       request.fields['date'] = date;
 
-      // Add the document file to the request body
       request.files.add(
         http.MultipartFile(
-          'file', // The key for the file on the server side
+          'file',
           file.readAsBytes().asStream(),
           file.lengthSync(),
           filename: filePath.split("/").last,
+          contentType: MediaType('application', 'pdf'),
         ),
       );
 
-      // Send the request
+
       var response = await request.send();
 
-      // Handle the response
-      if (response.statusCode == 200) {
+      if (response.statusCode == 201) {
         print("File uploaded successfully");
+        status = true;
       } else {
-        // Read the response body for more detailed information
         var responseBody = await http.Response.fromStream(response);
         print("File upload failed with status: ${response.statusCode}, body: ${responseBody.body}");
       }
     } catch (e) {
       print("Error Fetch Upload Single: $e");
     }
+
+    return status;
   }
 
 
