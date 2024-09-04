@@ -519,8 +519,8 @@ class EventDB {
     return messageResponse!;
   }
 
-  static Future<bool> UploadDocSingle(String token, String docName, String officeId, String description, List<Map<String, dynamic>> tags, String date, String filePath) async {
-    bool status = false;
+  static Future<List> UploadDocSingle(String token, String docName, String officeId, String description, List<Map<String, dynamic>> tags, String date, String filePath) async {
+    List data = [false, ""];
     try {
 
       File file = File(filePath);
@@ -528,7 +528,7 @@ class EventDB {
       var request = http.MultipartRequest('POST', Uri.parse(Api.upload_single));
 
       request.headers['Content-Type'] = 'multipart/form-data';
-      request.headers['token'] = token;
+      // request.headers['token'] = token;
 
       request.fields['doc_name'] = docName;
       request.fields['office_id'] = officeId;
@@ -549,18 +549,66 @@ class EventDB {
 
       var response = await request.send();
 
-      if (response.statusCode == 201) {
+      if (response.statusCode == 200 && response.statusCode == 201) {
         print("File uploaded successfully");
-        status = true;
+        data[0] = true;
       } else {
         var responseBody = await http.Response.fromStream(response);
+        var error = jsonDecode(responseBody.body);
         print("File upload failed with status: ${response.statusCode}, body: ${responseBody.body}");
+        data[1] = error['error'];
       }
     } catch (e) {
       print("Error Fetch Upload Single: $e");
     }
 
-    return status;
+    return data;
+  }
+  static Future<List> UploadDocBulk(String token, String docName, String officeId, String description, List<Map<String, dynamic>> tags, String date, List fileBulk) async {
+    List data = [false, ""];
+    try {
+
+      var request = http.MultipartRequest('POST', Uri.parse(Api.upload_bulk));
+
+      request.headers['Content-Type'] = 'multipart/form-data';
+      // request.headers['token'] = token;
+
+      request.fields['folder_name'] = docName;
+      request.fields['office_id'] = officeId;
+      request.fields['description'] = description;
+      request.fields['tags'] = jsonEncode(tags);
+      request.fields['date'] = date;
+
+
+      for(File file in fileBulk) {
+        String filePath = file.path;
+        request.files.add(
+          http.MultipartFile(
+            'docs',
+            file.readAsBytes().asStream(),
+            file.lengthSync(),
+            filename: filePath.split("/").last,
+            contentType: MediaType('application', 'pdf'),
+          )
+        );
+      }
+
+      var response = await request.send();
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print("File uploaded successfully");
+        data[0] = true;
+      } else {
+        var responseBody = await http.Response.fromStream(response);
+        var error = jsonDecode(responseBody.body);
+        print("File upload failed with status: ${response.statusCode}, body: ${responseBody.body}");
+        data[1] = error['error'];
+      }
+    } catch (e) {
+      print("Error Fetch Upload Single: $e");
+    }
+
+    return data;
   }
 
 
