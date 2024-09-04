@@ -151,7 +151,7 @@ class _UploadSingleState extends State<UploadSingle> {
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text("Upload Document"),
+            Text("Upload Document Single"),
             IconButton(
               onPressed: () {
 
@@ -1035,7 +1035,7 @@ class _UploadSingleState extends State<UploadSingle> {
                                             width: 200,
                                             alignment: Alignment.centerRight,
                                             child: Text(
-                                              fileName,
+                                              fileName??'',
                                               style: TextStyle(
                                                   fontSize: 12
                                               ),
@@ -1152,13 +1152,14 @@ class _UploadSingleState extends State<UploadSingle> {
                                     ),
                                     onPressed: () async {
 
-                                      var status = await EventDB.UploadDocSingle(token, docNameController.text, selectedOffice.toString(), descriptionController.text, tagsList, dateController.text, fileController);
-                                      if(status == true) {
-                                        Navigator.pop(context);
-                                        ModalSuccessUpload(context, Dashboard(token: token), "labelText", "contentText");
-                                      } else {
-                                        AlertFailed(context, "Upload File", "Error");
-                                      }
+                                      // List data = await EventDB.UploadDocSingle(token, docNameController.text, selectedOffice.toString(), descriptionController.text, tagsList, dateController.text, fileController);
+                                      // if(data[0] == true) {
+                                      //   Navigator.pop(context);
+                                      //   ModalSuccessUpload(context, Dashboard(token: token), "upload successful!", "Documents have been added! You can now view document details or continue browsing");
+                                      // } else {
+                                      //   Navigator.pop(context);
+                                      //   AlertFailed(context, "Upload File", "${data[1]}");
+                                      // }
                                     },
                                     child: Text(
                                       'Upload',
