@@ -55,47 +55,35 @@ class _UploadBulkState extends State<UploadBulk> {
 
   Future<void> _pickFile() async {
     try {
-      // Use FilePicker to pick a file
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf'],
       );
 
-      // Check if a file was selected
       if (result != null && result.files.single.path != null) {
-        // Get the path of the selected file
         var originalPath = result.files.single.path!;
 
-        // Create a File object from the path
         File file = File(originalPath);
 
-        // Check if the file exists
         if (await file.exists()) {
-          // Extract the base name and extension of the file
           String baseName = path.basenameWithoutExtension(originalPath);
           String extension = path.extension(originalPath).replaceFirst('.', '').toUpperCase(); // Remove the dot and convert to uppercase
 
-          // Construct the new path with the uppercase extension
           String newFileName = '$baseName.$extension';
           Directory documentsDirectory = await getApplicationDocumentsDirectory();
           String newPath = path.join(documentsDirectory.path, newFileName);
 
-          // Copy the file to the persistent location
           await file.copy(newPath);
 
-          // Update fileController to the new path
           fileController = newPath;
           fileName = baseName;
           filePath = originalPath;
           var fileSize = await getFileSize(filePath, 1);
           print(fileSize);
 
-          // Print the new path
           print('File saved to: $newPath');
 
-          // Optionally, update UI or state variables if needed
           setState(() {
-            // Update other UI elements or state variables if needed
             fileList.add(file);
             nameList.add(fileName);
             sizeList.add(fileSize);
@@ -104,15 +92,12 @@ class _UploadBulkState extends State<UploadBulk> {
           });
 
         } else {
-          // Handle the case when the file does not exist
           print('File does not exist at path: $originalPath');
         }
       } else {
-        // Handle the case when no file is selected
         print('No file selected.');
       }
     } catch (e) {
-      // Handle any exceptions that might occur
       print('Error picking file: $e');
     }
   }
@@ -164,17 +149,17 @@ class _UploadBulkState extends State<UploadBulk> {
           onPressed: () {
             Navigator.pop(context);
           },
-          icon: Icon(Icons.close),
+          icon: Icon(Icons.close, color: Colors.black,),
         ),
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text("Upload Document Bulk"),
+            Text("Upload Document Bulk", style: TextStyle(color: Colors.black, fontWeight: FontWeight.w400, fontSize: 16),),
             IconButton(
               onPressed: () {
                 print(token);
               },
-              icon: Icon(Icons.call),
+              icon: Icon(Icons.call, color: Colors.black,),
             ),
           ],
         ),
@@ -221,6 +206,7 @@ class _UploadBulkState extends State<UploadBulk> {
                               borderRadius: BorderRadius.all(
                                   Radius.circular(10)),
                             ),
+                            hintText: "Document Name",
                           ),
                         ),
                       ),
@@ -404,6 +390,7 @@ class _UploadBulkState extends State<UploadBulk> {
                               borderRadius: BorderRadius.all(
                                   Radius.circular(10)),
                             ),
+                            hintText: "Description",
                           ),
                         ),
                       ),

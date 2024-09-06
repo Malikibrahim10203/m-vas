@@ -292,11 +292,9 @@ class _RegistEsignState extends State<RegistEsign> {
     return Scaffold(
       appBar: AppBar(
         elevation: 1,
-        backgroundColor: Colors.white,
-        shadowColor: Colors.black87,
         title: Text(
           "Registration e-Kyc",
-          style: TextStyle(fontSize: 18),
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.w400, fontSize: 16),
         ),
         leading: IconButton(
           onPressed: () {
@@ -315,7 +313,7 @@ class _RegistEsignState extends State<RegistEsign> {
               });
             }
           },
-          icon: Icon(Icons.close),
+          icon: Icon(Icons.close, color: Colors.black,),
         ),
       ),
       body: SingleChildScrollView(

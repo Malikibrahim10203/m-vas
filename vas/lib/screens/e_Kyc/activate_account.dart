@@ -98,7 +98,7 @@ class _ActivateAccountState extends State<ActivateAccount> {
     widthScreen = size.width;
     return Scaffold(
       appBar: AppBar(
-        title: Text("Registration e-Sign"),
+        title: Text("Registration e-Sign", style: TextStyle(color: Colors.black, fontWeight: FontWeight.w400, fontSize: 16),),
         leading: IconButton(
           onPressed: () {
             if (page == 0) {
@@ -116,7 +116,7 @@ class _ActivateAccountState extends State<ActivateAccount> {
               });
             }
           },
-          icon: Icon(Icons.arrow_back_ios_new),
+          icon: Icon(Icons.arrow_back_ios_new, color: Colors.black,),
         ),
         centerTitle: true,
       ),

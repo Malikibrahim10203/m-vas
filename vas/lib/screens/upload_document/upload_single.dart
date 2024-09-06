@@ -64,45 +64,36 @@ class _UploadSingleState extends State<UploadSingle> {
         // Create a File object from the path
         File file = File(originalPath);
 
-        // Check if the file exists
         if (await file.exists()) {
-          // Extract the base name and extension of the file
+
           String baseName = path.basenameWithoutExtension(originalPath);
           String extension = path.extension(originalPath).replaceFirst('.', '').toUpperCase(); // Remove the dot and convert to uppercase
 
-          // Construct the new path with the uppercase extension
           String newFileName = '$baseName.$extension';
           Directory documentsDirectory = await getApplicationDocumentsDirectory();
           String newPath = path.join(documentsDirectory.path, newFileName);
 
-          // Copy the file to the persistent location
           await file.copy(newPath);
 
-          // Update fileController to the new path
           fileController = newPath;
           fileName = baseName;
           filePath = originalPath;
           fileSize = await getFileSize(filePath, 1);
           print(fileSize);
 
-          // Print the new path
           print('File saved to: $newPath');
 
-          // Optionally, update UI or state variables if needed
           setState(() {
-            // Update other UI elements or state variables if needed
+
           });
 
         } else {
-          // Handle the case when the file does not exist
           print('File does not exist at path: $originalPath');
         }
       } else {
-        // Handle the case when no file is selected
         print('No file selected.');
       }
     } catch (e) {
-      // Handle any exceptions that might occur
       print('Error picking file: $e');
     }
   }
@@ -146,17 +137,17 @@ class _UploadSingleState extends State<UploadSingle> {
           onPressed: () {
             Navigator.pop(context);
           },
-          icon: Icon(Icons.close),
+          icon: Icon(Icons.close, color: Colors.black,),
         ),
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text("Upload Document Single"),
+            Text("Upload Document Single", style: TextStyle(color: Colors.black, fontWeight: FontWeight.w400, fontSize: 16),),
             IconButton(
               onPressed: () {
 
               },
-              icon: Icon(Icons.call),
+              icon: Icon(Icons.call, color: Colors.black,),
             ),
           ],
         ),
@@ -196,6 +187,7 @@ class _UploadSingleState extends State<UploadSingle> {
                               borderRadius: BorderRadius.all(
                                   Radius.circular(10)),
                             ),
+                            hintText: "Document Name",
                             enabledBorder: OutlineInputBorder(
                               borderSide: BorderSide(
                                   width: 1,
@@ -386,6 +378,7 @@ class _UploadSingleState extends State<UploadSingle> {
                               borderRadius: BorderRadius.all(
                                   Radius.circular(10)),
                             ),
+                            hintText: "Description",
                           ),
                         ),
                       ),

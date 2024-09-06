@@ -6,18 +6,27 @@ import 'package:vas/screens/auth/change_password.dart';
 import 'package:vas/screens/auth/forget_password.dart';
 import 'package:vas/screens/auth/login.dart';
 import 'package:vas/screens/auth/otp_code.dart';
-import 'package:vas/screens/e-Kyc/activate_account.dart';
+import 'package:vas/screens/e_Kyc/activate_account.dart';
 import 'package:vas/screens/get_started.dart';
+import 'package:vas/screens/loading.dart';
 import 'package:vas/screens/pages/dashboard.dart';
 import 'package:vas/screens/splash_screen.dart';
 import 'package:flutter/services.dart';
 import 'package:uni_links/uni_links.dart';
+import 'package:vas/services/UserProvider.dart';
+import 'package:vas/widgets/components.dart';
 import 'package:vas/widgets/wait_screen.dart';
+import 'package:provider/provider.dart';
 
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => Userprovider(),
+      child: MyApp(),
+    )
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -71,16 +80,26 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+
+    final userProvider = Provider.of<Userprovider>(context);
+
     return GetMaterialApp(
       navigatorKey: _navigatorKey,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
-      ),
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: false,
+        scaffoldBackgroundColor: Colors.white,
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.white,
+        )
+      ),
       title: 'Flutter Demo',
       home: FutureBuilder(
         future: EventPref.getCredential(),
         builder: (context, AsyncSnapshot<Credential?> snapshot) {
+          final userProvider = Provider.of<Userprovider>(context, listen: false);
+
           if (snapshot.connectionState == ConnectionState.waiting) {
             return CircularProgressIndicator();
           } else if (snapshot.hasError) {
@@ -88,8 +107,17 @@ class _MyAppState extends State<MyApp> {
           } else if (snapshot.data == null) {
             return SplashScreen();
           } else {
-            final token = snapshot.data!.data.token;
-            return Dashboard(token: token);
+            var token = snapshot.data!.data.token;
+
+            if (userProvider.user == null) {
+              userProvider.tryLogin().then((_) {
+                // Rebuild UI once login retry is done.
+                setState(() {});
+              });
+              return Loading();
+            } else {
+              return Dashboard(token: token);
+            }
           }
         },
       ),

@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:vas/event/event_camerapref.dart';
 import 'package:vas/event/event_db.dart';
 import 'package:vas/event/event_pref.dart';
 import 'package:vas/models/module.dart';
 import 'package:vas/models/quota.dart';
 import 'package:vas/models/users.dart';
-import 'package:vas/screens/e-Kyc/regist_esign.dart';
+import 'package:vas/screens/document/document_detail.dart';
+import 'package:vas/screens/e_Kyc/regist_esign.dart';
+import 'package:vas/screens/e_Sign/sign_management.dart';
 import 'package:vas/screens/upload_document/upload_bulk.dart';
 import 'package:vas/screens/upload_document/upload_single.dart';
+import 'package:vas/services/UserProvider.dart';
 import 'package:vas/widgets/components.dart';
 import 'package:intl/intl.dart';
 
@@ -44,6 +48,8 @@ class _DashboardState extends State<Dashboard> {
   var saldoEMet;
   var saldoESign;
 
+  var heightMenu;
+
   NumberFormat numberFormat = NumberFormat.decimalPattern('hi');
 
   int certificate = 0;
@@ -71,13 +77,13 @@ class _DashboardState extends State<Dashboard> {
       }
     });
 
-    User? user = await EventDB.getUser(token??'', email??'', password??'');
-    fullName = user?.fullName;
-    officeName = user?.officeName;
-    deptName = user?.deptName;
-
-    signCertStatus = int.parse(user!.signCertStatus!);
-    statusRegistrationPeruri = user!.statusRegistrationPeruri;
+    // User? user = await EventDB.getUser(token??'', email??'', password??'');
+    // fullName = user?.fullName;
+    // officeName = user?.officeName;
+    // deptName = user?.deptName;
+    //
+    // signCertStatus = int.parse(user!.signCertStatus!);
+    // statusRegistrationPeruri = user!.statusRegistrationPeruri;
 
     print("statusRegistrationPeruri: $statusRegistrationPeruri");
     print("signCertStatus: $signCertStatus");
@@ -124,16 +130,35 @@ class _DashboardState extends State<Dashboard> {
 
     Widget certificateStatusWidget;
 
+    final userProvider = Provider.of<Userprovider>(context);
+
+    if(userProvider.user == null) {
+      userProvider.fetchUser(token??'', email??'', password??'');
+    }
+
+    fullName = userProvider.user?.fullName;
+    officeName = userProvider.user?.officeName;
+    deptName = userProvider.user?.deptName;
+
+    signCertStatus = int.parse(userProvider.user!.signCertStatus!);
+    statusRegistrationPeruri = userProvider.user?.statusRegistrationPeruri;
+
+
     if (statusRegistrationPeruri == null) {
       certificateStatusWidget = CertificateStatusNotActive(heightScreen, widthScreen, context);
+      heightMenu = heightScreen * 0.68;
     } else if (statusRegistrationPeruri > 2 && signCertStatus == null) {
       certificateStatusWidget = CertificateStatusProgress(heightScreen, widthScreen);
+      heightMenu = heightScreen * 0.65;
     } else if (statusRegistrationPeruri > 2 && (signCertStatus == 0 || signCertStatus == 2)) {
       certificateStatusWidget = CertificateStatusActive(heightScreen, widthScreen);
+      heightMenu = heightScreen * 0.63;
     } else if (statusRegistrationPeruri > 2 && signCertStatus == 1) {
       certificateStatusWidget = CertificateStatusExpired(heightScreen, widthScreen);
+      heightMenu = heightScreen * 0.63;
     } else {
-      certificateStatusWidget = Text("data");
+      certificateStatusWidget = Container();
+      heightMenu = heightScreen * 0.53;
     }
 
     return WillPopScope(
@@ -271,7 +296,7 @@ class _DashboardState extends State<Dashboard> {
               Container(
                   padding: EdgeInsets.all(15),
                   width: size.width * 1,
-                  height: 640,
+                  height: heightMenu,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     boxShadow: [
@@ -442,13 +467,13 @@ class _DashboardState extends State<Dashboard> {
                         children: [
                           signM==true?MenuActive():Container(),
                           SizedBox(height: 3,),
-                          stampM==true?Menu("assets/images/emet.png","Stamp e-Materai"): Container(),
+                          stampM==true?Menu("assets/images/emet.png","Stamp e-Materai", SignManagement()): Container(),
                           SizedBox(height: 3,),
-                          Menu("assets/images/tera.png","Stamp Tera"),
+                          Menu("assets/images/tera.png","Stamp Tera", SignManagement()),
                           SizedBox(height: 3,),
-                          Menu("assets/images/recap.png","Recapitulation"),
+                          Menu("assets/images/recap.png","Recapitulation", SignManagement()),
                           SizedBox(height: 3,),
-                          Menu("assets/images/contact-us.png","Contact Us"),
+                          Menu("assets/images/contact-us.png","Contact Us", SignManagement()),
                           SizedBox(height: 3,),
                         ],
                       )
@@ -533,6 +558,9 @@ class _DashboardState extends State<Dashboard> {
             // AlertSuccess(context, RegistEsign(), 'Registration Success', 'You have submit the data! Please check your email to activate your account');
             showModalBottomSheet(
                 context: context,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)
+                ),
                 builder: (context) {
                   return Column(
                     mainAxisSize: MainAxisSize.min,
@@ -562,8 +590,7 @@ class _DashboardState extends State<Dashboard> {
                         ),
                       ),
                       ListTile(
-                        leading: new Icon(
-                            Icons.file_copy),
+                        leading: Image.asset("assets/images/upload_single.png", width: 30,),
                         title: new Text('Single File'),
                         onTap: (){
                           Navigator.push(context, MaterialPageRoute(builder: (context)=>UploadSingle()));
@@ -574,8 +601,7 @@ class _DashboardState extends State<Dashboard> {
                           color: Colors.grey
                       ),
                       ListTile(
-                        leading: new Icon(
-                            Icons.file_copy),
+                        leading: Image.asset("assets/images/upload_bulk.png", width: 30,),
                         title: new Text('Bulk File'),
                         onTap: () async {
                           Navigator.push(context, MaterialPageRoute(builder: (context)=>UploadBulk()));
@@ -607,28 +633,32 @@ class _DashboardState extends State<Dashboard> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
-              _bottomAppBar(0, Icons.home, "Home"),
+              _bottomAppBar(0, "bar-home", "Home", DocumentDetail()),
               SizedBox(width: 5),
-              _bottomAppBar(1, Icons.folder, "Document"),
-              SizedBox(width: 48), // Space for the FAB
-              _bottomAppBar(2, Icons.chat_outlined, "Chat"),
+              _bottomAppBar(1, "bar-doc", "Document", DocumentDetail()),
+              SizedBox(width: 48),
+              _bottomAppBar(2, "bar-chat", "Chat", DocumentDetail()),
               SizedBox(width: 5),
-              _bottomAppBar(3, Icons.settings, "Setting"),
+              _bottomAppBar(3, "bar-setting", "Setting", DocumentDetail()),
             ],
           ),
         ),
       ),
     );
   }
-  Widget _bottomAppBar(item,icon,text) {
+
+  Widget _bottomAppBar(item,icon,text,route) {
     return GestureDetector(
-      onTap: () => _onItemTapped(item),
+      onTap: () {
+        _onItemTapped(item);
+        Navigator.push(context, MaterialPageRoute(builder: (context)=>route));
+      },
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            color: item!=_selectedIndex?greyColor3:primaryColor2,
+          Image.asset("assets/images/$icon.png", width: 30,),
+          SizedBox(
+            height: 5,
           ),
           Text(
             "${text}",
@@ -641,38 +671,44 @@ class _DashboardState extends State<Dashboard> {
     );
   }
   // Menu NotActive
-  Widget Menu(logo,name) {
-    return Container(
-      decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              spreadRadius: 5,
-              blurRadius: 20,
-              offset: Offset(0, 3),
-            ),
-          ],
-          borderRadius: BorderRadius.all(Radius.circular(10))
-      ),
-      child: ListTile(
-        leading: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: greyColor6,
-            borderRadius: BorderRadius.all(Radius.circular(5)),
-          ),
-          child: Container(
-            padding: EdgeInsets.all(10),
-            child: Image.asset(logo),
-          ),
+  Widget Menu(logo,name, route) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(context, MaterialPageRoute(builder: (context)=>route));
+        print("object");
+      },
+      child: Container(
+        decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                spreadRadius: 5,
+                blurRadius: 20,
+                offset: Offset(0, 3),
+              ),
+            ],
+            borderRadius: BorderRadius.all(Radius.circular(10))
         ),
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('${name}'),
-          ],
+        child: ListTile(
+          leading: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: greyColor6,
+              borderRadius: BorderRadius.all(Radius.circular(5)),
+            ),
+            child: Container(
+              padding: EdgeInsets.all(10),
+              child: Image.asset(logo),
+            ),
+          ),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('${name}'),
+            ],
+          ),
         ),
       ),
     );

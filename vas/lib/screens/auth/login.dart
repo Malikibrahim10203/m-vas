@@ -225,7 +225,7 @@ class _LoginState extends State<Login> {
                     ModalWait(context);
                     Future.delayed(
                       Duration(seconds: 2), () {
-                        Get.off(Dashboard(token: token));
+                      Get.off(Dashboard(token: token!));
                     },
                     );
                   } else {

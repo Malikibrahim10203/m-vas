@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 import 'package:vas/event/event_db.dart';
-import 'package:vas/screens/e-Kyc/regist_esign.dart';
+import 'package:vas/screens/e_Kyc/regist_esign.dart';
 
 
 // Colors
@@ -896,5 +896,29 @@ Future<void> ModalSuccessUpload(context, route, labelText, contentText) {
         ),
       );
     },
+  );
+}
+
+Widget chipTag(String nameTag) {
+  return Container(
+      width: 80,
+      height: 25,
+      decoration: BoxDecoration(
+        color: Colors.grey.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+            width: 1,
+            color: Colors.grey
+        ),
+      ),
+      child: Center(
+        child: Text(
+          "$nameTag",
+          style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey
+          ),
+        ),
+      )
   );
 }
