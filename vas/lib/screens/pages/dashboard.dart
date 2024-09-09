@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:ionicons/ionicons.dart';
 import 'package:provider/provider.dart';
 import 'package:vas/event/event_camerapref.dart';
 import 'package:vas/event/event_db.dart';
@@ -11,6 +12,7 @@ import 'package:vas/models/users.dart';
 import 'package:vas/screens/document/document_detail.dart';
 import 'package:vas/screens/e_Kyc/regist_esign.dart';
 import 'package:vas/screens/e_Sign/sign_management.dart';
+import 'package:vas/screens/loading.dart';
 import 'package:vas/screens/upload_document/upload_bulk.dart';
 import 'package:vas/screens/upload_document/upload_single.dart';
 import 'package:vas/services/UserProvider.dart';
@@ -77,13 +79,6 @@ class _DashboardState extends State<Dashboard> {
       }
     });
 
-    // User? user = await EventDB.getUser(token??'', email??'', password??'');
-    // fullName = user?.fullName;
-    // officeName = user?.officeName;
-    // deptName = user?.deptName;
-    //
-    // signCertStatus = int.parse(user!.signCertStatus!);
-    // statusRegistrationPeruri = user!.statusRegistrationPeruri;
 
     print("statusRegistrationPeruri: $statusRegistrationPeruri");
     print("signCertStatus: $signCertStatus");
@@ -132,18 +127,22 @@ class _DashboardState extends State<Dashboard> {
 
     final userProvider = Provider.of<Userprovider>(context);
 
-    if(userProvider.user == null) {
-      userProvider.fetchUser(token??'', email??'', password??'');
+    if (userProvider.user == null) {
+      return Center(
+        child: Loading(),
+      );
     }
 
     fullName = userProvider.user?.fullName;
     officeName = userProvider.user?.officeName;
     deptName = userProvider.user?.deptName;
 
-    signCertStatus = int.parse(userProvider.user!.signCertStatus!);
+    signCertStatus = userProvider.user?.signCertStatus != null
+        ? int.tryParse(userProvider.user!.signCertStatus!)
+        : null;
     statusRegistrationPeruri = userProvider.user?.statusRegistrationPeruri;
 
-
+    // Handle different certificate status conditions
     if (statusRegistrationPeruri == null) {
       certificateStatusWidget = CertificateStatusNotActive(heightScreen, widthScreen, context);
       heightMenu = heightScreen * 0.68;
@@ -160,6 +159,8 @@ class _DashboardState extends State<Dashboard> {
       certificateStatusWidget = Container();
       heightMenu = heightScreen * 0.53;
     }
+
+
 
     return WillPopScope(
       onWillPop: () async => true,

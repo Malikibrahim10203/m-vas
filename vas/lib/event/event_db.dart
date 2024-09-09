@@ -8,6 +8,7 @@ import 'package:path/path.dart';
 import 'package:vas/event/event_pref.dart';
 import 'package:vas/models/credential.dart';
 import 'package:vas/models/district.dart';
+import 'package:vas/models/document.dart';
 import 'package:vas/models/module.dart';
 import 'package:vas/models/office.dart';
 import 'package:vas/models/peruri_jwt_token.dart';
@@ -249,15 +250,14 @@ class EventDB {
         },
       );
 
-
+      var responseBody = jsonDecode(response.body);
       if (response.statusCode == 200) {
-        var responseBody = jsonDecode(response.body);
         if(responseBody['status'] == 'success') {
           status = true;
           print('Success: ${response.body}');
         }
       } else {
-        print('Failed with status code: ${response.statusCode}');
+        print('Failed with status code: ${response.statusCode} and Body: ${responseBody['error']}');
       }
     } catch (e) {
       print('Error: $e');
@@ -611,6 +611,30 @@ class EventDB {
     return data;
   }
 
+  static Future<Document?> getDocuments(String token) async {
+    final response = await http.get(
+      Uri.parse(Api.get_all_document),
+      headers: {
+        "token": token,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      try {
+        final jsonResponse = json.decode(response.body);
+
+        // Wrap the 'data' into a map with a 'data' key to match the Document.fromJson structure
+        return Document.fromJson({'data': jsonResponse['data']});
+
+      } catch (e) {
+        print("Error parsing JSON: $e");
+        return null;
+      }
+    } else {
+      print("Failed to load data. Status code: ${response.statusCode}");
+      return null;
+    }
+  }
 
 
 

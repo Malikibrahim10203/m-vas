@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:vas/event/event_camerapref.dart';
 import 'package:vas/event/event_db.dart';
 import 'package:vas/event/event_pref.dart';
@@ -39,6 +40,7 @@ class _RegistEsignState extends State<RegistEsign> {
   bool isPersonalInformation = true;
   bool isOfficeInformation = false;
   bool isUploadDocument = false;
+
 
   var firstName;
   var lastName;
@@ -95,20 +97,16 @@ class _RegistEsignState extends State<RegistEsign> {
       final sizeImage = await pickedFile.length();
       const maxFormatImages = 1 * 1024 * 1024; // 1 MB
 
-      // Read the image bytes
       Uint8List imagesBytes = await filePath.readAsBytes();
 
       setState(() {
         imageKTP = File(pickedFile.path);
 
-        // Encode image bytes to Base64
         ktpBase64 = base64.encode(imagesBytes);
 
-        // Store the Base64 string
         print("Base64 KTP: $ktpBase64");
         print("File KTP: $imagesBytes");
 
-        // Check file format and size
         if (sizeImage < maxFormatImages) {
           if (formatFile.contains(extensionImage)) {
             alertImage = false;
@@ -134,20 +132,16 @@ class _RegistEsignState extends State<RegistEsign> {
       final sizeImage = await pickedFile.length();
       const maxFormatImages = 1 * 1024 * 1024; // 1 MB
 
-      // Read the image bytes
       Uint8List imagesBytes = await filePath.readAsBytes();
 
       setState(() {
         imageNPWP = File(pickedFile.path);
 
-        // Encode image bytes to Base64
         npwpBase64 = base64.encode(imagesBytes);
 
-        // Store the Base64 string
         print("Base64 KTP: $npwpBase64");
         print("File KTP: $imagesBytes");
 
-        // Check file format and size
         if (sizeImage < maxFormatImages) {
           if (formatFile.contains(extensionImage)) {
             alertImage = false;
@@ -173,20 +167,16 @@ class _RegistEsignState extends State<RegistEsign> {
       final sizeImage = await pickedFile.length();
       const maxFormatImages = 1 * 1024 * 1024; // 1 MB
 
-      // Read the image bytes
       Uint8List imagesBytes = await filePath.readAsBytes();
 
       setState(() {
         imageSelfie = File(pickedFile.path);
 
-        // Encode image bytes to Base64
         selfieBase64 = base64.encode(imagesBytes);
 
-        // Store the Base64 string
         print("Base64 KTP: $selfieBase64");
         print("File KTP: $imagesBytes");
 
-        // Check file format and size
         if (sizeImage < maxFormatImages) {
           if (formatFile.contains(extensionImage)) {
             alertImage = false;
@@ -288,6 +278,7 @@ class _RegistEsignState extends State<RegistEsign> {
 
     const List<String> list = <String>['One', 'Two', 'Three', 'Four'];
     String province = list.first;
+
 
     return Scaffold(
       appBar: AppBar(
@@ -1710,108 +1701,164 @@ class _RegistEsignState extends State<RegistEsign> {
                                   'selfie_photo': selfieBase64,
                                 };
                               });
+
+                              bool isReadAgreement = false;
                               showDialog(
                                 context: context,
                                 builder: (BuildContext context) {
-                                  return Dialog(
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10)
-                                    ),
-                                    child: Stack(
-                                      clipBehavior: Clip.none,
-                                      alignment: Alignment.topCenter,
-                                      children: <Widget>[
-                                        Container(
-                                          padding: const EdgeInsets.all(20.0),
-                                          width: double.infinity,
-                                          decoration: BoxDecoration(
-                                              border: Border(top: BorderSide(color: primaryColor4, width: 10)),
-                                              borderRadius: BorderRadius.vertical(top: Radius.circular(10))
-                                          ),
-                                          child: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: <Widget>[
-                                              SizedBox(height: 30.0), // Add spacing for the floating icon
-                                              Text(
-                                                "labelText",
-                                                style: GoogleFonts.roboto(
-                                                    fontSize: 16.5,
-                                                    fontWeight: FontWeight.w600
-                                                ),
-                                                textAlign: TextAlign.center,
+                                  return StatefulBuilder(
+                                      builder: (BuildContext context, StateSetter setState) {
+                                      return Dialog(
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(10)
+                                        ),
+                                        child: Stack(
+                                          clipBehavior: Clip.none,
+                                          alignment: Alignment.topCenter,
+                                          children: <Widget>[
+                                            Container(
+                                              padding: const EdgeInsets.all(20.0),
+                                              width: double.infinity,
+                                              decoration: BoxDecoration(
+                                                  border: Border(top: BorderSide(color: primaryColor4, width: 10)),
+                                                  borderRadius: BorderRadius.vertical(top: Radius.circular(10))
                                               ),
-                                              SizedBox(height: 20.0),
-                                              Text("Confirm"),
-                                              SizedBox(height: 20.0),
-                                              Row(
-                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                children: [
-                                                  Container(
-                                                    width: 150,
-                                                    child: ElevatedButton(
-                                                      style: ElevatedButton.styleFrom(
-                                                          backgroundColor: Colors.white,
-                                                          shape: RoundedRectangleBorder(
-                                                              borderRadius: BorderRadius.all(Radius.circular(10)),
-                                                              side: BorderSide(width: 1, color: primaryColor2)
-                                                          )
-                                                      ),
-                                                      onPressed: () {
-                                                        Navigator.pop(context);
-                                                      },
-                                                      child: Text(
-                                                        'Back',
-                                                        style: TextStyle(
-                                                            color: primaryColor2
-                                                        ),
-                                                      ),
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: <Widget>[
+                                                  SizedBox(height: 30.0),
+                                                  Text(
+                                                    "Terms and Conditions",
+                                                    style: GoogleFonts.roboto(
+                                                        fontSize: 16.5,
+                                                        fontWeight: FontWeight.w600
                                                     ),
+                                                    textAlign: TextAlign.center,
                                                   ),
-                                                  Container(
-                                                    width: 150,
-                                                    child: ElevatedButton(
-                                                      style: ElevatedButton.styleFrom(
-                                                          backgroundColor: primaryColor2,
-                                                          shape: RoundedRectangleBorder(
-                                                              borderRadius: BorderRadius.all(Radius.circular(10))
-                                                          )
+                                                  SizedBox(height: 20.0),
+                                                  Row(
+                                                    children: [
+                                                      Checkbox(
+                                                        value: isReadAgreement,
+                                                        onChanged: (value) {
+                                                          setState(() {
+                                                            isReadAgreement = value!;
+                                                            print(isReadAgreement);
+                                                          });
+                                                        },
                                                       ),
-                                                      onPressed: () async {
-                                                        var statusResponse = await EventDB.RegisterPeruri(token ?? '', tokenPeruri??'', password??'', bodyCollection);
-                                                        if(statusResponse == true) {
-                                                          print(statusResponse);
-                                                          Navigator.pop(context);
-                                                          AlertSuccess(context, Dashboard(token: token), "Registration Success", "You have submit the data! Please check your email \nto activate your account");
-                                                        } else {
-                                                          print(statusResponse);
-                                                          Navigator.pop(context);
-                                                          AlertFailed(context, "Failed to Register", "Please check your input again or re-register.");
-                                                        }
-                                                      },
-                                                      child: Text(
-                                                        'Confirm',
-                                                        style: TextStyle(
-                                                            color: Colors.white
+                                                      SizedBox(
+                                                        width: 5,
+                                                      ),
+                                                      TextButton(
+                                                        onPressed: () {
+                                                          launchUrl(
+                                                            Uri.parse("https://ca.peruri.co.id/ca/legal/"),
+                                                            mode: LaunchMode.externalApplication
+                                                          );
+                                                        },
+                                                        child: Container(
+                                                          width: 250,
+                                                          child: Text(
+                                                            "I have read and agree with the legal terms (CP, CPS, Customer Agreement, and Privacy Policy) of Peruri CA.",
+                                                            style: TextStyle(
+                                                              fontSize: 12
+                                                            ),
+                                                          ),
                                                         ),
                                                       ),
-                                                    ),
+                                                    ],
+                                                  ),
+                                                  SizedBox(height: 20.0),
+                                                  Row(
+                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                    children: [
+                                                      Container(
+                                                        width: 150,
+                                                        child: ElevatedButton(
+                                                          style: ElevatedButton.styleFrom(
+                                                              backgroundColor: Colors.white,
+                                                              shape: RoundedRectangleBorder(
+                                                                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                                                                  side: BorderSide(width: 1, color: primaryColor2)
+                                                              )
+                                                          ),
+                                                          onPressed: () {
+                                                            Navigator.pop(context);
+                                                          },
+                                                          child: Text(
+                                                            'Back',
+                                                            style: TextStyle(
+                                                                color: primaryColor2
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      isReadAgreement == true?
+                                                      Container(
+                                                        width: 150,
+                                                        child: ElevatedButton(
+                                                          style: ElevatedButton.styleFrom(
+                                                              backgroundColor: primaryColor2,
+                                                              shape: RoundedRectangleBorder(
+                                                                  borderRadius: BorderRadius.all(Radius.circular(10))
+                                                              )
+                                                          ),
+                                                          onPressed: () async {
+                                                            var statusResponse = await EventDB.RegisterPeruri(token ?? '', tokenPeruri??'', password??'', bodyCollection);
+                                                            if(statusResponse == true) {
+                                                              print(statusResponse);
+                                                              Navigator.pop(context);
+                                                              AlertSuccess(context, Dashboard(token: token), "Registration Success", "You have submit the data! Please check your email \nto activate your account");
+                                                            } else {
+                                                              print(statusResponse);
+                                                              Navigator.pop(context);
+                                                              AlertFailed(context, "Failed to Register", "Please check your input again or re-register.");
+                                                            }
+                                                          },
+                                                          child: Text(
+                                                            'Confirm',
+                                                            style: TextStyle(
+                                                                color: Colors.white
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ): Container(
+                                                        width: 150,
+                                                        child: ElevatedButton(
+                                                          style: ElevatedButton.styleFrom(
+                                                              backgroundColor: primaryColor2,
+                                                              shape: RoundedRectangleBorder(
+                                                                  borderRadius: BorderRadius.all(Radius.circular(10))
+                                                              )
+                                                          ),
+                                                          onPressed: null,
+                                                          child: Text(
+                                                            'Confirm',
+                                                            style: TextStyle(
+                                                                color: Colors.white
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
                                                   ),
                                                 ],
                                               ),
-                                            ],
-                                          ),
+                                            ),
+                                            // Floating Icon
+                                            Positioned(
+                                              top: -30.0,
+                                              child: CircleAvatar(
+                                                  backgroundColor: primaryColor2,
+                                                  radius: 30.0,
+                                                  child: Image.asset("assets/images/alert.png", width: 50,)
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                        // Floating Icon
-                                        Positioned(
-                                          top: -30.0,
-                                          child: CircleAvatar(
-                                              backgroundColor: primaryColor2,
-                                              radius: 30.0,
-                                              child: Image.asset("assets/images/alert.png", width: 50,)
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                      );
+                                    }
                                   );
                                 },
                               );

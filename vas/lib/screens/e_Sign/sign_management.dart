@@ -1,9 +1,12 @@
+import "dart:convert";
+
 import "package:flutter/cupertino.dart";
 import "package:flutter/material.dart";
 import "package:flutter_speed_dial/flutter_speed_dial.dart";
 import "package:intl/intl.dart";
 import "package:vas/event/event_db.dart";
 import "package:vas/event/event_pref.dart";
+import "package:vas/models/document.dart";
 import "package:vas/screens/document/document_detail.dart";
 import "package:vas/screens/upload_document/upload_bulk.dart";
 import "package:vas/screens/upload_document/upload_single.dart";
@@ -21,6 +24,8 @@ class _SignManagementState extends State<SignManagement> {
   var heightScreen;
   var widthScreen;
 
+  var searchController = TextEditingController();
+
   var token;
 
   var saldoEMet;
@@ -30,6 +35,8 @@ class _SignManagementState extends State<SignManagement> {
   int currentIndex = 0;
 
   int _selectedIndex = 2;
+
+  late Future<Document?> document;
 
   void _onItemTapped(int index) {
     setState(() {
@@ -41,6 +48,7 @@ class _SignManagementState extends State<SignManagement> {
     token = (await EventPref.getCredential())?.data.token;
 
     saldoEMet = (await EventDB.getQuota(token, "1"))?.remaining;
+    document = EventDB.getDocuments(token);
 
     setState(() {
 
@@ -77,7 +85,8 @@ class _SignManagementState extends State<SignManagement> {
             ),
             IconButton(onPressed: () {}, icon: Image.asset("assets/images/contact-us.png", width: 20,))
           ],
-        )
+        ),
+        elevation: 2.0,
       ),
       body: SingleChildScrollView(
         child: Center(
@@ -87,7 +96,7 @@ class _SignManagementState extends State<SignManagement> {
                 height: 30,
               ),
               Container(
-                width: widthScreen * 0.95,
+                width: widthScreen * 0.9,
                 height: heightScreen * 0.095,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
@@ -163,266 +172,93 @@ class _SignManagementState extends State<SignManagement> {
               SizedBox(
                 height: 15,
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Container(
-                    width: widthScreen * 0.7,
-                    height: heightScreen * 0.05,
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.15),
-                            spreadRadius: 1,
-                            blurRadius: 15,
-                          )
-                        ]
-                    ),
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 15,
+              Container(
+                width: widthScreen * 0.9,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Container(
+                      width: widthScreen * 0.7,
+                      height: heightScreen * 0.05,
+                      child: CupertinoSearchTextField(
+                        prefixInsets: EdgeInsets.symmetric(horizontal: 15),
+                        suffixInsets: EdgeInsets.symmetric(horizontal: 15),
+                        padding: EdgeInsets.zero,
+                        controller: searchController,
+                        onSubmitted: (value) {
+                          print(searchController.text);
+                        },
+                        decoration: BoxDecoration(
+                            color: Colors.white,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.15),
+                                spreadRadius: 1,
+                                blurRadius: 15,
+                              )
+                            ],
+                            borderRadius: BorderRadius.circular(10)
                         ),
-                        Icon(Icons.search),
-                        SizedBox(
-                          width: 15,
-                        ),
-                        Text("Search.."),
-                      ],
+                      ),
                     ),
-                  ),
-                  Container(
-                    width: widthScreen * 0.12,
-                    height: heightScreen * 0.05,
-                    decoration: BoxDecoration(
+                    Container(
+                      width: widthScreen * 0.12,
+                      height: heightScreen * 0.05,
+                      padding: EdgeInsets.all(10),
+                      decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(10),
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.15),
-                            spreadRadius: 1,
-                            blurRadius: 15,
-                          )
-                        ]
+                        color: Colors.transparent,
+                      ),
+                      child: Image.asset("assets/images/filter.png",),
                     ),
-                    child: Icon(Icons.filter_list),
-                  ),
-                ],
+                  ],
+                ),
               ),
               SizedBox(
                 height: 20,
               ),
               Container(
-                width: widthScreen * 0.87,
-                height: heightScreen * 0.12,
-                padding: EdgeInsets.symmetric(vertical: 16,horizontal: 25),
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(15),
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 20,
-                      )
-                    ]
-                ),
-                child: Row(
+                width: 400,
+                height: 600,
+                child: Column(
                   children: [
-                    Container(
-                      width: 45,
-                      height: 45,
-                      decoration: BoxDecoration(
-                        color: bluePrimary.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                      child: Center(
-                        child: Icon(Icons.file_present_sharp, color: bluePrimary,),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 20,
-                    ),
-                    Container(
-                      width: widthScreen * 0.6,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                "Surat Perjanjian",
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500
-                                ),
-                              ),
-                              Text(
-                                "draf",
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    fontStyle: FontStyle.italic,
-                                    color: Colors.grey
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(
-                            height: 5,
-                          ),
-                          Row(
-                            children: [
-                              Text(
-                                "06 Juli 2023",
-                                style: TextStyle(
-                                    fontSize: 10
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(
-                            height: 5,
-                          ),
-                          Row(
-                            children: [
-                              Text(
-                                "Single",
-                                style: TextStyle(
-                                    fontSize: 10,
-                                    color: Colors.grey
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(
-                            height: 5,
-                          ),
-                          Row(
-                            children: [
-                              chipTag("E-Materai"),
-                              SizedBox(
-                                width: 10,
-                              ),
-                              chipTag("E-Sign"),
-                            ],
-                          )
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(
-                height: 15,
-              ),
-              Container(
-                width: widthScreen * 0.87,
-                height: heightScreen * 0.12,
-                padding: EdgeInsets.symmetric(vertical: 16,horizontal: 25),
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(15),
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 20,
-                      )
-                    ]
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 45,
-                      height: 45,
-                      decoration: BoxDecoration(
-                        color: bluePrimary.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                      child: Center(
-                        child: Icon(Icons.file_present_sharp, color: bluePrimary,),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 20,
-                    ),
-                    Container(
-                      width: widthScreen * 0.6,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                "Surat Perjanjian",
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500
-                                ),
-                              ),
-                              Text(
-                                "draf",
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    fontStyle: FontStyle.italic,
-                                    color: Colors.grey
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(
-                            height: 5,
-                          ),
-                          Row(
-                            children: [
-                              Text(
-                                "06 Juli 2023",
-                                style: TextStyle(
-                                    fontSize: 10
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(
-                            height: 5,
-                          ),
-                          Row(
-                            children: [
-                              Text(
-                                "Single",
-                                style: TextStyle(
-                                    fontSize: 10,
-                                    color: Colors.grey
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(
-                            height: 5,
-                          ),
-                          Row(
-                            children: [
-                              chipTag("E-Materai"),
-                              SizedBox(
-                                width: 10,
-                              ),
-                              chipTag("E-Sign"),
-                            ],
-                          )
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(
-                height: 15,
-              ),
+                    Expanded(
+                      child: FutureBuilder<Document?>(
+                        future: document,
+                        builder: (BuildContext context, snapshot) {
 
+                          if(snapshot.connectionState == ConnectionState.waiting) {
+                            return Center(child: CircularProgressIndicator());
+                          } else if(snapshot.hasError) {
+                            return Center(child: Text('Error: ${snapshot.error}'));
+                          } else if(!snapshot.hasData || snapshot.data!.data.isEmpty) {
+                            return Center(child: Text('No documents available.'));
+                          } else {
+                            return ListView.separated(
+                              separatorBuilder: (BuildContext context, index){
+                                return SizedBox(
+                                  height: 1,
+                                );
+                              },
+                              itemCount: snapshot.data!.data.length,
+                              itemBuilder: (context, index) {
+                                Datum datum = snapshot.data!.data[index];
+                                return Container(
+                                  padding: EdgeInsets.all(10),
+                                  child: cardListDocument(widthScreen, heightScreen, datum.docName, datum.createdAt.toString(), datum.isFolder, datum.isStamped, datum.isSigned, datum.isTera),
+                                );
+                              },
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                )
+              ),
+              SizedBox(
+                height: 15,
+              ),
             ],
           ),
         ),
@@ -430,60 +266,20 @@ class _SignManagementState extends State<SignManagement> {
       floatingActionButton: FloatingActionButton(
         shape: CircleBorder(),
         onPressed: () async {
-          showModalBottomSheet(
-              context: context,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)
-              ),
-              builder: (context) {
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    SizedBox(
-                      height: 10,
-                    ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 15),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "Upload Document",
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: (){
-                              Navigator.pop(context);
-                            },
-                            icon: Icon(Icons.close),
-                          ),
-                        ],
-                      ),
-                    ),
-                    ListTile(
-                      leading: Image.asset("assets/images/upload_single.png", width: 30,),
-                      title: new Text('Single File'),
-                      onTap: (){
-                        Navigator.push(context, MaterialPageRoute(builder: (context)=>UploadSingle()));
-                      },
-                    ),
-                    Divider(
-                        height: 2,
-                        color: Colors.grey
-                    ),
-                    ListTile(
-                      leading: Image.asset("assets/images/upload_bulk.png", width: 30,),
-                      title: new Text('Bulk File'),
-                      onTap: () async {
-                        Navigator.push(context, MaterialPageRoute(builder: (context)=>UploadBulk()));
-                      },
-                    ),
-                  ],
-                );
-              });
+          // Assume `token` is already defined and passed correctly
+          Document? document = await EventDB.getDocuments(token);
+
+          if (document != null && document.data.isNotEmpty) {
+            Datum firstDatum = document.data[2];
+
+            // Convert the first Datum to JSON for better readability
+            String datumJson = jsonEncode(firstDatum.toJson());
+
+            // Print the full data of the first Datum
+            print('First Datum: $datumJson');
+          } else {
+            print("Failed to retrieve document data or no data available.");
+          }
         },
         child: Container(
           width: 40,
@@ -543,5 +339,4 @@ class _SignManagementState extends State<SignManagement> {
       ),
     );
   }
-
 }

@@ -18,10 +18,10 @@ class CameraVideo extends StatefulWidget {
 
 class _CameraVideoState extends State<CameraVideo> {
   late List<CameraDescription> cameras;
-  CameraController? cameraController;  // Use CameraController? to handle null case
+  CameraController? cameraController;
   bool isRecording = false;
   String? videoBase64;
-  Future<void>? _initializeControllerFuture;  // Future for initializing camera
+  Future<void>? _initializeControllerFuture;
 
   Future<void> initializeCamera() async {
     cameras = await availableCameras();
@@ -274,15 +274,15 @@ class _CameraVideoState extends State<CameraVideo> {
                       padding: const EdgeInsets.all(30.0),
                       width: double.infinity,
                       decoration: BoxDecoration(
-                          border: Border(top: BorderSide(color: primaryColor4, width: 10)),
+                          border: Border(top: BorderSide(color: tertiaryColor50, width: 10)),
                           borderRadius: BorderRadius.vertical(top: Radius.circular(10))
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
-                          SizedBox(height: 30.0), // Add spacing for the floating icon
+                          SizedBox(height: 20.0),
                           Text(
-                            "labelText",
+                            "Are you sure?",
                             style: GoogleFonts.roboto(
                                 fontSize: 16.5,
                                 fontWeight: FontWeight.w600
@@ -294,15 +294,15 @@ class _CameraVideoState extends State<CameraVideo> {
                             width: 400,
                             height: 40,
                             decoration: BoxDecoration(
-                              border: Border.all(width: 2,color: bluePrimary),
-                              color: primaryColor5,
+                              border: Border.all(width: 2,color: tertiaryColor100),
+                              color: tertiaryColor4,
                             ),
                             child: Center(
                               child: Text(
-                                "contentText",
+                                "You will be submitting data for the company registration account, please make sure before submitting.",
                                 style: GoogleFonts.roboto(
                                     fontSize: 10,
-                                    color: bluePrimary
+                                    color: tertiaryColor100
                                 ),
                                 textAlign: TextAlign.center,
                               ),
@@ -356,6 +356,7 @@ class _CameraVideoState extends State<CameraVideo> {
                                       Navigator.pop(context);
                                     } else {
                                       Navigator.push(context, MaterialPageRoute(builder: (context)=>Dashboard(token: widget.token)));
+                                      AlertSuccess(context, Dashboard(token: "token"), "Verification Successful", "Verification Successful, Please wait for certificate activation from Peruri");
                                       print("Video Kyc: $data");
                                     }
                                   },
@@ -376,7 +377,7 @@ class _CameraVideoState extends State<CameraVideo> {
                     Positioned(
                       top: -30.0,
                       child: CircleAvatar(
-                          backgroundColor: primaryColor2,
+                          backgroundColor: tertiaryColor100,
                           radius: 30.0,
                           child: Image.asset("assets/images/alert.png", width: 50,)
                       ),
@@ -410,7 +411,7 @@ class _CameraVideoState extends State<CameraVideo> {
         behavior: SnackBarBehavior.floating,  // Set behavior to floating
         backgroundColor: primaryColor2.withOpacity(0.5),  // Customize background color
         padding: EdgeInsets.all(16),  // Customize padding
-        margin: EdgeInsets.symmetric(vertical: 130),   // Customize margin
+        margin: EdgeInsets.only(top: 100),   // Customize margin
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),  // Customize shape
         ),
@@ -427,10 +428,9 @@ class HoleClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     Path path = Path();
-    // Define the outer rectangle
+
     path.addRect(Rect.fromLTWH(0, 0, size.width, size.height));
 
-    // Define the circle hole and subtract it from the outer rectangle
     Path holePath = Path()
       ..addOval(Rect.fromCenter(
         center: Offset(size.width / 2, size.height / 2.13),
@@ -438,7 +438,6 @@ class HoleClipper extends CustomClipper<Path> {
         height: MediaQuery.of(context).size.height * 0.48,
       ));
 
-    // Combine the paths to subtract the hole from the main path
     path = Path.combine(PathOperation.difference, path, holePath);
 
     return path;

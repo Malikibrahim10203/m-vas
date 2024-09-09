@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:ionicons/ionicons.dart';
 import 'package:lottie/lottie.dart';
 import 'package:vas/event/event_db.dart';
 import 'package:vas/screens/e_Kyc/regist_esign.dart';
@@ -899,8 +900,25 @@ Future<void> ModalSuccessUpload(context, route, labelText, contentText) {
   );
 }
 
-Widget chipTag(String nameTag) {
-  return Container(
+Widget chipTag(String nameTag, status) {
+  return status == true?
+    Container(
+        width: 80,
+        height: 25,
+        decoration: BoxDecoration(
+          color: bluePrimary,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Center(
+          child: Text(
+            "$nameTag",
+            style: TextStyle(
+                fontSize: 12,
+                color: Colors.white
+            ),
+          ),
+        )
+    ): Container(
       width: 80,
       height: 25,
       decoration: BoxDecoration(
@@ -920,5 +938,254 @@ Widget chipTag(String nameTag) {
           ),
         ),
       )
+  );
+}
+
+Widget cardListDocument(widthScreen, heightScreen, docName, date, isFolder, isStamped, isSign, isTera) {
+  return Container(
+    width: widthScreen * 0.87,
+    height: heightScreen * 0.14,
+    padding: EdgeInsets.symmetric(vertical: 16,horizontal: 25),
+    decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(15),
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 20,
+          )
+        ]
+    ),
+    child: Row(
+      children: [
+        Container(
+          width: 35,
+          height: 35,
+          decoration: BoxDecoration(
+            color: bluePrimary.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(50),
+          ),
+          child: Center(
+            child: Icon(Ionicons.document_text, color: bluePrimary,),
+          ),
+        ),
+        SizedBox(
+          width: 20,
+        ),
+        Container(
+          width: widthScreen * 0.6,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    width: 200,
+                    child: Text(
+                      docName,
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500
+                      ),
+                    ),
+                  ),
+                  Text(
+                    "draf",
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
+                        color: Colors.grey
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              Row(
+                children: [
+                  Text(
+                    date,
+                    style: TextStyle(
+                        fontSize: 10
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(
+                height: 5,
+              ),
+              Row(
+                children: [
+                  isFolder == true?
+                    Text(
+                      "Bulk",
+                      style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.grey
+                      ),
+                    ): Text(
+                    "Single",
+                    style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(
+                height: 5,
+              ),
+              Row(
+                children: [
+                  chipTag("E-Materai", isStamped),
+                  SizedBox(
+                    width: 10,
+                  ),
+                  chipTag("E-Sign", isSign),
+                ],
+              )
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget bottomSave(BuildContext context) {
+  return Container(
+    width: 500,
+    height: 50,
+    child: ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: bluePrimary,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+      onPressed: () async {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)
+              ),
+              child: Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.topCenter,
+                children: <Widget>[
+                  Container(
+                    padding: const EdgeInsets.all(30.0),
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                        border: Border(top: BorderSide(color: tertiaryColor50, width: 10)),
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(10))
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        SizedBox(height: 30.0),
+                        Text(
+                          "Verification Successful",
+                          style: GoogleFonts.roboto(
+                              fontSize: 16.5,
+                              fontWeight: FontWeight.w600
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: 20.0),
+                        Container(
+                          width: 400,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            border: Border.all(width: 2,color: bluePrimary),
+                            color: primaryColor5,
+                          ),
+                          child: Center(
+                            child: Text(
+                              "Verification Successful, Please wait for certificate activation from Peruri",
+                              style: GoogleFonts.roboto(
+                                  fontSize: 10,
+                                  color: bluePrimary
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 20.0),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Container(
+                              width: 150,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                                        side: BorderSide(width: 2, color: primaryColor2.withOpacity(0.5))
+                                    )
+                                ),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: Text(
+                                  'Back',
+                                  style: TextStyle(
+                                      color: primaryColor2
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Container(
+                              width: 150,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                    backgroundColor: primaryColor2,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.all(Radius.circular(10))
+                                    )
+                                ),
+                                onPressed: () async {
+
+
+                                },
+                                child: Text(
+                                  'Send',
+                                  style: TextStyle(
+                                      color: Colors.white
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Floating Icon
+                  Positioned(
+                    top: -30.0,
+                    child: CircleAvatar(
+                        backgroundColor: tertiaryColor100,
+                        radius: 30.0,
+                        child: Image.asset("assets/images/alert.png", width: 50,)
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+      child: Text(
+        "Send",
+        style: TextStyle(color: Colors.white),
+      ),
+    ),
   );
 }

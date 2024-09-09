@@ -287,7 +287,6 @@ class _ActivateAccountState extends State<ActivateAccount> {
                   SizedBox(
                     height: size.height * 0.2,
                   ),
-
                 ],
               ),
             ),

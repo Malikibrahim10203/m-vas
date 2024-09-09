@@ -34,5 +34,8 @@ class Api {
   static String upload_single = "$_host/api/v1/document";
   static String upload_bulk = "$_host/api/v1/document-bulk";
 
+  // Get All Document
+  static String get_all_document = "$_host/api/v1/document";
+
 
 }

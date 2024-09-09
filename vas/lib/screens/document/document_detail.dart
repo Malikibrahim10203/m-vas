@@ -143,11 +143,11 @@ class _DocumentDetailState extends State<DocumentDetail> {
                     ),
                     Row(
                       children: [
-                        chipTag("E-Materai"),
+                        chipTag("E-Materai", false),
                         SizedBox(
                           width: 10,
                         ),
-                        chipTag("E-Materai"),
+                        chipTag("E-Sign", false),
                       ],
                     ),
                     SizedBox(
