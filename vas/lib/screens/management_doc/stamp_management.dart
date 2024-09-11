@@ -2,25 +2,23 @@ import "dart:convert";
 
 import "package:flutter/cupertino.dart";
 import "package:flutter/material.dart";
-import "package:flutter_speed_dial/flutter_speed_dial.dart";
 import "package:intl/intl.dart";
 import "package:vas/event/event_db.dart";
 import "package:vas/event/event_pref.dart";
 import "package:vas/models/document.dart";
-import "package:vas/screens/document/document_detail.dart";
-import "package:vas/screens/upload_document/upload_bulk.dart";
-import "package:vas/screens/upload_document/upload_single.dart";
+import "package:vas/screens/document/document_bulk_detail.dart";
+import "package:vas/screens/document/document_single_detail.dart";
 import "package:vas/widgets/components.dart";
 
-class SignManagement extends StatefulWidget {
-  const SignManagement({super.key});
+
+class StampManagement extends StatefulWidget {
+  const StampManagement({super.key});
 
   @override
-  State<SignManagement> createState() => _SignManagementState();
+  State<StampManagement> createState() => _StampManagementState();
 }
 
-class _SignManagementState extends State<SignManagement> {
-
+class _StampManagementState extends State<StampManagement> {
   var heightScreen;
   var widthScreen;
 
@@ -36,7 +34,7 @@ class _SignManagementState extends State<SignManagement> {
 
   int _selectedIndex = 2;
 
-  late Future<Document?> document;
+  Future<Document?>? document;
 
   void _onItemTapped(int index) {
     setState(() {
@@ -68,7 +66,8 @@ class _SignManagementState extends State<SignManagement> {
     heightScreen = MediaQuery.of(context).size.height;
     widthScreen = MediaQuery.of(context).size.width;
 
-    return Scaffold(
+    return document!=null?
+    Scaffold(
       appBar: AppBar(
         leading: IconButton(
           onPressed: () {
@@ -99,12 +98,12 @@ class _SignManagementState extends State<SignManagement> {
                 width: widthScreen * 0.9,
                 height: heightScreen * 0.095,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color: bluePrimary,
-                  image: DecorationImage(
-                    image: AssetImage("assets/images/box-seal-management.png"),
-                    fit: BoxFit.cover
-                  )
+                    borderRadius: BorderRadius.circular(10),
+                    color: bluePrimary,
+                    image: DecorationImage(
+                        image: AssetImage("assets/images/box-seal-management.png"),
+                        fit: BoxFit.cover
+                    )
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.start,
@@ -218,43 +217,54 @@ class _SignManagementState extends State<SignManagement> {
                 height: 20,
               ),
               Container(
-                width: 400,
-                height: 600,
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: FutureBuilder<Document?>(
-                        future: document,
-                        builder: (BuildContext context, snapshot) {
+                  width: 400,
+                  height: heightScreen * 0.65,
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: FutureBuilder<Document?>(
+                          future: document,
+                          builder: (BuildContext context, snapshot) {
 
-                          if(snapshot.connectionState == ConnectionState.waiting) {
-                            return Center(child: CircularProgressIndicator());
-                          } else if(snapshot.hasError) {
-                            return Center(child: Text('Error: ${snapshot.error}'));
-                          } else if(!snapshot.hasData || snapshot.data!.data.isEmpty) {
-                            return Center(child: Text('No documents available.'));
-                          } else {
-                            return ListView.separated(
-                              separatorBuilder: (BuildContext context, index){
-                                return SizedBox(
-                                  height: 1,
-                                );
-                              },
-                              itemCount: snapshot.data!.data.length,
-                              itemBuilder: (context, index) {
-                                Datum datum = snapshot.data!.data[index];
-                                return Container(
-                                  padding: EdgeInsets.all(10),
-                                  child: cardListDocument(widthScreen, heightScreen, datum.docName, datum.createdAt.toString(), datum.isFolder, datum.isStamped, datum.isSigned, datum.isTera),
-                                );
-                              },
-                            );
-                          }
-                        },
+                            if(snapshot.connectionState == ConnectionState.waiting) {
+                              return Center(child: CircularProgressIndicator());
+                            } else if(snapshot.hasError) {
+                              return Center(child: Text('Error: ${snapshot.error}'));
+                            } else if(!snapshot.hasData || snapshot.data!.data.isEmpty) {
+                              return Center(child: Text('No documents available.'));
+                            } else {
+                              return ListView.separated(
+                                separatorBuilder: (BuildContext context, index){
+                                  return SizedBox(
+                                    height: 1,
+                                  );
+                                },
+                                itemCount: snapshot.data!.data.length,
+                                itemBuilder: (context, index) {
+                                  Datum datum = snapshot.data!.data[index];
+                                  return GestureDetector(
+                                    onTap: () async {
+                                      print(datum.docId);
+
+                                      List statusChip = [datum.isStamped, datum.isSigned, datum.isTera];
+
+                                      datum.isFolder?
+                                      Navigator.push(context, MaterialPageRoute(builder: (context)=>DocumentBulkDetail(docId: datum.docId, isFolder: datum.isFolder, statusChip: statusChip,))):
+                                      Navigator.push(context, MaterialPageRoute(builder: (context)=>DocumentSingleDetail(docId: datum.docId, isFolder: datum.isFolder, statusChip: statusChip,)));
+                                    },
+                                    child: Container(
+                                      padding: EdgeInsets.all(10),
+                                      child: cardListDocument(widthScreen, heightScreen, datum.docName, datum.createdAt.toString(), datum.isFolder, datum.isStamped, datum.isSigned, datum.isTera),
+                                    ),
+                                  );
+                                },
+                              );
+                            }
+                          },
+                        ),
                       ),
-                    ),
-                  ],
-                )
+                    ],
+                  )
               ),
               SizedBox(
                 height: 15,
@@ -303,16 +313,19 @@ class _SignManagementState extends State<SignManagement> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
-            _bottomAppBar(0, "bar-home", "Home", DocumentDetail()),
+            _bottomAppBar(0, "bar-home", "Home", ""),
             SizedBox(width: 5),
-            _bottomAppBar(1, "bar-doc", "Document", DocumentDetail()),
+            _bottomAppBar(1, "bar-doc", "Document", ""),
             SizedBox(width: 48),
-            _bottomAppBar(2, "bar-chat", "Chat", DocumentDetail()),
+            _bottomAppBar(2, "bar-chat", "Chat", ""),
             SizedBox(width: 5),
-            _bottomAppBar(3, "bar-setting", "Setting", DocumentDetail()),
+            _bottomAppBar(3, "bar-setting", "Setting", ""),
           ],
         ),
       ),
+    ):
+    Scaffold(
+      body: CircularProgressIndicator(),
     );
   }
 

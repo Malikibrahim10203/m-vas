@@ -37,5 +37,14 @@ class Api {
   // Get All Document
   static String get_all_document = "$_host/api/v1/document";
 
+  // Get One Document
+  static String get_one_document = "$_host/api/v1/document/";
+
+  // Get Document Activity
+  static String get_document_activity = "$_host/api/v1/document-log-activities";
+
+  // Get Log Activity
+  static String get_log_activity = "$_host/api/v1/user-log-activities";
+
 
 }

@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:path/path.dart';
 import 'package:vas/event/event_pref.dart';
+import 'package:vas/models/activity.dart';
+import 'package:vas/models/bulk_document.dart';
 import 'package:vas/models/credential.dart';
 import 'package:vas/models/district.dart';
 import 'package:vas/models/document.dart';
@@ -14,6 +16,8 @@ import 'package:vas/models/office.dart';
 import 'package:vas/models/peruri_jwt_token.dart';
 import 'package:vas/models/quota.dart';
 import 'package:vas/models/province.dart';
+import 'package:vas/models/single_document.dart';
+import 'package:vas/models/user_log_activity.dart';
 import 'package:vas/models/users.dart';
 import 'package:vas/screens/auth/change_password.dart';
 import 'package:vas/screens/auth/login.dart';
@@ -636,8 +640,140 @@ class EventDB {
     }
   }
 
+  static Future<dynamic> getDetailDocument(String token, String docId, bool isFolder) async {
+    Singledocument? singleDoc;
+    Bulkdocument? bulkDoc;
+    var folderType = isFolder ? '1' : '0';
 
+    try {
+      var response = await http.get(
+        Uri.parse("${Api.get_one_document}$docId").replace(
+            queryParameters: {
+              'is_folder': folderType
+            }
+        ),
+        headers: {
+          'token': token
+        },
+      );
 
+      if (response.statusCode == 200) {
+        var responseBody = jsonDecode(response.body);
+
+        if (responseBody != null && responseBody['data'] != null) {
+          if (folderType == '0') {  // Ensure you're comparing against the correct type
+            singleDoc = Singledocument.fromJson(responseBody['data']);
+            return singleDoc;
+          } else {
+            bulkDoc = Bulkdocument.fromJson(responseBody['data']);
+            return bulkDoc;
+          }
+        } else {
+          print("Error: No data found in response body.");
+        }
+      } else {
+        print("Request failed with status: ${response.statusCode}");
+        print("URL: ${Api.get_one_document}$docId");
+      }
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
+
+  static Future<Activity?> getActivity(String token, docId, folderId,) async {
+
+    Activity? activityData;
+
+    try {
+      var response;
+      if(docId != null) {
+        response = await http.get(
+            Uri.parse(Api.get_document_activity).replace(
+                queryParameters: {
+                  'page': '1',
+                  'sort_by': 'created_at',
+                  'order': 'desc',
+                  'doc_id': docId.toString(),
+                  'row': '10',
+                }
+            ),
+            headers: {
+              'token': token,
+            }
+        );
+      } else if(folderId != null) {
+        response = await http.get(
+            Uri.parse(Api.get_document_activity).replace(
+                queryParameters: {
+                  'page': '1',
+                  'sort_by': 'created_at',
+                  'order': 'desc',
+                  'row': '10',
+                  'folder_id': folderId.toString()
+                }
+            ),
+            headers: {
+              'token': token,
+            }
+        );
+      }
+
+      var responseBody = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        if (responseBody.containsKey('data') && responseBody['data'] is List) {
+          final jsonResponse = json.decode(response.body);
+          activityData = Activity.fromJson({'data': jsonResponse['data']});
+
+          return activityData;
+
+        } else {
+          print("Data not in expected format or missing 'data' field.");
+          return null;
+        }
+      } else {
+        print("Failed to get activity data. Status code: ${response.statusCode}");
+        return null;
+      }
+    } catch (e) {
+      print("Error: $e");
+    }
+    return null;
+  }
+
+  static Future<UserLogActivity?> getLogActivity(token) async {
+
+    UserLogActivity? userLogActivity;
+
+    try {
+      var response = await http.get(Uri.parse(Api.get_log_activity).replace(
+        queryParameters: {
+          'sort_by': 'created_at',
+          'order': 'desc'
+        }
+      ),
+      headers: {
+        'token': token
+      });
+
+      var responseBody = jsonDecode(response.body);
+
+      if(response.statusCode == 200) {
+        if(responseBody.containsKey('data') && responseBody['data'] is List) {
+          userLogActivity = UserLogActivity.fromJson({'data': responseBody['data']});
+        } else {
+          print("Data not in expected format or missing 'data' field.");
+        }
+      } else {
+        print("Failed to get activity data. Status code: ${response.statusCode}");
+      }
+
+    } catch(e) {
+      print(e);
+    }
+
+    return userLogActivity;
+  }
 
   static Future<void> LogOut() async {
     EventPref.clear();

@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:ionicons/ionicons.dart';
 import 'package:provider/provider.dart';
 import 'package:vas/event/event_camerapref.dart';
 import 'package:vas/event/event_db.dart';
 import 'package:vas/event/event_pref.dart';
 import 'package:vas/models/module.dart';
-import 'package:vas/models/quota.dart';
-import 'package:vas/models/users.dart';
-import 'package:vas/screens/document/document_detail.dart';
-import 'package:vas/screens/e_Kyc/regist_esign.dart';
-import 'package:vas/screens/e_Sign/sign_management.dart';
+import 'package:vas/models/user_log_activity.dart';
+import 'package:vas/screens/management_doc/sign_management.dart';
 import 'package:vas/screens/loading.dart';
+import 'package:vas/screens/management_doc/stamp_management.dart';
 import 'package:vas/screens/upload_document/upload_bulk.dart';
 import 'package:vas/screens/upload_document/upload_single.dart';
 import 'package:vas/services/UserProvider.dart';
@@ -59,6 +55,7 @@ class _DashboardState extends State<Dashboard> {
   int currentIndex = 0;
 
   int _selectedIndex = 2;
+  Future<UserLogActivity?>? dataLog;
 
   void _onItemTapped(int index) {
     setState(() {
@@ -78,6 +75,8 @@ class _DashboardState extends State<Dashboard> {
         print(data.data.token);
       }
     });
+
+    dataLog = EventDB.getLogActivity(token);
 
 
     print("statusRegistrationPeruri: $statusRegistrationPeruri");
@@ -468,7 +467,7 @@ class _DashboardState extends State<Dashboard> {
                         children: [
                           signM==true?MenuActive():Container(),
                           SizedBox(height: 3,),
-                          stampM==true?Menu("assets/images/emet.png","Stamp e-Materai", SignManagement()): Container(),
+                          stampM==true?Menu("assets/images/emet.png","Stamp e-Materai", StampManagement()): Container(),
                           SizedBox(height: 3,),
                           Menu("assets/images/tera.png","Stamp Tera", SignManagement()),
                           SizedBox(height: 3,),
@@ -501,6 +500,12 @@ class _DashboardState extends State<Dashboard> {
                 ),
                 child: Column(
                   children: [
+                    // FutureBuilder<UserLogActivity?>(
+                    //   future: dataLog,
+                    //   builder: (BuildContext context, snapshot) {
+                    //     return Text(snapshot.data!.data[0].activity);
+                    //   },
+                    // ),
                     SizedBox(
                       height: 10,
                     ),
@@ -515,7 +520,9 @@ class _DashboardState extends State<Dashboard> {
                           ),
                         ),
                         GestureDetector(
-                          onTap: (){},
+                          onTap: () {
+
+                          },
                           child: Text(
                             "view all",
                             style: TextStyle(
@@ -634,13 +641,13 @@ class _DashboardState extends State<Dashboard> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
-              _bottomAppBar(0, "bar-home", "Home", DocumentDetail()),
+              _bottomAppBar(0, "bar-home", "Home", ""),
               SizedBox(width: 5),
-              _bottomAppBar(1, "bar-doc", "Document", DocumentDetail()),
+              _bottomAppBar(1, "bar-doc", "Document", ""),
               SizedBox(width: 48),
-              _bottomAppBar(2, "bar-chat", "Chat", DocumentDetail()),
+              _bottomAppBar(2, "bar-chat", "Chat", ""),
               SizedBox(width: 5),
-              _bottomAppBar(3, "bar-setting", "Setting", DocumentDetail()),
+              _bottomAppBar(3, "bar-setting", "Setting", ""),
             ],
           ),
         ),
