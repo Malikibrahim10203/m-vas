@@ -3,6 +3,7 @@ import "dart:convert";
 import "package:flutter/cupertino.dart";
 import "package:flutter/material.dart";
 import "package:intl/intl.dart";
+import "package:modal_bottom_sheet/modal_bottom_sheet.dart";
 import "package:vas/event/event_db.dart";
 import "package:vas/event/event_pref.dart";
 import "package:vas/models/document.dart";
@@ -25,6 +26,7 @@ class _SignManagementState extends State<SignManagement> {
   var searchController = TextEditingController();
 
   var token;
+  int page = 1;
 
   var saldoESign;
 
@@ -33,6 +35,11 @@ class _SignManagementState extends State<SignManagement> {
   int currentIndex = 0;
 
   int _selectedIndex = 2;
+
+  var filterOfficeController = TextEditingController();
+  var filterStatusController = TextEditingController();
+  var filterOrderByController = TextEditingController();
+  var filterOrderByTypeController = TextEditingController();
 
   Future<Document?>? document;
 
@@ -46,7 +53,7 @@ class _SignManagementState extends State<SignManagement> {
     token = (await EventPref.getCredential())?.data.token;
 
     saldoESign = (await EventDB.getQuota(token, "2"))?.remaining;
-    document = EventDB.getDocuments(token);
+    document = EventDB.getDocuments(token, page);
 
     setState(() {
 
@@ -185,7 +192,16 @@ class _SignManagementState extends State<SignManagement> {
                         padding: EdgeInsets.zero,
                         controller: searchController,
                         onSubmitted: (value) {
-                          print(searchController.text);
+                          searchController.text = value!;
+                          setState(() {
+
+                          });
+                        },
+                        onChanged: (value) {
+                          searchController.text = value!;
+                          setState(() {
+
+                          });
                         },
                         decoration: BoxDecoration(
                             color: Colors.white,
@@ -201,14 +217,203 @@ class _SignManagementState extends State<SignManagement> {
                       ),
                     ),
                     Container(
-                      width: widthScreen * 0.12,
-                      height: heightScreen * 0.05,
-                      padding: EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color: Colors.transparent,
-                      ),
-                      child: Image.asset("assets/images/filter.png",),
+                        width: widthScreen * 0.12,
+                        height: heightScreen * 0.05,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: Colors.transparent,
+                        ),
+                        child: InkWell(
+                          onTap: () async {
+                            return showMaterialModalBottomSheet(
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)
+                              ),
+                              context: context,
+                              builder: (context) {
+                                return Container(
+                                  height: 550,
+                                  padding: EdgeInsets.all(20),
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            "search",
+                                            style: TextStyle(
+                                                fontSize: 30,
+                                                fontWeight: FontWeight.w500
+                                            ),
+                                          ),
+                                          Text(
+                                            "Reset",
+                                            style: TextStyle(
+                                                fontSize: 30,
+                                                fontWeight: FontWeight.w400,
+                                                color: Colors.black.withOpacity(0.2)
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(
+                                        height: 20,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text("Office"),
+                                        ],
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      Container(
+                                        height: 55,
+                                        child: TextFormField(
+                                          controller: filterOfficeController,
+                                          decoration: InputDecoration(
+                                              border: OutlineInputBorder(
+                                                  borderSide: BorderSide(
+                                                      width: 1
+                                                  ),
+                                                  borderRadius: BorderRadius.circular(10)
+                                              )
+                                          ),
+                                          onEditingComplete: () {
+                                            setState(() {
+
+                                            });
+                                          },
+                                          onTapOutside: (value) {
+                                            setState(() {
+
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        height: 20,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text("Status"),
+                                        ],
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      Container(
+                                        height: 55,
+                                        child: DropdownButtonFormField(
+                                          decoration: InputDecoration(
+                                              border: OutlineInputBorder(
+                                                  borderSide: BorderSide(
+                                                      width: 1
+                                                  ),
+                                                  borderRadius: BorderRadius.circular(10)
+                                              )
+                                          ),
+                                          items: <String>['Draft', 'On Progress', 'Done', 'Un Done'].map((String value) {
+                                            return DropdownMenuItem<String>(
+                                              value: value,
+                                              child: Text(value),
+                                            );
+                                          }).toList(),
+                                          hint: Text("-- Status Document --"),
+                                          onChanged: (value) {
+                                            if (value == 'Draft') {
+                                              filterStatusController.text = '0';
+                                            } else if (value == 'On Progress') {
+                                              filterStatusController.text = '1';
+                                            } else if (value == 'Done') {
+                                              filterStatusController.text = '2';
+                                            } else {
+                                              filterStatusController.text = '3';
+                                            }
+                                            setState(() {
+                                              print(filterStatusController.text);
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        height: 20,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text("Order By"),
+                                        ],
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      Container(
+                                        height: 55,
+                                        child: DropdownButtonFormField(
+                                          decoration: InputDecoration(
+                                              border: OutlineInputBorder(
+                                                  borderSide: BorderSide(
+                                                      width: 1
+                                                  ),
+                                                  borderRadius: BorderRadius.circular(10)
+                                              )
+                                          ),
+                                          items: <String>['Document Name', 'Status'].map((String value) {
+                                            return DropdownMenuItem<String>(
+                                              value: value,
+                                              child: Text(value),
+                                            );
+                                          }).toList(),
+                                          hint: Text("-- Status Document --"),
+                                          onChanged: (value) {
+                                            filterOrderByController.text = value as String;
+                                          },
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        height: 20,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text("Order By Type"),
+                                        ],
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      Row(
+                                        children: [
+                                          RadioMenuButton(value: (), groupValue: context, onChanged: (value) { filterOrderByTypeController.text = value as String; }, child: Text("Asc")),
+                                          RadioMenuButton(value: (), groupValue: context, onChanged: (value) { filterOrderByTypeController.text = value as String; }, child: Text("Desc")),
+                                        ],
+                                      ),
+                                      SizedBox(
+                                        height: 20,
+                                      ),
+                                      Container(
+                                        width: 300,
+                                        height: 50,
+                                        child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                              shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(10)
+                                              )
+                                          ),
+                                          onPressed: () {},
+                                          child: Text("Apply"),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                          child: Container(
+                            padding: EdgeInsets.all(8),
+                            child: Image.asset("assets/images/filter.png",),
+                          ),
+                        )
                     ),
                   ],
                 ),
@@ -217,54 +422,75 @@ class _SignManagementState extends State<SignManagement> {
                 height: 20,
               ),
               Container(
-                  width: 400,
-                  height: heightScreen * 0.65,
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: FutureBuilder<Document?>(
-                          future: document,
-                          builder: (BuildContext context, snapshot) {
+                width: 400,
+                height: heightScreen * 0.7,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: FutureBuilder<Document?>(
+                        future: document,
+                        builder: (BuildContext context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return Center(child: CircularProgressIndicator());
+                          } else if (snapshot.hasError) {
+                            return Center(child: Text('Error: ${snapshot.error}'));
+                          } else if (!snapshot.hasData || snapshot.data!.data.isEmpty) {
+                            return Center(child: Text('No documents available.'));
+                          } else {
+                            List<Datum> docData = snapshot.data!.data;
+                            List<Datum> filteredData = docData;
 
-                            if(snapshot.connectionState == ConnectionState.waiting) {
-                              return Center(child: CircularProgressIndicator());
-                            } else if(snapshot.hasError) {
-                              return Center(child: Text('Error: ${snapshot.error}'));
-                            } else if(!snapshot.hasData || snapshot.data!.data.isEmpty) {
-                              return Center(child: Text('No documents available.'));
-                            } else {
-                              return ListView.separated(
-                                separatorBuilder: (BuildContext context, index){
-                                  return SizedBox(
-                                    height: 1,
-                                  );
-                                },
-                                itemCount: snapshot.data!.data.length,
-                                itemBuilder: (context, index) {
-                                  Datum datum = snapshot.data!.data[index];
-                                  return GestureDetector(
-                                    onTap: () async {
-                                      print(datum.docId);
-
-                                      List statusChip = [datum.isStamped, datum.isSigned, datum.isTera];
-
-                                      datum.isFolder?
-                                      Navigator.push(context, MaterialPageRoute(builder: (context)=>DocumentBulkDetail(docId: datum.docId, isFolder: datum.isFolder, statusChip: statusChip,))):
-                                      Navigator.push(context, MaterialPageRoute(builder: (context)=>DocumentSingleDetail(docId: datum.docId, isFolder: datum.isFolder, statusChip: statusChip,)));
-                                    },
-                                    child: Container(
-                                      padding: EdgeInsets.all(10),
-                                      child: cardListDocument(widthScreen, heightScreen, datum.docName, datum.createdAt.toString(), datum.isFolder, datum.isStamped, datum.isSigned, datum.isTera),
-                                    ),
-                                  );
-                                },
-                              );
+                            // Apply search filter if there's text in the search field
+                            if (searchController.text.isNotEmpty) {
+                              filteredData = filteredData.where((datum) =>
+                                  datum.docName.toLowerCase().contains(searchController.text.toLowerCase())).toList();
                             }
-                          },
-                        ),
+
+                            // Apply office filter if there's text in the office field
+                            if (filterOfficeController.text.isNotEmpty) {
+                              filteredData = filteredData.where((datum) =>
+                                  datum.officeName.toLowerCase().contains(filterOfficeController.text.toLowerCase())).toList();
+                            }
+
+                            // Apply status filter if there's text in the status field
+                            if (filterStatusController.text.isNotEmpty) {
+                              filteredData = filteredData.where((datum) =>
+                              datum.stampStatus == int.parse(filterStatusController.text)).toList();
+                            }
+
+                            return ListView.separated(
+                              separatorBuilder: (BuildContext context, index) {
+                                return SizedBox(
+                                  height: 1,
+                                );
+                              },
+                              itemCount: filteredData.length,
+                              itemBuilder: (context, index) {
+                                Datum datum = filteredData[index];
+
+                                return GestureDetector(
+                                  onTap: () async {
+                                    print(datum.docId);
+
+                                    List statusChip = [datum.isStamped, datum.isSigned, datum.isTera];
+
+                                    datum.isFolder
+                                        ? Navigator.push(context, MaterialPageRoute(builder: (context) => DocumentBulkDetail(docId: datum.docId, isFolder: datum.isFolder, statusChip: statusChip,)))
+                                        : Navigator.push(context, MaterialPageRoute(builder: (context) => DocumentSingleDetail(docId: datum.docId, isFolder: datum.isFolder, statusChip: statusChip,)));
+                                  },
+                                  child: Container(
+                                    padding: EdgeInsets.all(10),
+                                    child: cardListDocument(widthScreen, heightScreen, datum.docName, datum.createdAt.toString(), datum.isFolder, datum.isStamped, datum.isSigned, datum.isTera),
+                                  ),
+                                );
+                              },
+                            );
+                          }
+                        },
                       ),
-                    ],
-                  )
+                    ),
+                  ],
+                ),
               ),
               SizedBox(
                 height: 15,
@@ -273,83 +499,54 @@ class _SignManagementState extends State<SignManagement> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        shape: CircleBorder(),
-        onPressed: () async {
-          // Assume `token` is already defined and passed correctly
-          Document? document = await EventDB.getDocuments(token);
+        floatingActionButton: Container(
+          child: Column(
+            children: [
+              SizedBox(
+                height: heightScreen * 0.9,
+              ),
+              FloatingActionButton(
+                shape: CircleBorder(),
+                onPressed: () async {
+                  // Assume `token` is already defined and passed correctly
+                  Document? document = await EventDB.getDocuments(token,page);
 
-          if (document != null && document.data.isNotEmpty) {
-            Datum firstDatum = document.data[2];
+                  if (document != null && document.data.isNotEmpty) {
+                    Datum firstDatum = document.data[2];
 
-            // Convert the first Datum to JSON for better readability
-            String datumJson = jsonEncode(firstDatum.toJson());
+                    // Convert the first Datum to JSON for better readability
+                    String datumJson = jsonEncode(firstDatum.toJson());
 
-            // Print the full data of the first Datum
-            print('First Datum: $datumJson');
-          } else {
-            print("Failed to retrieve document data or no data available.");
-          }
-        },
-        child: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-              color: Color(0xff0081F1),
-              borderRadius: BorderRadius.all(Radius.circular(20))
-          ),
-          child: Icon(
-            Icons.file_upload_outlined,
-            color: Colors.white,
-            size: 25,
+                    // Print the full data of the first Datum
+                    print('First Datum: $datumJson');
+                  } else {
+                    print("Failed to retrieve document data or no data available.");
+                  }
+                },
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                      color: Color(0xff0081F1),
+                      borderRadius: BorderRadius.all(Radius.circular(20))
+                  ),
+                  child: Icon(
+                    Icons.pending_outlined,
+                    color: Colors.white,
+                    size: 25,
+                  ),
+                ),
+                backgroundColor: Color(0xffEFF5FF),
+              )
+            ],
           ),
         ),
-        backgroundColor: Color(0xffEFF5FF),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-        color: Colors.white,
-        height: 70,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            _bottomAppBar(0, "bar-home", "Home", ""),
-            SizedBox(width: 5),
-            _bottomAppBar(1, "bar-doc", "Document", ""),
-            SizedBox(width: 48),
-            _bottomAppBar(2, "bar-chat", "Chat", ""),
-            SizedBox(width: 5),
-            _bottomAppBar(3, "bar-setting", "Setting", ""),
-          ],
-        ),
-      ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     ):
         Scaffold(
-         body: CircularProgressIndicator(),
+         body: Center(
+           child: CircularProgressIndicator(),
+         ),
         );
-  }
-
-  Widget _bottomAppBar(item,icon,text,route) {
-    return GestureDetector(
-      onTap: () {
-        _onItemTapped(item);
-        Navigator.push(context, MaterialPageRoute(builder: (context)=>route));
-      },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Image.asset("assets/images/$icon.png", width: 30,),
-          SizedBox(
-            height: 5,
-          ),
-          Text(
-            "${text}",
-            style: TextStyle(
-              color: item!=_selectedIndex?greyColor3:primaryColor2,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

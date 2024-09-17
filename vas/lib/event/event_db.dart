@@ -532,7 +532,7 @@ class EventDB {
       var request = http.MultipartRequest('POST', Uri.parse(Api.upload_single));
 
       request.headers['Content-Type'] = 'multipart/form-data';
-      // request.headers['token'] = token;
+      request.headers['token'] = token;
 
       request.fields['doc_name'] = docName;
       request.fields['office_id'] = officeId;
@@ -553,7 +553,7 @@ class EventDB {
 
       var response = await request.send();
 
-      if (response.statusCode == 200 && response.statusCode == 201) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         print("File uploaded successfully");
         data[0] = true;
       } else {
@@ -575,7 +575,7 @@ class EventDB {
       var request = http.MultipartRequest('POST', Uri.parse(Api.upload_bulk));
 
       request.headers['Content-Type'] = 'multipart/form-data';
-      // request.headers['token'] = token;
+      request.headers['token'] = token;
 
       request.fields['folder_name'] = docName;
       request.fields['office_id'] = officeId;
@@ -615,9 +615,13 @@ class EventDB {
     return data;
   }
 
-  static Future<Document?> getDocuments(String token) async {
+  static Future<Document?> getDocuments(String token, int page) async {
     final response = await http.get(
-      Uri.parse(Api.get_all_document),
+      Uri.parse(Api.get_all_document).replace(
+        queryParameters: {
+          'page': page.toString()
+        }
+      ),
       headers: {
         "token": token,
       },
@@ -774,6 +778,7 @@ class EventDB {
 
     return userLogActivity;
   }
+
 
   static Future<void> LogOut() async {
     EventPref.clear();

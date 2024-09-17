@@ -496,6 +496,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.6"
+  modal_bottom_sheet:
+    dependency: "direct main"
+    description:
+      name: modal_bottom_sheet
+      sha256: eac66ef8cb0461bf069a38c5eb0fa728cee525a531a8304bd3f7b2185407c67e
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.0"
   nested:
     dependency: transitive
     description:
@@ -761,18 +769,18 @@ packages:
     dependency: transitive
     description:
       name: syncfusion_flutter_core
-      sha256: "877411504a07c874970c361762c447081e6e13219a6bea6fc88fbb31c2aff4a4"
+      sha256: "6e67726b85812afc7105725a23620b876ab7f6b04b8410e211330ffb8c2cdbe8"
       url: "https://pub.dev"
     source: hosted
-    version: "26.2.13"
+    version: "26.2.14"
   syncfusion_flutter_datepicker:
     dependency: "direct main"
     description:
       name: syncfusion_flutter_datepicker
-      sha256: "7989608f897edb61ea156d743ca31024eba688679a85f633f8203d17eafab83c"
+      sha256: "9d0e1db2f49cef3fde28c5a42c7ef9b64fc9a49c52557eb6961cd41af3cf8adc"
       url: "https://pub.dev"
     source: hosted
-    version: "26.2.13"
+    version: "26.2.14"
   term_glyph:
     dependency: transitive
     description:

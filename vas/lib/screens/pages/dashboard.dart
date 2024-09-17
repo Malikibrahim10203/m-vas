@@ -1,5 +1,7 @@
+import 'package:another_stepper/another_stepper.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:provider/provider.dart';
 import 'package:vas/event/event_camerapref.dart';
 import 'package:vas/event/event_db.dart';
@@ -55,7 +57,9 @@ class _DashboardState extends State<Dashboard> {
   int currentIndex = 0;
 
   int _selectedIndex = 2;
+
   Future<UserLogActivity?>? dataLog;
+  List<StepperData> stepperData = [];
 
   void _onItemTapped(int index) {
     setState(() {
@@ -126,7 +130,7 @@ class _DashboardState extends State<Dashboard> {
 
     final userProvider = Provider.of<Userprovider>(context);
 
-    if (userProvider.user == null) {
+    if (userProvider.user == null || module == null) {
       return Center(
         child: Loading(),
       );
@@ -500,12 +504,6 @@ class _DashboardState extends State<Dashboard> {
                 ),
                 child: Column(
                   children: [
-                    // FutureBuilder<UserLogActivity?>(
-                    //   future: dataLog,
-                    //   builder: (BuildContext context, snapshot) {
-                    //     return Text(snapshot.data!.data[0].activity);
-                    //   },
-                    // ),
                     SizedBox(
                       height: 10,
                     ),
@@ -534,26 +532,85 @@ class _DashboardState extends State<Dashboard> {
                       ],
                     ),
                     SizedBox(
-                      height: 50,
+                      height: 10,
                     ),
-                    Stack(
-                      children: [
-                        Column(
-                          children: [
-                            Image.asset(
-                              "assets/images/history.png",
-                              width: 100,
+                    Container(
+                      height: heightScreen * 0.316,
+                      child: Column(
+                        children: [
+                          Expanded(
+                            child: FutureBuilder<UserLogActivity?>(
+                              future: dataLog,
+                              builder: (BuildContext context, snapshot) {
+                                if(snapshot.connectionState == ConnectionState.waiting) {
+                                  return Center(child: CircularProgressIndicator());
+                                } else if(snapshot.hasError) {
+                                  return Center(child: Text('Error: ${snapshot.error}'));
+                                } else if(!snapshot.hasData || snapshot.data!.data.isEmpty) {
+                                  return Center(
+                                    child: Stack(
+                                      children: [
+                                        Column(
+                                          children: [
+                                            Image.asset(
+                                              "assets/images/history.png",
+                                              width: 100,
+                                            ),
+                                            Text(
+                                              "No Activity History",
+                                              style: TextStyle(
+                                                  color: Colors.black12
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                } else {
+                                  for(var i = 0; i < snapshot.data!.data.length; i++) {
+                                    DataLogActivity dataLogActivity = snapshot.data!.data[i];
+                                    stepperData.add(
+                                      StepperData(
+                                        title: StepperText(
+                                          "${dataLogActivity.activity??''} - ${dataLogActivity.creator??''}",
+                                          textStyle: const TextStyle(
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                        subtitle: StepperText(DateFormat('yyyy-MM-dd, HH:mm:ss').format(dataLogActivity.createdAt!)),
+                                        iconWidget: Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: const BoxDecoration(
+                                            color: Color(0xff07418C),
+                                            borderRadius: BorderRadius.all(Radius.circular(30),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  return Scrollbar(
+                                    child: ListView.builder(
+                                      itemCount: 1,
+                                      itemBuilder: (context, index) {
+
+                                        return AnotherStepper(
+                                          stepperList: stepperData,
+                                          stepperDirection: Axis.vertical,
+                                          verticalGap: 25,
+                                          inActiveBarColor: Colors.black.withOpacity(0.1)
+                                        );
+                                      },
+                                    ),
+                                  );
+                                }
+                              },
                             ),
-                            Text(
-                              "No Activity History",
-                              style: TextStyle(
-                                  color: Colors.black12
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    )
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -564,7 +621,7 @@ class _DashboardState extends State<Dashboard> {
           shape: CircleBorder(),
           onPressed: () async {
             // AlertSuccess(context, RegistEsign(), 'Registration Success', 'You have submit the data! Please check your email to activate your account');
-            showModalBottomSheet(
+            showMaterialModalBottomSheet(
                 context: context,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)

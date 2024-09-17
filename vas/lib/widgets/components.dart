@@ -786,6 +786,7 @@ Future<void> ModalWait(BuildContext context) {
 Future<void> ModalSuccessUpload(context, route, labelText, contentText) {
   return showDialog(
     context: context,
+    barrierDismissible: false,
     builder: (BuildContext context) {
       return Dialog(
         shape: RoundedRectangleBorder(

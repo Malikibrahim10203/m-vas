@@ -234,7 +234,7 @@ class _UploadSingleState extends State<UploadSingle> {
                               borderRadius:
                               BorderRadius.circular(10),
                             ),
-                            hintText: 'dd/MM/yyyy',
+                            hintText: 'yyyy/MM/dd',
                             suffixIcon: Icon(Icons.calendar_month),
                           ),
                           readOnly: true,
@@ -249,7 +249,7 @@ class _UploadSingleState extends State<UploadSingle> {
                               lastDate: DateTime(2200),
                             );
                             if(pickedDate != null) {
-                              String formatDate = DateFormat('dd/MM/yyyy').format(pickedDate);
+                              String formatDate = DateFormat('yyyy-MM-dd').format(pickedDate);
                               setState(() {
                                 dateController.text = formatDate;
                               });
@@ -1145,14 +1145,14 @@ class _UploadSingleState extends State<UploadSingle> {
                                     ),
                                     onPressed: () async {
 
-                                      // List data = await EventDB.UploadDocSingle(token, docNameController.text, selectedOffice.toString(), descriptionController.text, tagsList, dateController.text, fileController);
-                                      // if(data[0] == true) {
-                                      //   Navigator.pop(context);
-                                      //   ModalSuccessUpload(context, Dashboard(token: token), "upload successful!", "Documents have been added! You can now view document details or continue browsing");
-                                      // } else {
-                                      //   Navigator.pop(context);
-                                      //   AlertFailed(context, "Upload File", "${data[1]}");
-                                      // }
+                                      List data = await EventDB.UploadDocSingle(token, docNameController.text, selectedOffice.toString(), descriptionController.text, tagsList, dateController.text, fileController);
+                                      if(data[0] == true) {
+                                        Navigator.pop(context);
+                                        ModalSuccessUpload(context, Dashboard(token: token), "upload successful!", "Documents have been added! You can now view document details or continue browsing");
+                                      } else {
+                                        Navigator.pop(context);
+                                        AlertFailed(context, "Upload File", "${data[1]}");
+                                      }
                                     },
                                     child: Text(
                                       'Upload',

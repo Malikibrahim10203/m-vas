@@ -61,6 +61,7 @@ dependencies:
   card_loading: ^0.3.2
   ionicons: ^0.2.2
   url_launcher: ^6.3.0
+  modal_bottom_sheet: ^3.0.0
 
 
 dev_dependencies:
