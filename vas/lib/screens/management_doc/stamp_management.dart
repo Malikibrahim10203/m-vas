@@ -33,10 +33,14 @@ class _StampManagementState extends State<StampManagement> {
   var filterOrderByController = TextEditingController();
   var filterOrderByTypeController = TextEditingController();
 
+  List<Datum> fetchedData = [];
+
   final ItemScrollController scrollController = ItemScrollController();
   final ItemPositionsListener itemPositionsListener = ItemPositionsListener.create();
   int lastIndex = 0;
   int lastPage = 0;
+
+  var isLoadData = false;
 
   var token;
 
@@ -492,167 +496,201 @@ class _StampManagementState extends State<StampManagement> {
               SizedBox(
                 height: 20,
               ),
-              Container(
-                width: 400,
-                height: heightScreen * 0.7,
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: FutureBuilder<Document?>(
-                        future: document,
-                        builder: (BuildContext context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return Center(child: CircularProgressIndicator());
-                          } else if (snapshot.hasError) {
-                            return Center(child: Text('Error: ${snapshot.error}'));
-                          } else if (!snapshot.hasData || snapshot.data!.data.isEmpty) {
-                            return Center(child: Text('No documents available.'));
-                          } else {
-                            List<Datum> docData = snapshot.data!.data;
-                            filteredData.addAll(docData);
+          Container(
+            width: 400,
+            height: heightScreen * 0.7,
+            child: Column(
+              children: [
+                Expanded(
+                  child: FutureBuilder<Document?>(
+                    future: document,
+                    builder: (BuildContext context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(child: CircularProgressIndicator());
+                      } else if (snapshot.hasError) {
+                        return Center(child: Text('Error: ${snapshot.error}'));
+                      } else if (!snapshot.hasData || snapshot.data!.data.isEmpty) {
+                        return Center(child: Text('No documents available.'));
+                      } else {
+                        List<Datum> newDocData = snapshot.data!.data;
 
-                            // Apply search filter
-                            if (searchController.text.isNotEmpty) {
-                              filteredData = filteredData.where((datum) =>
-                                  datum.docName.toLowerCase().contains(searchController.text.toLowerCase())
-                              ).toList();
-                            }
+                        // Update fetchedData to include new documents without duplicates
+                        for (var datum in newDocData) {
+                          if (!fetchedData.any((existing) => existing.docId == datum.docId)) {
+                            fetchedData.add(datum);
+                          }
+                        }
 
-                            // Apply office filter
-                            if (filterOfficeController.text.isNotEmpty) {
-                              filteredData = filteredData.where((datum) =>
-                                  datum.officeName.toLowerCase().contains(filterOfficeController.text.toLowerCase())
-                              ).toList();
-                            }
+                        // Apply filters to fetchedData
+                        filteredData = List.from(fetchedData);
 
-                            // Apply status filter
-                            if (filterStatusController.text.isNotEmpty) {
-                              filteredData = filteredData.where((datum) =>
-                              datum.stampStatus == int.parse(filterStatusController.text)
-                              ).toList();
-                            }
+                        // Apply search filter
+                        if (searchController.text.isNotEmpty) {
+                          filteredData = filteredData.where((datum) =>
+                              datum.docName.toLowerCase().contains(searchController.text.toLowerCase())
+                          ).toList();
+                          isLoadData = false;
+                        }
 
-                            // Apply sorting based on filterOrderByController
-                            if (filterOrderByController.text.isNotEmpty) {
-                              String orderBy = filterOrderByController.text.toLowerCase();
-                              bool isAscending = ascType;  // Use ascType to determine the order
+                        // Apply office filter
+                        if (filterOfficeController.text.isNotEmpty) {
+                          filteredData = filteredData.where((datum) =>
+                              datum.officeName.toLowerCase().contains(filterOfficeController.text.toLowerCase())
+                          ).toList();
+                          isLoadData = false;
+                        }
 
-                              if (orderBy == "docname") {
-                                filteredData.sort((a, b) {
-                                  return isAscending
-                                      ? a.docName.toLowerCase().compareTo(b.docName.toLowerCase())
-                                      : b.docName.toLowerCase().compareTo(a.docName.toLowerCase());
-                                });
-                              } else if (orderBy == "status") {
-                                filteredData.sort((a, b) {
-                                  return isAscending
-                                      ? a.createdAt.compareTo(b.createdAt)
-                                      : b.createdAt.compareTo(a.createdAt);
-                                });
-                              }
-                            }
+                        // Apply status filter
+                        if (filterStatusController.text.isNotEmpty) {
+                          filteredData = filteredData.where((datum) =>
+                          datum.stampStatus == int.parse(filterStatusController.text)
+                          ).toList();
+                          isLoadData = false;
+                        }
 
+                        // Apply sorting based on filterOrderByController
+                        if (filterOrderByController.text.isNotEmpty) {
+                          String orderBy = filterOrderByController.text.toLowerCase();
+                          bool isAscending = ascType;
+
+                          if (orderBy == "docname") {
+                            filteredData.sort((a, b) {
+                              return isAscending
+                                  ? a.docName.toLowerCase().compareTo(b.docName.toLowerCase())
+                                  : b.docName.toLowerCase().compareTo(a.docName.toLowerCase());
+                            });
+                          } else if (orderBy == "status") {
+                            filteredData.sort((a, b) {
+                              return isAscending
+                                  ? a.createdAt.compareTo(b.createdAt)
+                                  : b.createdAt.compareTo(a.createdAt);
+                            });
+                          }
+                          isLoadData = false;
+                        }
+
+                        if (isLoadData == true) {
+                          print("P:${fetchedData.length}-$lastIndex");
+                          if(fetchedData.length > lastIndex) {
                             WidgetsBinding.instance.addPostFrameCallback((_) {
                               if (scrollController.isAttached) {
                                 scrollController.jumpTo(index: lastIndex);
+                                isLoadData = false;
                               }
                             });
-
-                            return NotificationListener<ScrollNotification>(
-                              onNotification: (ScrollNotification scrollInfo) {
-                                if (scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent && hasMore && !isLoading) {
-                                  setState(() {
-                                    isLoading = true; // Set flag to true to prevent multiple loads
-                                    page++;
-                                    print("Page: $page");
-                                    document = EventDB.getDocuments(token, page);
-
-                                    lastIndex += 9;
-                                    print(lastIndex);
-
-                                    document!.then((newData) {
-                                      setState(() {
-                                        isLoading = false; // Reset flag after data is loaded
-                                        if (newData == null || newData.data.isEmpty) {
-                                          hasMore = false; // No more data to load
-                                        }
-                                      });
-                                    }).catchError((error) {
-                                      setState(() {
-                                        isLoading = false; // Reset flag on error
-                                      });
-                                    });
-                                  });
-                                }
-                                return true;
-                              },
-                              child: ScrollablePositionedList.builder(
-                                itemScrollController: scrollController,
-                                itemPositionsListener: itemPositionsListener,
-                                itemCount: filteredData.length,
-                                itemBuilder: (context, index) {
-                                  if (index == filteredData.length) {
-                                    // Loader at the bottom
-                                    return Center(
-                                      child: CircularProgressIndicator(),
-                                    );
-                                  }
-
-                                  Datum datum = filteredData[index];
-
-                                  return GestureDetector(
-                                    onTap: () async {
-                                      print(datum.docId);
-
-                                      List statusChip = [
-                                        datum.isStamped,
-                                        datum.isSigned,
-                                        datum.isTera
-                                      ];
-
-                                      datum.isFolder
-                                          ? Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (context) => DocumentBulkDetail(
-                                                docId: datum.docId,
-                                                isFolder: datum.isFolder,
-                                                statusChip: statusChip,
-                                              )))
-                                          : Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (context) => DocumentSingleDetail(
-                                                docId: datum.docId,
-                                                isFolder: datum.isFolder,
-                                                statusChip: statusChip,
-                                              )));
-                                    },
-                                    child: Container(
-                                      padding: EdgeInsets.all(10),
-                                      child: cardListDocument(
-                                        widthScreen,
-                                        heightScreen,
-                                        datum.docName,
-                                        datum.createdAt.toString(),
-                                        datum.isFolder,
-                                        datum.isStamped,
-                                        datum.isSigned,
-                                        datum.isTera,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            );
+                          } else if(fetchedData.length < 15 || filteredData.length < 15) {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (scrollController.isAttached) {
+                                scrollController.jumpTo(index: 1);
+                                isLoadData = false;
+                              }
+                            });
                           }
-                        },
-                      ),
-                    ),
-                  ],
+                        } else {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (scrollController.isAttached) {
+                              scrollController.jumpTo(index: 0);
+                            }
+                          });
+                        }
+
+                        return NotificationListener<ScrollNotification>(
+                          onNotification: (ScrollNotification scrollInfo) {
+                            if (scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent && hasMore && !isLoading && filteredData.length >= 14) {
+                              setState(() {
+                                isLoading = true;
+                                page++;
+                                print("Page: $page");
+                                document = EventDB.getDocuments(token, page);
+
+                                lastIndex += 14;
+                                print(lastIndex);
+
+                                isLoadData = true;
+                                print("PP:${fetchedData.length}+${filteredData.length}");
+
+                                document!.then((newData) {
+                                  setState(() {
+                                    isLoading = false;
+                                    if (newData == null || newData.data.isEmpty) {
+                                      hasMore = false;
+                                    }
+                                  });
+                                }).catchError((error) {
+                                  setState(() {
+                                    isLoading = false;
+                                  });
+                                });
+                              });
+                            }
+                            return true;
+                          },
+                          child: ScrollablePositionedList.builder(
+                            itemScrollController: scrollController,
+                            itemPositionsListener: itemPositionsListener,
+                            itemCount: filteredData.length,
+                            itemBuilder: (context, index) {
+                              if (index == filteredData.length) {
+                                return Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              }
+
+                              Datum datum = filteredData[index];
+
+                              return GestureDetector(
+                                onTap: () async {
+                                  print(datum.docId);
+
+                                  List statusChip = [
+                                    datum.isStamped,
+                                    datum.isSigned,
+                                    datum.isTera
+                                  ];
+
+                                  datum.isFolder
+                                      ? Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => DocumentBulkDetail(
+                                            docId: datum.docId,
+                                            isFolder: datum.isFolder,
+                                            statusChip: statusChip,
+                                          )))
+                                      : Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => DocumentSingleDetail(
+                                            docId: datum.docId,
+                                            isFolder: datum.isFolder,
+                                            statusChip: statusChip,
+                                          )));
+                                },
+                                child: Container(
+                                  padding: EdgeInsets.all(10),
+                                  child: cardListDocument(
+                                    widthScreen,
+                                    heightScreen,
+                                    datum.docName,
+                                    datum.createdAt.toString(),
+                                    datum.isFolder,
+                                    datum.isStamped,
+                                    datum.isSigned,
+                                    datum.isTera,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      }
+                    },
+                  ),
                 ),
-              ),
-              SizedBox(
+              ],
+            ),
+          ),
+          SizedBox(
                 height: 15,
               ),
             ],

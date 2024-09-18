@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:vas/widgets/components.dart';
@@ -15,6 +17,9 @@ class _SingleStampState extends State<SingleStamp> {
   late PdfViewerController _pdfViewerController;
   int _currentPage = 1;
   final int _totalPages = 10; // This should be dynamically obtained from the document
+
+  double _left = (0.0);
+  double _top = (0.0);
 
   @override
   void initState() {
@@ -49,8 +54,8 @@ class _SingleStampState extends State<SingleStamp> {
           ),
         ),
       ),
-      body: Container(
-        child: ListView(
+      body: SingleChildScrollView(
+        child: Column(
           children: [
             SizedBox(
               height: 50,
@@ -72,6 +77,21 @@ class _SingleStampState extends State<SingleStamp> {
                         _currentPage = details.newPageNumber;
                       });
                     },
+                  ),
+                ),
+                Positioned(
+                  left: _left,
+                  top: _top,
+                  child: GestureDetector(
+                    onPanUpdate: (details) {
+                      _left = max(0, _left + details.delta.dx);
+                      _top = max(0, _top + details.delta.dy);
+                      print('Posisi left: $_left, top: $_top');
+                      setState(() {
+
+                      });
+                    },
+                    child: Image.asset('assets/images/materai.jpg', height: 50,),
                   ),
                 ),
               ],
@@ -97,7 +117,16 @@ class _SingleStampState extends State<SingleStamp> {
                               width: 40,
                               height: 40,
                               decoration: BoxDecoration(
-                                  color: Colors.white
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.1),
+                                      spreadRadius: 5,
+                                      blurRadius: 7,
+                                      offset: Offset(0, 3), // changes position of shadow
+                                    ),
+                                  ]
                               ),
                               child: IconButton(
                                 icon: Icon(Icons.zoom_out),
@@ -110,7 +139,16 @@ class _SingleStampState extends State<SingleStamp> {
                               width: 40,
                               height: 40,
                               decoration: BoxDecoration(
-                                  color: Colors.white
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.1),
+                                      spreadRadius: 5,
+                                      blurRadius: 7,
+                                      offset: Offset(0, 3), // changes position of shadow
+                                    ),
+                                  ]
                               ),
                               child: IconButton(
                                 icon: Icon(Icons.zoom_in),
@@ -123,10 +161,19 @@ class _SingleStampState extends State<SingleStamp> {
                         ),
                       ),
                       Container(
-                        width: 100,
+                        width: 120,
                         height: 40,
                         decoration: BoxDecoration(
-                            color: Colors.white
+                          color: Colors.white,
+                          borderRadius: BorderRadius.all(Radius.circular(10)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.1),
+                              spreadRadius: 5,
+                              blurRadius: 7,
+                              offset: Offset(0, 3), // changes position of shadow
+                            ),
+                          ],
                         ),
                         child: Center(child: Text('Page $_currentPage of $_totalPages')),
                       ),
@@ -139,7 +186,16 @@ class _SingleStampState extends State<SingleStamp> {
                               width: 40,
                               height: 40,
                               decoration: BoxDecoration(
-                                  color: Colors.white
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.1),
+                                      spreadRadius: 5,
+                                      blurRadius: 7,
+                                      offset: Offset(0, 3), // changes position of shadow
+                                    ),
+                                  ]
                               ),
                               child: IconButton(
                                 icon: Icon(Icons.navigate_before),
@@ -154,7 +210,16 @@ class _SingleStampState extends State<SingleStamp> {
                               width: 40,
                               height: 40,
                               decoration: BoxDecoration(
-                                  color: Colors.white
+                                color: Colors.white,
+                                borderRadius: BorderRadius.all(Radius.circular(10)),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.1),
+                                    spreadRadius: 5,
+                                    blurRadius: 7,
+                                    offset: Offset(0, 3), // changes position of shadow
+                                  ),
+                                ],
                               ),
                               child: IconButton(
                                 icon: Icon(Icons.navigate_next),

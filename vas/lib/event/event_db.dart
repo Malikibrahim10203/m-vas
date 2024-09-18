@@ -620,7 +620,13 @@ class EventDB {
     final response = await http.get(
       Uri.parse(Api.get_all_document).replace(
         queryParameters: {
-          'page': page.toString()
+          'page': page.toString(),
+          'sort_by': '',
+          'order': '',
+          'search': '',
+          'office': '',
+          'stamped': '',
+          'stamp_status': '',
         }
       ),
       headers: {
