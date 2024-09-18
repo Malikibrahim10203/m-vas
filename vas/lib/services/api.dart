@@ -47,4 +47,7 @@ class Api {
   static String get_log_activity = "$_host/api/v1/user-log-activities";
 
 
+  // Get Document Type for Stamping
+  static String get_document_types = "$_host/api/v1/peruri/list-doc";
+
 }

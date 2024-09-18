@@ -11,6 +11,7 @@ import 'package:vas/models/bulk_document.dart';
 import 'package:vas/models/credential.dart';
 import 'package:vas/models/district.dart';
 import 'package:vas/models/document.dart';
+import 'package:vas/models/document_type.dart';
 import 'package:vas/models/module.dart';
 import 'package:vas/models/office.dart';
 import 'package:vas/models/peruri_jwt_token.dart';
@@ -777,6 +778,35 @@ class EventDB {
     }
 
     return userLogActivity;
+  }
+
+  static Future<List<ListTypeDocument>?> getDocumentType(token) async {
+
+    List<ListTypeDocument>? docType;
+
+    try {
+
+      var response = await http.get(Uri.parse(Api.get_document_types), headers: {
+        'token': token
+      });
+
+      if(response.statusCode == 200) {
+        var responseBody = jsonDecode(response.body);
+        if (responseBody != null) {
+          var documentTypeDataList = List<Map<String, dynamic>>.from(responseBody);
+          docType = documentTypeDataList.map((data)=>ListTypeDocument.fromJson(data)).toList();
+        } else {
+          print("Error: No data found in response body.");
+        }
+      } else {
+        print("Failed to get document type. Status code: ${response.statusCode}");
+      }
+
+    } catch (e) {
+      print(e);
+    }
+
+    return docType;
   }
 
 

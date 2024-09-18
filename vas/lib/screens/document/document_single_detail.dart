@@ -2,14 +2,18 @@ import 'package:another_stepper/another_stepper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:flutter_stepindicator/flutter_stepindicator.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:vas/event/event_db.dart';
 import 'package:vas/event/event_pref.dart';
 import 'package:vas/models/activity.dart';
 import 'package:vas/models/bulk_document.dart';
+import 'package:vas/models/document_type.dart';
 import 'package:vas/models/single_document.dart';
 import 'package:vas/screens/loading.dart';
+import 'package:vas/screens/stamp/single_stamp.dart';
 import 'package:vas/widgets/components.dart';
+
 
 class DocumentSingleDetail extends StatefulWidget {
   const DocumentSingleDetail({super.key, required this.docId, required this.isFolder, required this.statusChip});
@@ -28,11 +32,17 @@ class _DocumentSingleDetailState extends State<DocumentSingleDetail> {
   Singledocument? singleDoc;
 
   Future<Activity?>? activityList;
+  List<ListTypeDocument>? docType;
+  var selectedDocType;
+
 
   Future<void> getData() async {
     token = (await EventPref.getCredential())?.data.token;
     singleDoc = await EventDB.getDetailDocument(token, widget.docId, widget.isFolder);
     activityList = EventDB.getActivity(token, singleDoc!.docId, null);
+
+    docType = await EventDB.getDocumentType(token);
+
     setState(() {
 
     });
@@ -467,7 +477,8 @@ class _DocumentSingleDetailState extends State<DocumentSingleDetail> {
             children: [
               SpeedDialChild(
                 onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context)=>Loading()));
+                  DocumentType();
+                  // Navigator.push(context, MaterialPageRoute(builder: (context)=>SingleStamp()));
                 },
                 child: Icon(Icons.person),
                 label: "Single Stamp",
@@ -491,4 +502,151 @@ class _DocumentSingleDetailState extends State<DocumentSingleDetail> {
       ),
     );
   }
+
+  Future<void> DocumentType() {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10)
+          ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.topCenter,
+            children: <Widget>[
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                width: double.infinity,
+                decoration: BoxDecoration(
+                    border: Border(top: BorderSide(color: tertiaryColor50, width: 10)),
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(10))
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    SizedBox(height: 30.0), // Add spacing for the floating icon
+                    Text(
+                      "Document Type",
+                      style: GoogleFonts.roboto(
+                          fontSize: 16.5,
+                          fontWeight: FontWeight.w600
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 20.0),
+                    Container(
+                      width: 300,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        border: Border.all(width: 1,color: tertiaryColor50),
+                        color: tertiaryColor4,
+                      ),
+                      child: Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(5),
+                            child: Text(
+                              "Select Document Type",
+                              style: GoogleFonts.roboto(
+                                  fontSize: 10,
+                                  color: tertiaryColor100
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          )
+                      ),
+                    ),
+                    SizedBox(height: 20.0),
+                    Container(
+                      width: 300,
+                      height: 55,
+                      child: DropdownButtonFormField<ListTypeDocument>(
+                        items: docType?.map((ListTypeDocument value) {
+                          return DropdownMenuItem<ListTypeDocument>(
+                            value: value,
+                            child: Text(
+                              value.nama,
+                              style: TextStyle(fontSize: 12),
+                            ),
+                          );
+                        }).toList(),
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide(width: 1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onChanged: (ListTypeDocument? value) {
+                          // Handle dropdown selection
+                          if (value != null) {
+                            print('Selected ID: ${value.id}, Name: ${value.nama}');
+                          }
+                        },
+                        hint: Text('Select document type', style: TextStyle(fontSize: 12),),
+                        value: selectedDocType,
+                      ),
+                    ),
+                    SizedBox(height: 20.0),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        Container(
+                          width: 130,
+                          height: 35,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                side: BorderSide(width: 1, color: bluePrimary)
+                              ),
+                              backgroundColor: Colors.white
+                            ),
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: Text("No", style: TextStyle(color: bluePrimary),),
+                          ),
+                        ),
+                        Container(
+                          width: 130,
+                          height: 35,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  side: BorderSide(width: 1, color: bluePrimary)
+                              ),
+                              backgroundColor: bluePrimary
+                            ),
+                            onPressed: () {
+                              Navigator.pop(context);
+                              Navigator.push(context, MaterialPageRoute(builder: (context)=>SingleStamp(docType: selectedDocType,)));
+                            },
+                            child: Text("Yes"),
+                          ),
+                        )
+                      ],
+                    ),
+                    SizedBox(
+                      height: 20,
+                    ),
+                  ],
+                ),
+              ),
+              // Floating Icon
+              Positioned(
+                top: -30.0,
+                child: CircleAvatar(
+                    backgroundColor: tertiaryColor100,
+                    radius: 30.0,
+                    child: Image.asset("assets/images/alert.png", width: 50,)
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
 }

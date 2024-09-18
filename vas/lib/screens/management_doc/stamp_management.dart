@@ -4,6 +4,7 @@ import "package:flutter/cupertino.dart";
 import "package:flutter/material.dart";
 import "package:intl/intl.dart";
 import "package:modal_bottom_sheet/modal_bottom_sheet.dart";
+import "package:scrollable_positioned_list/scrollable_positioned_list.dart";
 import "package:vas/event/event_db.dart";
 import "package:vas/event/event_pref.dart";
 import "package:vas/models/bulk_document.dart";
@@ -32,6 +33,11 @@ class _StampManagementState extends State<StampManagement> {
   var filterOrderByController = TextEditingController();
   var filterOrderByTypeController = TextEditingController();
 
+  final ItemScrollController scrollController = ItemScrollController();
+  final ItemPositionsListener itemPositionsListener = ItemPositionsListener.create();
+  int lastIndex = 0;
+  int lastPage = 0;
+
   var token;
 
   var saldoEMet;
@@ -42,7 +48,8 @@ class _StampManagementState extends State<StampManagement> {
 
   List<Datum> filteredData = [];
 
-  ScrollController scrollController = ScrollController();
+
+
 
   bool isLoading = false;
   int page = 1;
@@ -57,6 +64,7 @@ class _StampManagementState extends State<StampManagement> {
       _selectedIndex = index;
     });
   }
+
 
 
   Future<void> getData() async {
@@ -79,6 +87,7 @@ class _StampManagementState extends State<StampManagement> {
 
 
 
+
   @override
   void initState() {
     // TODO: implement initState
@@ -88,7 +97,6 @@ class _StampManagementState extends State<StampManagement> {
 
   @override
   void dispose() {
-    scrollController.dispose();
     super.dispose();
   }
 
@@ -484,146 +492,167 @@ class _StampManagementState extends State<StampManagement> {
               SizedBox(
                 height: 20,
               ),
-          Container(
-            width: 400,
-            height: heightScreen * 0.7,
-            child: Column(
-              children: [
-                Expanded(
-                  child: FutureBuilder<Document?>(
-                    future: document,
-                    builder: (BuildContext context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(child: CircularProgressIndicator());
-                      } else if (snapshot.hasError) {
-                        return Center(child: Text('Error: ${snapshot.error}'));
-                      } else if (!snapshot.hasData || snapshot.data!.data.isEmpty) {
-                        return Center(child: Text('No documents available.'));
-                      } else {
-                        List<Datum> docData = snapshot.data!.data;
-                        filteredData.addAll(docData);
+              Container(
+                width: 400,
+                height: heightScreen * 0.7,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: FutureBuilder<Document?>(
+                        future: document,
+                        builder: (BuildContext context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return Center(child: CircularProgressIndicator());
+                          } else if (snapshot.hasError) {
+                            return Center(child: Text('Error: ${snapshot.error}'));
+                          } else if (!snapshot.hasData || snapshot.data!.data.isEmpty) {
+                            return Center(child: Text('No documents available.'));
+                          } else {
+                            List<Datum> docData = snapshot.data!.data;
+                            filteredData.addAll(docData);
 
-                        // Apply search filter
-                        if (searchController.text.isNotEmpty) {
-                          filteredData = filteredData.where((datum) =>
-                              datum.docName.toLowerCase().contains(searchController.text.toLowerCase())
-                          ).toList();
-                        }
-
-                        // Apply office filter
-                        if (filterOfficeController.text.isNotEmpty) {
-                          filteredData = filteredData.where((datum) =>
-                              datum.officeName.toLowerCase().contains(filterOfficeController.text.toLowerCase())
-                          ).toList();
-                        }
-
-                        // Apply status filter
-                        if (filterStatusController.text.isNotEmpty) {
-                          filteredData = filteredData.where((datum) =>
-                          datum.stampStatus == int.parse(filterStatusController.text)
-                          ).toList();
-                        }
-
-                        // Apply sorting based on filterOrderByController
-                        if (filterOrderByController.text.isNotEmpty) {
-                          String orderBy = filterOrderByController.text.toLowerCase();
-                          bool isAscending = ascType;  // Use ascType to determine the order
-
-                          if (orderBy == "docname") {
-                            filteredData.sort((a, b) {
-                              return isAscending
-                                  ? a.docName.toLowerCase().compareTo(b.docName.toLowerCase())
-                                  : b.docName.toLowerCase().compareTo(a.docName.toLowerCase());
-                            });
-                          } else if (orderBy == "status") {
-                            filteredData.sort((a, b) {
-                              return isAscending
-                                  ? a.createdAt.compareTo(b.createdAt)
-                                  : b.createdAt.compareTo(a.createdAt);
-                            });
-                          }
-                        }
-
-                        return NotificationListener<ScrollNotification>(
-                          onNotification: (ScrollNotification scrollInfo) {
-                            if (scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent && hasMore) {
-                              setState(() {
-                                page++;
-                                document = EventDB.getDocuments(token, page); // Update future for more data
-                              });
+                            // Apply search filter
+                            if (searchController.text.isNotEmpty) {
+                              filteredData = filteredData.where((datum) =>
+                                  datum.docName.toLowerCase().contains(searchController.text.toLowerCase())
+                              ).toList();
                             }
-                            return true;
-                          },
-                          child: ListView.separated(
-                            separatorBuilder: (BuildContext context, index) {
-                              return SizedBox(
-                                height: 1,
-                              );
-                            },
-                            itemCount: filteredData.length,
-                            itemBuilder: (context, index) {
-                              if (index == filteredData.length) {
-                                // Loader at the bottom
-                                return Center(
-                                  child: CircularProgressIndicator(),
-                                );
+
+                            // Apply office filter
+                            if (filterOfficeController.text.isNotEmpty) {
+                              filteredData = filteredData.where((datum) =>
+                                  datum.officeName.toLowerCase().contains(filterOfficeController.text.toLowerCase())
+                              ).toList();
+                            }
+
+                            // Apply status filter
+                            if (filterStatusController.text.isNotEmpty) {
+                              filteredData = filteredData.where((datum) =>
+                              datum.stampStatus == int.parse(filterStatusController.text)
+                              ).toList();
+                            }
+
+                            // Apply sorting based on filterOrderByController
+                            if (filterOrderByController.text.isNotEmpty) {
+                              String orderBy = filterOrderByController.text.toLowerCase();
+                              bool isAscending = ascType;  // Use ascType to determine the order
+
+                              if (orderBy == "docname") {
+                                filteredData.sort((a, b) {
+                                  return isAscending
+                                      ? a.docName.toLowerCase().compareTo(b.docName.toLowerCase())
+                                      : b.docName.toLowerCase().compareTo(a.docName.toLowerCase());
+                                });
+                              } else if (orderBy == "status") {
+                                filteredData.sort((a, b) {
+                                  return isAscending
+                                      ? a.createdAt.compareTo(b.createdAt)
+                                      : b.createdAt.compareTo(a.createdAt);
+                                });
                               }
+                            }
 
-                              Datum datum = filteredData[index];
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (scrollController.isAttached) {
+                                scrollController.jumpTo(index: lastIndex);
+                              }
+                            });
 
-                              return GestureDetector(
-                                onTap: () async {
-                                  print(datum.docId);
+                            return NotificationListener<ScrollNotification>(
+                              onNotification: (ScrollNotification scrollInfo) {
+                                if (scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent && hasMore && !isLoading) {
+                                  setState(() {
+                                    isLoading = true; // Set flag to true to prevent multiple loads
+                                    page++;
+                                    print("Page: $page");
+                                    document = EventDB.getDocuments(token, page);
 
-                                  List statusChip = [
-                                    datum.isStamped,
-                                    datum.isSigned,
-                                    datum.isTera
-                                  ];
+                                    lastIndex += 9;
+                                    print(lastIndex);
 
-                                  datum.isFolder
-                                      ? Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => DocumentBulkDetail(
-                                            docId: datum.docId,
-                                            isFolder: datum.isFolder,
-                                            statusChip: statusChip,
-                                          )))
-                                      : Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => DocumentSingleDetail(
-                                            docId: datum.docId,
-                                            isFolder: datum.isFolder,
-                                            statusChip: statusChip,
-                                          )));
+                                    document!.then((newData) {
+                                      setState(() {
+                                        isLoading = false; // Reset flag after data is loaded
+                                        if (newData == null || newData.data.isEmpty) {
+                                          hasMore = false; // No more data to load
+                                        }
+                                      });
+                                    }).catchError((error) {
+                                      setState(() {
+                                        isLoading = false; // Reset flag on error
+                                      });
+                                    });
+                                  });
+                                }
+                                return true;
+                              },
+                              child: ScrollablePositionedList.builder(
+                                itemScrollController: scrollController,
+                                itemPositionsListener: itemPositionsListener,
+                                itemCount: filteredData.length,
+                                itemBuilder: (context, index) {
+                                  if (index == filteredData.length) {
+                                    // Loader at the bottom
+                                    return Center(
+                                      child: CircularProgressIndicator(),
+                                    );
+                                  }
+
+                                  Datum datum = filteredData[index];
+
+                                  return GestureDetector(
+                                    onTap: () async {
+                                      print(datum.docId);
+
+                                      List statusChip = [
+                                        datum.isStamped,
+                                        datum.isSigned,
+                                        datum.isTera
+                                      ];
+
+                                      datum.isFolder
+                                          ? Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) => DocumentBulkDetail(
+                                                docId: datum.docId,
+                                                isFolder: datum.isFolder,
+                                                statusChip: statusChip,
+                                              )))
+                                          : Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) => DocumentSingleDetail(
+                                                docId: datum.docId,
+                                                isFolder: datum.isFolder,
+                                                statusChip: statusChip,
+                                              )));
+                                    },
+                                    child: Container(
+                                      padding: EdgeInsets.all(10),
+                                      child: cardListDocument(
+                                        widthScreen,
+                                        heightScreen,
+                                        datum.docName,
+                                        datum.createdAt.toString(),
+                                        datum.isFolder,
+                                        datum.isStamped,
+                                        datum.isSigned,
+                                        datum.isTera,
+                                      ),
+                                    ),
+                                  );
                                 },
-                                child: Container(
-                                  padding: EdgeInsets.all(10),
-                                  child: cardListDocument(
-                                    widthScreen,
-                                    heightScreen,
-                                    datum.docName,
-                                    datum.createdAt.toString(),
-                                    datum.isFolder,
-                                    datum.isStamped,
-                                    datum.isSigned,
-                                    datum.isTera,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        );
-                      }
-                    },
-                  ),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          SizedBox(
+              ),
+              SizedBox(
                 height: 15,
               ),
             ],
@@ -639,20 +668,6 @@ class _StampManagementState extends State<StampManagement> {
             FloatingActionButton(
               shape: CircleBorder(),
               onPressed: () async {
-                // Assume `token` is already defined and passed correctly
-                Document? document = await EventDB.getDocuments(token, page);
-
-                if (document != null && document.data.isNotEmpty) {
-                  Datum firstDatum = document.data[2];
-
-                  // Convert the first Datum to JSON for better readability
-                  String datumJson = jsonEncode(firstDatum.toJson());
-
-                  // Print the full data of the first Datum
-                  print('First Datum: $datumJson');
-                } else {
-                  print("Failed to retrieve document data or no data available.");
-                }
               },
               child: Container(
                 width: 40,
