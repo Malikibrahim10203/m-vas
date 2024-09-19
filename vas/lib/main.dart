@@ -114,7 +114,9 @@ class _MyAppState extends State<MyApp> {
                 // Rebuild UI once login retry is done.
                 setState(() {});
               });
-              return Loading();
+              return Center(
+                child: CircularProgressIndicator(),
+              );
             } else {
               return Dashboard(token: token);
             }

@@ -620,7 +620,7 @@ class _DocumentSingleDetailState extends State<DocumentSingleDetail> {
                             ),
                             onPressed: () {
                               Navigator.pop(context);
-                              Navigator.push(context, MaterialPageRoute(builder: (context)=>SingleStamp(docType: selectedDocType,)));
+                              Navigator.push(context, MaterialPageRoute(builder: (context)=>SingleStamp(docType: selectedDocType, docFile: singleDoc!.file,)));
                             },
                             child: Text("Yes"),
                           ),

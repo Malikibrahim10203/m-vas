@@ -53,7 +53,7 @@ class _SignManagementState extends State<SignManagement> {
     token = (await EventPref.getCredential())?.data.token;
 
     saldoESign = (await EventDB.getQuota(token, "2"))?.remaining;
-    document = EventDB.getDocuments(token, page);
+    document = EventDB.getDocuments(token, page,searchController.text, filterOrderByController.text, filterOrderByTypeController.text, filterOfficeController.text, '', '');
 
     setState(() {
 
@@ -442,6 +442,7 @@ class _SignManagementState extends State<SignManagement> {
 
                             // Apply search filter if there's text in the search field
                             if (searchController.text.isNotEmpty) {
+
                               filteredData = filteredData.where((datum) =>
                                   datum.docName.toLowerCase().contains(searchController.text.toLowerCase())).toList();
                             }
@@ -509,7 +510,7 @@ class _SignManagementState extends State<SignManagement> {
                 shape: CircleBorder(),
                 onPressed: () async {
                   // Assume `token` is already defined and passed correctly
-                  Document? document = await EventDB.getDocuments(token,page);
+                  Document? document = await EventDB.getDocuments(token, page,searchController.text, filterOrderByController.text, filterOrderByTypeController.text, filterOfficeController.text, '', '');
 
                   if (document != null && document.data.isNotEmpty) {
                     Datum firstDatum = document.data[2];

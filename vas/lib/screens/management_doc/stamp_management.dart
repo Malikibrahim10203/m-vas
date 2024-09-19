@@ -33,6 +33,8 @@ class _StampManagementState extends State<StampManagement> {
   var filterOrderByController = TextEditingController();
   var filterOrderByTypeController = TextEditingController();
 
+  var checkDocument;
+
   List<Datum> fetchedData = [];
 
   final ItemScrollController scrollController = ItemScrollController();
@@ -78,7 +80,7 @@ class _StampManagementState extends State<StampManagement> {
 
     token = (await EventPref.getCredential())?.data.token;
 
-    document = EventDB.getDocuments(token, page);
+    document = EventDB.getDocuments(token, page,searchController.text, filterOrderByController.text, filterOrderByTypeController.text, filterOfficeController.text, '', '');
 
     final quotaFuture = EventDB.getQuota(token, "1");
 
@@ -230,12 +232,20 @@ class _StampManagementState extends State<StampManagement> {
                         controller: searchController,
                         onSubmitted: (value) {
                           searchController.text = value!;
+                          document = EventDB.getDocuments(token, page,searchController.text, filterOrderByController.text, filterOrderByTypeController.text, filterOfficeController.text, '', filterStatusController.text);
                           setState(() {
 
                           });
                         },
                         onChanged: (value) {
                           searchController.text = value!;
+                          setState(() {
+
+                          });
+                        },
+                        onSuffixTap: () {
+                          searchController.clear();
+                          document = EventDB.getDocuments(token, page,searchController.text, filterOrderByController.text, filterOrderByTypeController.text, filterOfficeController.text, '', filterStatusController.text);
                           setState(() {
 
                           });
@@ -316,11 +326,6 @@ class _StampManagementState extends State<StampManagement> {
                                                   borderRadius: BorderRadius.circular(10)
                                               )
                                           ),
-                                          onEditingComplete: () {
-                                            setState(() {
-
-                                            });
-                                          },
                                           onTapOutside: (value) {
                                             setState(() {
 
@@ -395,7 +400,7 @@ class _StampManagementState extends State<StampManagement> {
                                                   borderRadius: BorderRadius.circular(10)
                                               )
                                           ),
-                                          items: <String>['docName', 'status'].map((String value) {
+                                          items: <String>['created_at','doc_name', 'status'].map((String value) {
                                             return DropdownMenuItem<String>(
                                               value: value,
                                               child: Text(value),
@@ -471,8 +476,22 @@ class _StampManagementState extends State<StampManagement> {
                                             Navigator.of(context).pop();  // Close the modal
 
                                             setState(() {
-                                              // Trigger the filtering and sorting here by updating the controllers
-                                              // Apply the filters and sort logic in FutureBuilder as needed
+                                              // Apply office filter
+
+                                              // Apply status filter
+                                              if (filterStatusController.text.isNotEmpty) {
+                                                document = EventDB.getDocuments(token, page,searchController.text, filterOrderByController.text, filterOrderByTypeController.text, filterOfficeController.text, '', filterStatusController.text);
+                                              }
+
+                                              // Apply sorting based on filterOrderByController
+                                              if (filterOrderByController.text.isNotEmpty) {
+                                                String orderBy = filterOrderByController.text.toLowerCase();
+
+                                                if(filterOrderByTypeController.text.isNotEmpty) {
+                                                  document = EventDB.getDocuments(token, page,searchController.text, orderBy, filterOrderByTypeController.text, filterOfficeController.text, '', filterStatusController.text);
+                                                }
+                                                print(orderBy);
+                                              }
                                             });
                                           },
                                           child: Text("Apply"),
@@ -496,201 +515,169 @@ class _StampManagementState extends State<StampManagement> {
               SizedBox(
                 height: 20,
               ),
-          Container(
-            width: 400,
-            height: heightScreen * 0.7,
-            child: Column(
-              children: [
-                Expanded(
-                  child: FutureBuilder<Document?>(
-                    future: document,
-                    builder: (BuildContext context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(child: CircularProgressIndicator());
-                      } else if (snapshot.hasError) {
-                        return Center(child: Text('Error: ${snapshot.error}'));
-                      } else if (!snapshot.hasData || snapshot.data!.data.isEmpty) {
-                        return Center(child: Text('No documents available.'));
-                      } else {
-                        List<Datum> newDocData = snapshot.data!.data;
+              Container(
+                width: 400,
+                height: heightScreen * 0.7,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: FutureBuilder<Document?>(
+                        future: document,
+                        builder: (BuildContext context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return Center(child: CircularProgressIndicator());
+                          } else if (snapshot.hasError) {
+                            return Center(child: Text('Error: ${snapshot.error}'));
+                          } else if (!snapshot.hasData || snapshot.data!.data.isEmpty) {
+                            return Center(child: Text('No documents available.'));
+                          } else {
+                            fetchedData.clear();
+                            List<Datum> newDocData = snapshot.data!.data;
 
-                        // Update fetchedData to include new documents without duplicates
-                        for (var datum in newDocData) {
-                          if (!fetchedData.any((existing) => existing.docId == datum.docId)) {
-                            fetchedData.add(datum);
-                          }
-                        }
-
-                        // Apply filters to fetchedData
-                        filteredData = List.from(fetchedData);
-
-                        // Apply search filter
-                        if (searchController.text.isNotEmpty) {
-                          filteredData = filteredData.where((datum) =>
-                              datum.docName.toLowerCase().contains(searchController.text.toLowerCase())
-                          ).toList();
-                          isLoadData = false;
-                        }
-
-                        // Apply office filter
-                        if (filterOfficeController.text.isNotEmpty) {
-                          filteredData = filteredData.where((datum) =>
-                              datum.officeName.toLowerCase().contains(filterOfficeController.text.toLowerCase())
-                          ).toList();
-                          isLoadData = false;
-                        }
-
-                        // Apply status filter
-                        if (filterStatusController.text.isNotEmpty) {
-                          filteredData = filteredData.where((datum) =>
-                          datum.stampStatus == int.parse(filterStatusController.text)
-                          ).toList();
-                          isLoadData = false;
-                        }
-
-                        // Apply sorting based on filterOrderByController
-                        if (filterOrderByController.text.isNotEmpty) {
-                          String orderBy = filterOrderByController.text.toLowerCase();
-                          bool isAscending = ascType;
-
-                          if (orderBy == "docname") {
-                            filteredData.sort((a, b) {
-                              return isAscending
-                                  ? a.docName.toLowerCase().compareTo(b.docName.toLowerCase())
-                                  : b.docName.toLowerCase().compareTo(a.docName.toLowerCase());
-                            });
-                          } else if (orderBy == "status") {
-                            filteredData.sort((a, b) {
-                              return isAscending
-                                  ? a.createdAt.compareTo(b.createdAt)
-                                  : b.createdAt.compareTo(a.createdAt);
-                            });
-                          }
-                          isLoadData = false;
-                        }
-
-                        if (isLoadData == true) {
-                          print("P:${fetchedData.length}-$lastIndex");
-                          if(fetchedData.length > lastIndex) {
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              if (scrollController.isAttached) {
-                                scrollController.jumpTo(index: lastIndex);
-                                isLoadData = false;
+                            // Update fetchedData to include new documents without duplicates
+                            for (var datum in newDocData) {
+                              if (!fetchedData.any((existing) => existing.docId == datum.docId)) {
+                                fetchedData.add(datum);
                               }
-                            });
-                          } else if(fetchedData.length < 15 || filteredData.length < 15) {
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              if (scrollController.isAttached) {
-                                scrollController.jumpTo(index: 1);
-                                isLoadData = false;
-                              }
-                            });
-                          }
-                        } else {
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            if (scrollController.isAttached) {
-                              scrollController.jumpTo(index: 0);
                             }
-                          });
-                        }
 
-                        return NotificationListener<ScrollNotification>(
-                          onNotification: (ScrollNotification scrollInfo) {
-                            if (scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent && hasMore && !isLoading && filteredData.length >= 14) {
-                              setState(() {
-                                isLoading = true;
-                                page++;
-                                print("Page: $page");
-                                document = EventDB.getDocuments(token, page);
+                            // Apply filters to fetchedData
+                            filteredData = List.from(fetchedData);
 
-                                lastIndex += 14;
-                                print(lastIndex);
 
-                                isLoadData = true;
-                                print("PP:${fetchedData.length}+${filteredData.length}");
-
-                                document!.then((newData) {
-                                  setState(() {
-                                    isLoading = false;
-                                    if (newData == null || newData.data.isEmpty) {
-                                      hasMore = false;
-                                    }
-                                  });
-                                }).catchError((error) {
-                                  setState(() {
-                                    isLoading = false;
-                                  });
+                            if (isLoadData == true) {
+                              print("P:${fetchedData.length}-$lastIndex");
+                              if(fetchedData.length > lastIndex) {
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  if (scrollController.isAttached) {
+                                    scrollController.jumpTo(index: lastIndex);
+                                    isLoadData = false;
+                                  }
                                 });
+                              } else if(fetchedData.length < 15 || filteredData.length < 15) {
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  if (scrollController.isAttached) {
+                                    scrollController.jumpTo(index: 1);
+                                    isLoadData = false;
+                                  }
+                                });
+                              }
+                            } else {
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (scrollController.isAttached) {
+                                  scrollController.jumpTo(index: 0);
+                                }
                               });
                             }
-                            return true;
-                          },
-                          child: ScrollablePositionedList.builder(
-                            itemScrollController: scrollController,
-                            itemPositionsListener: itemPositionsListener,
-                            itemCount: filteredData.length,
-                            itemBuilder: (context, index) {
-                              if (index == filteredData.length) {
-                                return Center(
-                                  child: CircularProgressIndicator(),
-                                );
-                              }
 
-                              Datum datum = filteredData[index];
+                            return NotificationListener<ScrollNotification>(
+                              onNotification: (ScrollNotification scrollInfo) {
+                                if (scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent && hasMore && !isLoading) {
+                                  setState(() async {
+                                    isLoading = true;
+                                    page++;
+                                    print("Page: $page");
+                                    var checkDocument = await EventDB.getDocuments(token, page,searchController.text, filterOrderByController.text, filterOrderByTypeController.text, filterOfficeController.text, '', '');
+                                    if(checkDocument!.data.isNotEmpty) {
 
-                              return GestureDetector(
-                                onTap: () async {
-                                  print(datum.docId);
+                                      document = EventDB.getDocuments(token, page,searchController.text, filterOrderByController.text, filterOrderByTypeController.text, filterOfficeController.text, '', '');
+                                      lastIndex += 14;
+                                      print(lastIndex);
 
-                                  List statusChip = [
-                                    datum.isStamped,
-                                    datum.isSigned,
-                                    datum.isTera
-                                  ];
+                                      isLoadData = true;
+                                      print("PP:${fetchedData.length}+${filteredData.length}");
 
-                                  datum.isFolder
-                                      ? Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => DocumentBulkDetail(
-                                            docId: datum.docId,
-                                            isFolder: datum.isFolder,
-                                            statusChip: statusChip,
-                                          )))
-                                      : Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => DocumentSingleDetail(
-                                            docId: datum.docId,
-                                            isFolder: datum.isFolder,
-                                            statusChip: statusChip,
-                                          )));
+                                      document!.then((newData) {
+                                        setState(() {
+                                          isLoading = false;
+                                          if (newData == null || newData.data.isEmpty) {
+                                            hasMore = false;
+                                          }
+                                        });
+                                      }).catchError((error) {
+                                        setState(() {
+                                          isLoading = false;
+                                        });
+                                      });
+                                    } else {
+                                      page--;
+                                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                                        if (scrollController.isAttached) {
+                                          scrollController.jumpTo(index: filteredData.length);
+                                        }
+                                      });
+                                    }
+                                  });
+                                }
+
+                                return true;
+                              },
+                              child: ScrollablePositionedList.builder(
+                                itemScrollController: scrollController,
+                                itemPositionsListener: itemPositionsListener,
+                                itemCount: filteredData.length,
+                                itemBuilder: (context, index) {
+                                  if (index == filteredData.length) {
+                                    return Center(
+                                      child: CircularProgressIndicator(),
+                                    );
+                                  }
+
+                                  Datum datum = filteredData[index];
+
+                                  return GestureDetector(
+                                    onTap: () async {
+                                      print(datum.docId);
+
+                                      List statusChip = [
+                                        datum.isStamped,
+                                        datum.isSigned,
+                                        datum.isTera
+                                      ];
+
+                                      datum.isFolder
+                                          ? Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) => DocumentBulkDetail(
+                                                docId: datum.docId,
+                                                isFolder: datum.isFolder,
+                                                statusChip: statusChip,
+                                              )))
+                                          : Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) => DocumentSingleDetail(
+                                                docId: datum.docId,
+                                                isFolder: datum.isFolder,
+                                                statusChip: statusChip,
+                                              )));
+                                    },
+                                    child: Container(
+                                      padding: EdgeInsets.all(10),
+                                      child: cardListDocument(
+                                        widthScreen,
+                                        heightScreen,
+                                        datum.docName,
+                                        datum.createdAt.toString(),
+                                        datum.isFolder,
+                                        datum.isStamped,
+                                        datum.isSigned,
+                                        datum.isTera,
+                                      ),
+                                    ),
+                                  );
                                 },
-                                child: Container(
-                                  padding: EdgeInsets.all(10),
-                                  child: cardListDocument(
-                                    widthScreen,
-                                    heightScreen,
-                                    datum.docName,
-                                    datum.createdAt.toString(),
-                                    datum.isFolder,
-                                    datum.isStamped,
-                                    datum.isSigned,
-                                    datum.isTera,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        );
-                      }
-                    },
-                  ),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          SizedBox(
+              ),
+              SizedBox(
                 height: 15,
               ),
             ],
@@ -706,6 +693,9 @@ class _StampManagementState extends State<StampManagement> {
             FloatingActionButton(
               shape: CircleBorder(),
               onPressed: () async {
+                searchController.text==null?
+                  print("null"):print("not null");
+                print(searchController.text);
               },
               child: Container(
                 width: 40,

@@ -5,9 +5,9 @@ import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:vas/widgets/components.dart';
 
 class SingleStamp extends StatefulWidget {
-  const SingleStamp({super.key, required this.docType});
+  const SingleStamp({super.key, required this.docType, required this.docFile});
 
-  final docType;
+  final docType, docFile;
 
   @override
   State<SingleStamp> createState() => _SingleStampState();
@@ -16,10 +16,12 @@ class SingleStamp extends StatefulWidget {
 class _SingleStampState extends State<SingleStamp> {
   late PdfViewerController _pdfViewerController;
   int _currentPage = 1;
-  final int _totalPages = 10; // This should be dynamically obtained from the document
+  final int _totalPages = 10;
+  double _scale = 30;
 
-  double _left = (0.0);
-  double _top = (0.0);
+  List<Stamp> stamps = [];
+  int stampCount = 1;
+  bool isButtonEnabled = true;
 
   @override
   void initState() {
@@ -54,18 +56,18 @@ class _SingleStampState extends State<SingleStamp> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            SizedBox(
-              height: 50,
-            ),
-            Stack(
+      body: Column(
+        children: [
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.05,
+          ),
+          Expanded(
+            child: Stack(
               children: [
                 Container(
                   height: 650,
-                  child: SfPdfViewer.network(
-                    'https://koreascience.kr/article/CFKO202015463051450.pdf',
+                  child: SfPdfViewer.asset(
+                    'assets/document/sample.pdf',
                     controller: _pdfViewerController,
                     scrollDirection: PdfScrollDirection.horizontal,
                     enableDoubleTapZooming: false,
@@ -79,166 +81,198 @@ class _SingleStampState extends State<SingleStamp> {
                     },
                   ),
                 ),
-                Positioned(
-                  left: _left,
-                  top: _top,
-                  child: GestureDetector(
-                    onPanUpdate: (details) {
-                      _left = max(0, _left + details.delta.dx);
-                      _top = max(0, _top + details.delta.dy);
-                      print('Posisi left: $_left, top: $_top');
-                      setState(() {
-
-                      });
-                    },
-                    child: Image.asset('assets/images/materai.jpg', height: 50,),
-                  ),
-                ),
+                ...stamps.map((stamp) {
+                  return Positioned(
+                    left: stamp.left,
+                    top: stamp.top,
+                    child: Container(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          GestureDetector(
+                            onPanUpdate: (details) {
+                              setState(() {
+                                stamp.left = max(0, stamp.left + details.delta.dx);
+                                stamp.top = max(0, stamp.top + details.delta.dy);
+                              });
+                            },
+                            child: Image.asset("assets/images/materai.jpg", height: _scale),
+                          ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              GestureDetector(
+                                onPanUpdate: (details) {
+                                  setState(() {
+                                    _scale += details.delta.dy;
+                                    if(_scale >= 100) _scale = 100;
+                                    if(_scale <= 20) _scale = 20;
+                                  });
+                                },
+                                child: Container(
+                                  width: 30,
+                                  height: 30,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(50),
+                                    color: Colors.red
+                                  ),
+                                  child: Icon(
+                                    Icons.zoom_out_map,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                )
+                              ),
+                            ],
+                          ),
+                        ],
+                      )
+                    )
+                  );
+                }).toList(),
               ],
             ),
-            SizedBox(
-              height: 10,
-            ),
-            Positioned(
-                bottom: 16,
-                left: 16,
-                right: 16,
-                child: Container(
-                  height: 70,
+          ),
+          SizedBox(
+            height: 10,
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            height: 70,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  width: 100,
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       Container(
-                        width: 100,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.grey.withOpacity(0.1),
-                                      spreadRadius: 5,
-                                      blurRadius: 7,
-                                      offset: Offset(0, 3), // changes position of shadow
-                                    ),
-                                  ]
-                              ),
-                              child: IconButton(
-                                icon: Icon(Icons.zoom_out),
-                                onPressed: () {
-                                  _pdfViewerController.zoomLevel = (_pdfViewerController.zoomLevel - 0.5).clamp(1.0, 4.0);
-                                },
-                              ),
-                            ),
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.grey.withOpacity(0.1),
-                                      spreadRadius: 5,
-                                      blurRadius: 7,
-                                      offset: Offset(0, 3), // changes position of shadow
-                                    ),
-                                  ]
-                              ),
-                              child: IconButton(
-                                icon: Icon(Icons.zoom_in),
-                                onPressed: () {
-                                  _pdfViewerController.zoomLevel = (_pdfViewerController.zoomLevel + 0.5).clamp(1.0, 4.0);
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        width: 120,
+                        width: 40,
                         height: 40,
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.all(Radius.circular(10)),
+                          borderRadius: BorderRadius.circular(10),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.grey.withOpacity(0.1),
                               spreadRadius: 5,
                               blurRadius: 7,
-                              offset: Offset(0, 3), // changes position of shadow
+                              offset: const Offset(0, 3),
                             ),
                           ],
                         ),
-                        child: Center(child: Text('Page $_currentPage of $_totalPages')),
+                        child: IconButton(
+                          icon: const Icon(Icons.zoom_out),
+                          onPressed: () {
+                            _pdfViewerController.zoomLevel = (_pdfViewerController.zoomLevel - 0.5).clamp(1.0, 4.0);
+                          },
+                        ),
                       ),
                       Container(
-                        width: 100,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.grey.withOpacity(0.1),
-                                      spreadRadius: 5,
-                                      blurRadius: 7,
-                                      offset: Offset(0, 3), // changes position of shadow
-                                    ),
-                                  ]
-                              ),
-                              child: IconButton(
-                                icon: Icon(Icons.navigate_before),
-                                onPressed: () {
-                                  if (_currentPage > 1) {
-                                    _pdfViewerController.jumpToPage(_currentPage - 1);
-                                  }
-                                },
-                              ),
-                            ),
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.all(Radius.circular(10)),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.withOpacity(0.1),
-                                    spreadRadius: 5,
-                                    blurRadius: 7,
-                                    offset: Offset(0, 3), // changes position of shadow
-                                  ),
-                                ],
-                              ),
-                              child: IconButton(
-                                icon: Icon(Icons.navigate_next),
-                                onPressed: () {
-                                  if (_currentPage < _totalPages) {
-                                    _pdfViewerController.jumpToPage(_currentPage + 1);
-                                  }
-                                },
-                              ),
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.1),
+                              spreadRadius: 5,
+                              blurRadius: 7,
+                              offset: const Offset(0, 3),
                             ),
                           ],
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.zoom_in),
+                          onPressed: () {
+                            _pdfViewerController.zoomLevel = (_pdfViewerController.zoomLevel + 0.5).clamp(1.0, 4.0);
+                          },
                         ),
                       ),
                     ],
                   ),
-                )
+                ),
+                Container(
+                  width: 120,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        spreadRadius: 5,
+                        blurRadius: 7,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text('Page $_currentPage of $_totalPages'),
+                  ),
+                ),
+                Container(
+                  width: 100,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.1),
+                              spreadRadius: 5,
+                              blurRadius: 7,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.navigate_before),
+                          onPressed: () {
+                            if (_currentPage > 1) {
+                              _pdfViewerController.jumpToPage(_currentPage - 1);
+                            }
+                          },
+                        ),
+                      ),
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.1),
+                              spreadRadius: 5,
+                              blurRadius: 7,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.navigate_next),
+                          onPressed: () {
+                            if (_currentPage < _totalPages) {
+                              _pdfViewerController.jumpToPage(_currentPage + 1);
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
       floatingActionButton: Container(
         child: Column(
@@ -248,7 +282,13 @@ class _SingleStampState extends State<SingleStamp> {
             ),
             FloatingActionButton(
               backgroundColor: textAlertRedColor3,
-              onPressed: () {},
+              onPressed: () {
+                setState(() {
+                  stamps.add(Stamp(left: 104.376, top: 161.919));
+                  stampCount++;
+                  isButtonEnabled = false;
+                });
+              },
               child: Container(
                 child: Center(
                   child: Icon(Icons.qr_code),
@@ -270,5 +310,13 @@ class _SingleStampState extends State<SingleStamp> {
       ),
     );
   }
+}
+
+class Stamp {
+  double left;
+  double top;
+  bool isDisable = true;
+
+  Stamp({required this.left, required this.top});
 }
 

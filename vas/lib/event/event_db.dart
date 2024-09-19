@@ -616,17 +616,17 @@ class EventDB {
     return data;
   }
 
-  static Future<Document?> getDocuments(String token, int page) async {
+  static Future<Document?> getDocuments(String token, int page, String search, String sortBy, String order, String office, String stamped, String stamp_status) async {
     final response = await http.get(
       Uri.parse(Api.get_all_document).replace(
         queryParameters: {
           'page': page.toString(),
-          'sort_by': '',
-          'order': '',
-          'search': '',
-          'office': '',
-          'stamped': '',
-          'stamp_status': '',
+          'sort_by': sortBy,
+          'order': order,
+          'search': search,
+          'office': office,
+          'stamped': stamped,
+          'stamp_status': stamp_status,
         }
       ),
       headers: {

@@ -1,5 +1,8 @@
 import 'package:card_loading/card_loading.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:provider/provider.dart';
+import 'package:vas/services/UserProvider.dart';
 
 class Loading extends StatefulWidget {
   const Loading({super.key});
@@ -12,8 +15,10 @@ class _LoadingState extends State<Loading> {
 
   var widthScreen;
 
+
   @override
   Widget build(BuildContext context) {
+
     widthScreen = MediaQuery.of(context).size.width;
     return Scaffold(
       body: Column(
