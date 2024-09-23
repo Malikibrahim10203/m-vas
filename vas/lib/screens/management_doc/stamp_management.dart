@@ -531,7 +531,6 @@ class _StampManagementState extends State<StampManagement> {
                           } else if (!snapshot.hasData || snapshot.data!.data.isEmpty) {
                             return Center(child: Text('No documents available.'));
                           } else {
-                            fetchedData.clear();
                             List<Datum> newDocData = snapshot.data!.data;
 
                             // Update fetchedData to include new documents without duplicates
@@ -554,7 +553,7 @@ class _StampManagementState extends State<StampManagement> {
                                     isLoadData = false;
                                   }
                                 });
-                              } else if(fetchedData.length < 15 || filteredData.length < 15) {
+                              } else if(newDocData.length < 15) {
                                 WidgetsBinding.instance.addPostFrameCallback((_) {
                                   if (scrollController.isAttached) {
                                     scrollController.jumpTo(index: 1);
@@ -573,43 +572,45 @@ class _StampManagementState extends State<StampManagement> {
                             return NotificationListener<ScrollNotification>(
                               onNotification: (ScrollNotification scrollInfo) {
                                 if (scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent && hasMore && !isLoading) {
-                                  setState(() async {
+                                  setState(() {
                                     isLoading = true;
                                     page++;
                                     print("Page: $page");
-                                    var checkDocument = await EventDB.getDocuments(token, page,searchController.text, filterOrderByController.text, filterOrderByTypeController.text, filterOfficeController.text, '', '');
-                                    if(checkDocument!.data.isNotEmpty) {
+                                  });
 
-                                      document = EventDB.getDocuments(token, page,searchController.text, filterOrderByController.text, filterOrderByTypeController.text, filterOfficeController.text, '', '');
-                                      lastIndex += 14;
-                                      print(lastIndex);
+                                  // Ensure this method is marked as async so you can await the Future
+                                  EventDB.getDocuments(token, page, searchController.text, filterOrderByController.text, filterOrderByTypeController.text, filterOfficeController.text, '', '').then((checkDocument) {
+                                    if (checkDocument != null && checkDocument.data.isNotEmpty) {
+                                      setState(() {
+                                        // Assign the resolved value directly to the document variable
+                                        document = Future.value(checkDocument); // Assign Future<Document?>? properly
+                                        lastIndex += 13;
+                                        print(lastIndex);
+                                        isLoadData = true;
+                                        print("PP:${fetchedData.length}+${filteredData.length}");
+                                      });
 
-                                      isLoadData = true;
-                                      print("PP:${fetchedData.length}+${filteredData.length}");
-
-                                      document!.then((newData) {
-                                        setState(() {
-                                          isLoading = false;
-                                          if (newData == null || newData.data.isEmpty) {
-                                            hasMore = false;
-                                          }
-                                        });
-                                      }).catchError((error) {
-                                        setState(() {
-                                          isLoading = false;
-                                        });
+                                      setState(() {
+                                        isLoading = false;
                                       });
                                     } else {
-                                      page--;
+                                      setState(() {
+                                        page--;
+                                        isLoading = false;
+                                      });
+
                                       WidgetsBinding.instance.addPostFrameCallback((_) {
                                         if (scrollController.isAttached) {
                                           scrollController.jumpTo(index: filteredData.length);
                                         }
                                       });
                                     }
+                                  }).catchError((error) {
+                                    setState(() {
+                                      isLoading = false;
+                                    });
                                   });
                                 }
-
                                 return true;
                               },
                               child: ScrollablePositionedList.builder(
@@ -617,6 +618,7 @@ class _StampManagementState extends State<StampManagement> {
                                 itemPositionsListener: itemPositionsListener,
                                 itemCount: filteredData.length,
                                 itemBuilder: (context, index) {
+
                                   if (index == filteredData.length) {
                                     return Center(
                                       child: CircularProgressIndicator(),
@@ -632,26 +634,32 @@ class _StampManagementState extends State<StampManagement> {
                                       List statusChip = [
                                         datum.isStamped,
                                         datum.isSigned,
-                                        datum.isTera
+                                        datum.isTera,
                                       ];
 
-                                      datum.isFolder
-                                          ? Navigator.push(
+                                      if (datum.isFolder) {
+                                        Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                              builder: (context) => DocumentBulkDetail(
-                                                docId: datum.docId,
-                                                isFolder: datum.isFolder,
-                                                statusChip: statusChip,
-                                              )))
-                                          : Navigator.push(
+                                            builder: (context) => DocumentBulkDetail(
+                                              docId: datum.docId,
+                                              isFolder: datum.isFolder,
+                                              statusChip: statusChip,
+                                            ),
+                                          ),
+                                        );
+                                      } else {
+                                        Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                              builder: (context) => DocumentSingleDetail(
-                                                docId: datum.docId,
-                                                isFolder: datum.isFolder,
-                                                statusChip: statusChip,
-                                              )));
+                                            builder: (context) => DocumentSingleDetail(
+                                              docId: datum.docId,
+                                              isFolder: datum.isFolder,
+                                              statusChip: statusChip,
+                                            ),
+                                          ),
+                                        );
+                                      }
                                     },
                                     child: Container(
                                       padding: EdgeInsets.all(10),

@@ -50,4 +50,10 @@ class Api {
   // Get Document Type for Stamping
   static String get_document_types = "$_host/api/v1/peruri/list-doc";
 
+  // Get Document Preview
+  static String get_document_preview = "$_host/api/v1/document/preview/";
+
+  // Stamping Single Doc
+  static String stamp_single_document = "$_host/api/v1/peruri/stamp";
+
 }

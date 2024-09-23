@@ -815,6 +815,72 @@ class EventDB {
     return docType;
   }
 
+  static Future<String?> getPreviewDocument(String token, int doc_id) async {
+    String? fileBase64;
+
+    try {
+      var response = await http.get(Uri.parse("${Api.get_document_preview}$doc_id"),
+      headers: {
+        'token': token
+      });
+
+      if(response.statusCode == 200) {
+        var responseBody = jsonDecode(response.body);
+        if(responseBody['data'] != null) {
+          fileBase64 = responseBody['data'];
+        } else {
+          print("Error: No data found in response body.");
+        }
+      } else {
+        print("Failed to get document preview. Status code: ${response.statusCode}");
+      }
+    } catch(e) {
+      print(e);
+    }
+    return fileBase64;
+  }
+
+  static Future<void> StampingSingleDocument(String token, int docId, String docType, String city, String? otp, Map<String, dynamic> stampData) async {
+    List<Map<String, dynamic>> stampsData = [];
+    stampsData.insert(0, stampData);
+
+    try {
+      // Construct the URL
+      var url = Uri.parse("${Api.stamp_single_document}/$docId");
+
+      // Create the body as a JSON string
+      var requestBody = jsonEncode({
+        "jenis_doc": docType,
+        "city": city,
+        "otp": otp ?? "",
+        "stamps": stampsData // This will be sent as a JSON array
+      });
+
+      // Send the POST request with proper headers and body
+      var response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json", // Indicating you're sending JSON
+          "token": token,  // Assuming the token is used as a Bearer token
+        },
+        body: requestBody, // The raw JSON string
+      );
+
+      // Decode and handle the response
+      var responseBody = jsonDecode(response.body);
+      print(responseBody);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print("Document stamped successfully.");
+      } else {
+        print("Failed to stamp document. Status code: ${response.statusCode}");
+        print("Response: ${response.body}");
+      }
+    } catch (e) {
+      print("Error during stamping: $e");
+    }
+  }
+
 
   static Future<void> LogOut() async {
     EventPref.clear();
