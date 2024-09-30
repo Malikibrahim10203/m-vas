@@ -24,6 +24,7 @@ import 'package:vas/models/users.dart';
 import 'package:vas/screens/auth/change_password.dart';
 import 'package:vas/screens/auth/login.dart';
 import 'package:vas/screens/pages/dashboard.dart';
+import 'package:vas/screens/stamp/single_stamp.dart';
 import 'package:vas/services/api.dart';
 import 'package:get/get.dart';
 import 'package:vas/widgets/components.dart';
@@ -841,32 +842,39 @@ class EventDB {
     return fileBase64;
   }
 
-  static Future<Map<String, dynamic>> StampingSingleDocument(String token, int docId, String docType, String city, String? otp, double llx, double lly, double urx, double ury, int page) async {
+  static Future<Map<String, dynamic>> StampingSingleDocument(String token, int docId, String docType, String city, String? otp, List<StampData> coordinateDoc) async {
+
     List<Map<String, dynamic>> stampsData = [];
-    stampsData.insert(0, {'llx': llx, 'lly': lly, 'urx': urx, 'ury': ury, 'page': page});
+
+    for (var stamp in coordinateDoc) {
+      stampsData.add({
+        "llx": stamp.llx,
+        "lly": stamp.lly,
+        "urx": stamp.urx,
+        "ury": stamp.ury,
+        "page": stamp.page,
+      });
+    }
 
     Map<String, dynamic> result = {};
 
     try {
-      // Construct the URL
       var url = Uri.parse("${Api.stamp_single_document}/$docId");
 
-      // Create the body as a JSON string
       var requestBody = jsonEncode({
         "jenis_doc": docType,
         "city": city,
         "otp": otp ?? "",
-        "stamps": stampsData // This will be sent as a JSON array
+        "stamps": stampsData
       });
 
-      // Send the POST request with proper headers and body
       var response = await http.post(
         url,
         headers: {
-          "Content-Type": "application/json", // Indicating you're sending JSON
-          "token": token,  // Assuming the token is used as a Bearer token
+          "Content-Type": "application/json",
+          "token": token,
         },
-        body: requestBody, // The raw JSON string
+        body: requestBody,
       );
 
       // Decode and handle the response
@@ -887,6 +895,7 @@ class EventDB {
 
     return result;
   }
+
 
   static Future<String?> RetrySingleStampDocument(token,docId) async {
 

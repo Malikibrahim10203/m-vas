@@ -716,7 +716,7 @@ class _DocumentSingleDetailState extends State<DocumentSingleDetail> {
                                 onPressed: () {
                                   if (selectedDocType != null) {
                                     Navigator.pop(context);
-                                    Navigator.push(context, MaterialPageRoute(builder: (context)=>SingleStamp(docType: "Surat Berharga", docId: singleDoc!.docId, isfolder: widget.isFolder, statuschips: widget.statusChip,)));
+                                    Navigator.push(context, MaterialPageRoute(builder: (context)=>SingleStamp(docType: "Surat Berharga", docId: singleDoc!.docId, isfolder: widget.isFolder, docName: singleDoc!.docName, statuschips: widget.statusChip,)));
                                   }
                                 },
                                 child: Text("Yes"),

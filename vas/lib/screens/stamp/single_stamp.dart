@@ -13,9 +13,9 @@ import 'package:vas/screens/management_doc/stamp_management.dart';
 import 'package:vas/widgets/components.dart';
 
 class SingleStamp extends StatefulWidget {
-  const SingleStamp({super.key, required this.docType, required this.docId, required this.isfolder, required this.statuschips});
+  const SingleStamp({super.key, required this.docType, required this.docId, required this.isfolder, required this.docName, required this.statuschips});
 
-  final docType, docId, isfolder, statuschips;
+  final docType, docId, isfolder, docName, statuschips;
 
   @override
   State<SingleStamp> createState() => _SingleStampState();
@@ -32,12 +32,14 @@ class _SingleStampState extends State<SingleStamp> {
   double containerWidth = 0;
   double containerHeight = 0;
 
+  double zoomLevel = 1.0;
+
   int _totalPage = 0;
   bool isDisable = false;
   
   List<StampData> coordinateActive = [];
 
-  List<Map<String, double>> stamps = [];
+  List<Map<String, dynamic>> stamps = [];
 
   Size? calculateRenderedSize() {
     if (pageSize != null && viewSize != null) {
@@ -63,10 +65,10 @@ class _SingleStampState extends State<SingleStamp> {
     return (y / renderedSize!.height) * pageSize!.height;
   }
 
-  double getLLX(Map<String, double> stamp) => getScaledX(stamp['x']!);
-  double getLLY(Map<String, double> stamp) => getScaledY(containerHeight - stamp['y']! - stamp['height']!);
-  double getURX(Map<String, double> stamp) => getScaledX(stamp['x']! + stamp['width']!);
-  double getURY(Map<String, double> stamp) => getScaledY(containerHeight - stamp['y']!);
+  double getLLX(Map<String, dynamic> stamp) => getScaledX(stamp['x']!);
+  double getLLY(Map<String, dynamic> stamp) => getScaledY(containerHeight - stamp['y']! - stamp['height']!);
+  double getURX(Map<String, dynamic> stamp) => getScaledX(stamp['x']! + stamp['width']!);
+  double getURY(Map<String, dynamic> stamp) => getScaledY(containerHeight - stamp['y']!);
 
   String printCoordinates(int index) {
     double llx = getLLX(stamps[index]);
@@ -78,11 +80,18 @@ class _SingleStampState extends State<SingleStamp> {
 
   void addStamp() {
     setState(() {
+
+      if (stamps.isNotEmpty) {
+        stamps[stamps.length - 1]['isDisabled'] = true;
+      }
+
       stamps.add({
-        'x': (containerWidth - 100) / 2,
-        'y': (containerHeight - 100) / 2,
-        'width': 100,
-        'height': 100,
+        'x': ((containerWidth - 100) / 2).toDouble(),
+        'y': ((containerHeight - 100) / 2).toDouble(),
+        'width': 100.toDouble(),
+        'height': 100.toDouble(),
+        'page': _currentPage,
+        'isDisabled': false,
       });
     });
   }
@@ -173,7 +182,7 @@ class _SingleStampState extends State<SingleStamp> {
                           }
 
                           setState(() {
-
+                            zoomLevel = _pdfViewerController.zoomLevel;
                           });
                         },
                       );
@@ -194,106 +203,114 @@ class _SingleStampState extends State<SingleStamp> {
                     child: Stack(
                       children: List.generate(stamps.length, (index) {
                         final stamp = stamps[index];
-                        if (isDisable == false) {
-                          return Positioned(
-                            left: stamp['x'],
-                            top: stamp['y'],
-                            child: GestureDetector(
-                              onPanUpdate: (details) {
-                                setState(() {
-                                  // Move the stamp
-                                  stamp['x'] = (stamp['x']! + details.delta.dx).clamp(0, containerWidth - stamp['width']!);
-                                  stamp['y'] = (stamp['y']! + details.delta.dy).clamp(0, containerHeight - stamp['height']!);
-                                  printCoordinates(index);
-                                });
-                              },
-                              child: Container(
-                                width: stamp['width']!+10,
-                                height: stamp['height']!+10,
+                        // Adjust position based on zoom level
+                        double adjustedX = stamp['x']! * zoomLevel;
+                        double adjustedY = stamp['y']! * zoomLevel;
 
-                                child: Stack(
-                                  children: [
-                                    Container(
-                                      child: DottedBorder(
+                        // Only show stamps for the current page
+                        if (stamp['page'] == _currentPage) {
+                          if (stamp['isDisabled'] == false) {
+                            return Positioned(
+                              left: adjustedX,
+                              top: adjustedY,
+                              child: GestureDetector(
+                                onPanUpdate: (details) {
+                                  setState(() {
+                                    // Move the stamp
+                                    stamp['x'] = (stamp['x']! + details.delta.dx)
+                                        .clamp(0, containerWidth - stamp['width']!);
+                                    stamp['y'] = (stamp['y']! + details.delta.dy)
+                                        .clamp(0, containerHeight - stamp['height']!);
+                                    printCoordinates(index);
+                                  });
+                                },
+                                child: Container(
+                                  width: stamp['width']! + 10,
+                                  height: stamp['height']! + 10,
+                                  child: Stack(
+                                    children: [
+                                      Container(
+                                        child: DottedBorder(
+                                          child: Image.asset(
+                                            "assets/images/materai.jpg",
+                                            width: stamp['width'],
+                                            height: stamp['height'],
+                                          ),
+                                        ),
+                                      ),
+                                      Positioned(
+                                        right: 0,
+                                        bottom: 0,
+                                        child: GestureDetector(
+                                          onPanUpdate: (details) {
+                                            setState(() {
+                                              double aspectRatio = stamp['width']! / stamp['height']!;
+                                              double newWidth = stamp['width']! + details.delta.dx;
+                                              double newHeight = newWidth / aspectRatio;
+
+                                              newWidth = newWidth.clamp(20.0, containerWidth - stamp['x']!);
+                                              newHeight = newHeight.clamp(20.0, containerHeight - stamp['y']!);
+
+                                              stamp['width'] = newWidth;
+                                              stamp['height'] = newHeight;
+
+                                              if (stamp['x']! + stamp['width']! > containerWidth) {
+                                                stamp['x'] = containerWidth - stamp['width']!;
+                                              }
+                                              if (stamp['y']! + stamp['height']! > containerHeight) {
+                                                stamp['y'] = containerHeight - stamp['height']!;
+                                              }
+
+                                              printCoordinates(index);
+                                            });
+                                          },
+                                          child: Container(
+                                            width: 30,
+                                            height: 30,
+                                            padding: EdgeInsets.all(5),
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(50),
+                                              color: Colors.red,
+                                            ),
+                                            child: Image.asset("assets/images/maximize.png"),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          } else {
+                            return Positioned(
+                              left: adjustedX,
+                              top: adjustedY,
+                              child: GestureDetector(
+                                onPanUpdate: (details) {
+                                  setState(() {
+
+                                  });
+                                },
+                                child: Container(
+                                  width: stamp['width']! + 10,
+                                  height: stamp['height']! + 10,
+                                  child: Stack(
+                                    children: [
+                                      Container(
                                         child: Image.asset(
                                           "assets/images/materai.jpg",
                                           width: stamp['width'],
                                           height: stamp['height'],
                                         ),
                                       ),
-                                    ),
-                                    Positioned(
-                                      right: 0,
-                                      bottom: 0,
-                                      child: GestureDetector(
-                                        onPanUpdate: (details) {
-                                          setState(() {
-
-                                            double aspectRatio = stamp['width']! / stamp['height']!;
-
-                                            double newWidth = stamp['width']! + details.delta.dx;
-                                            double newHeight = newWidth / aspectRatio;
-
-                                            newWidth = newWidth.clamp(20.0, containerWidth - stamp['x']!);
-                                            newHeight = newHeight.clamp(20.0, containerHeight - stamp['y']!);
-
-                                            stamp['width'] = newWidth;
-                                            stamp['height'] = newHeight;
-
-                                            if (stamp['x']! + stamp['width']! > containerWidth) {
-                                              stamp['x'] = containerWidth - stamp['width']!;
-                                            }
-                                            if (stamp['y']! + stamp['height']! > containerHeight) {
-                                              stamp['y'] = containerHeight - stamp['height']!;
-                                            }
-
-                                            printCoordinates(index);
-                                          });
-                                        },
-                                        child: Container(
-                                          width: 30,
-                                          height: 30,
-                                          padding: EdgeInsets.all(5),
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(50),
-                                            color: Colors.red,
-                                          ),
-                                          child: Image.asset("assets/images/maximize.png"),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
+                            );
+                          }
                         } else {
-                          return Positioned(
-                            left: stamp['x'],
-                            top: stamp['y'],
-                            child: GestureDetector(
-                              onPanUpdate: (details) {
-                                setState(() {
-
-                                });
-                              },
-                              child: Container(
-                                width: stamp['width']!,
-                                height: stamp['height']!,
-                                child: Stack(
-                                  children: [
-                                    Container(
-                                      child: Image.asset(
-                                        "assets/images/materai.jpg",
-                                        width: stamp['width'],
-                                        height: stamp['height'],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
+                          return SizedBox.shrink();
                         }
                       }),
                     ),
@@ -313,16 +330,19 @@ class _SingleStampState extends State<SingleStamp> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    isButtonEnabled?
+                    isButtonEnabled && !isConfirm?
                     GestureDetector(
                       onTap: () {
                         setState(() {
-                          if(stamps.length > 0 && isButtonEnabled == true){
-                            stampCount--;
-                            stamps.clear();
-                            coordinateActive.clear();
+                          if (stamps.isNotEmpty && isButtonEnabled == true) {
+                            stamps.removeLast();
+                            stampCount = stamps.length;
+                            coordinateActive.removeLast();
+                            if (stampCount > 0) {
+                              stamps[stampCount - 1]['isDisabled'] = true;
+                            }
+                            print(stampCount);
                           }
-                          isDisable = false;
                         });
                       },
                       child: Container(
@@ -348,9 +368,10 @@ class _SingleStampState extends State<SingleStamp> {
                         setState(() {
                           isButtonEnabled = true;
                           isConfirm = false;
-                          isDisable = true;
-                          coordinateActive.insert(0, StampData(llx: getLLX(stamps[stampCount-1]), lly: getLLY(stamps[stampCount-1]), urx: getURX(stamps[stampCount-1]), ury: getURY(stamps[stampCount-1]), page: 1));
+                          stamps[stampCount - 1]['isDisabled'] = true;
+                          coordinateActive.insert(stampCount - 1, StampData(llx: getLLX(stamps[stampCount-1]), lly: getLLY(stamps[stampCount-1]), urx: getURX(stamps[stampCount-1]), ury: getURY(stamps[stampCount-1]), page: _currentPage));
                           print("llx = ${coordinateActive[0].llx}, lly = ${coordinateActive[0].lly}, urx = ${coordinateActive[0].urx}, ury = ${coordinateActive[0].ury}");
+                          print(stampCount);
                         });
                       },
                       child: Container(
@@ -394,7 +415,10 @@ class _SingleStampState extends State<SingleStamp> {
                             child: IconButton(
                               icon: const Icon(Icons.zoom_out),
                               onPressed: () {
-                                _pdfViewerController.zoomLevel = (_pdfViewerController.zoomLevel - 0.5).clamp(1.0, 4.0);
+                                setState(() {
+                                  zoomLevel = (zoomLevel - 0.5).clamp(1.0, 4.0);
+                                  _pdfViewerController.zoomLevel = zoomLevel; // Update the PDF viewer's zoom level
+                                });
                               },
                             ),
                           ),
@@ -416,7 +440,10 @@ class _SingleStampState extends State<SingleStamp> {
                             child: IconButton(
                               icon: const Icon(Icons.zoom_in),
                               onPressed: () {
-                                _pdfViewerController.zoomLevel = (_pdfViewerController.zoomLevel + 0.5).clamp(1.0, 4.0);
+                                setState(() {
+                                  zoomLevel = (zoomLevel + 0.5).clamp(1.0, 4.0);
+                                  _pdfViewerController.zoomLevel = zoomLevel; // Update the PDF viewer's zoom level
+                                });
                               },
                             ),
                           ),
@@ -519,17 +546,16 @@ class _SingleStampState extends State<SingleStamp> {
             SizedBox(
               height: MediaQuery.of(context).size.height * 0.85,
             ),
-            isButtonEnabled == true? FloatingActionButton(
+            isButtonEnabled && !isConfirm? FloatingActionButton(
               backgroundColor: textAlertColor2,
               onPressed: () {
-                if(stamps.length < 1) {
-                  setState(() {
-                    addStamp();
-                    stampCount++;
-                    isButtonEnabled = false;
-                    isConfirm = true;
-                  });
-                }
+                setState(() {
+                  addStamp();
+                  stampCount++;
+                  isButtonEnabled = false;
+                  isConfirm = true;
+                  print(coordinateActive.length);
+                });
               },
               child: Container(
                 child: Center(
@@ -559,7 +585,7 @@ class _SingleStampState extends State<SingleStamp> {
           child: ElevatedButton(
             onPressed: () {
               if(coordinateActive.length>=1) {
-                ModalConfirmLocation(context, "route", "Confirmation Location", "For a more accurate data certificate in the document, turn on the device location.", token, widget.docId, widget.docType, "jakarta", null, coordinateActive[0].llx, coordinateActive[0].lly, coordinateActive[0].urx, coordinateActive[0].ury, coordinateActive[0].page);
+                ModalConfirmLocation(context, "route", "Confirmation Location", "For a more accurate data certificate in the document, turn on the device location.", token, widget.docId, widget.docType, "jakarta", null, widget.docName, coordinateActive);
               }
             },
             child: Text('Submit'),
@@ -586,7 +612,7 @@ class StampData {
   });
 }
 
-Future<void> ModalConfirmLocation(context, route, labelText, contentText, token, docId, docType, city, otp, llx, lly, urx, ury, page,) {
+Future<void> ModalConfirmLocation(context, route, labelText, contentText, token, docId, docType, city, otp, docName, coordinateDoc) {
   return showDialog(
     context: context,
     builder: (BuildContext context) {
@@ -672,7 +698,7 @@ Future<void> ModalConfirmLocation(context, route, labelText, contentText, token,
                           ),
                           onPressed: () {
                             Navigator.pop(context);
-                            ModalConfirmSubmit(context, "route", "Are you sure?", "Document Information", token, docId, docType, city, otp, llx, lly, urx, ury, page);
+                            ModalConfirmSubmit(context, "route", "Are you sure?", "Document Information", token, docId, docType, city, otp, docName, coordinateDoc);
                           },
                           child: Text(
                             'Confirm',
@@ -703,7 +729,7 @@ Future<void> ModalConfirmLocation(context, route, labelText, contentText, token,
   );
 }
 
-Future<void> ModalConfirmSubmit(context, route, labelText, contentText, token, docId, docType, city, otp, llx, lly, urx, ury, page) {
+Future<void> ModalConfirmSubmit(context, route, labelText, contentText, token, docId, docType, city, otp, docName, coordinateDoc) {
   return showDialog(
     context: context,
     builder: (BuildContext context) {
@@ -767,7 +793,7 @@ Future<void> ModalConfirmSubmit(context, route, labelText, contentText, token, d
                                   color: Colors.black.withOpacity(0.5)
                               ),
                             ),
-                            Text("Single Document v8"),
+                            Text(docName),
                           ],
                         ),
                         SizedBox(
@@ -797,7 +823,7 @@ Future<void> ModalConfirmSubmit(context, route, labelText, contentText, token, d
                                   color: Colors.black.withOpacity(0.5)
                               ),
                             ),
-                            Text("Other Letter"),
+                            Text(docType),
                           ],
                         )
                       ],
@@ -838,7 +864,7 @@ Future<void> ModalConfirmSubmit(context, route, labelText, contentText, token, d
                               )
                           ),
                           onPressed: () async {
-                            Map<String, dynamic> data = await EventDB.StampingSingleDocument(token, docId, docType, city, otp, llx, lly, urx, ury, page);
+                            Map<String, dynamic> data = await EventDB.StampingSingleDocument(token, docId, docType, city, otp, coordinateDoc);
                             Navigator.pop(context);
                             if(data['status'] == 'error') {
                               AlertFailed(context, "Error", data['error']);
