@@ -571,7 +571,7 @@ Future<void> AlertFailed(context, labelText, contentText) {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  SizedBox(height: 30.0),
+                  SizedBox(height: 20.0),
                   Text(
                     labelText,
                     style: GoogleFonts.roboto(
@@ -606,7 +606,7 @@ Future<void> AlertFailed(context, labelText, contentText) {
                       style: ElevatedButton.styleFrom(
                           backgroundColor: bluePrimary,
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(10))
+                              borderRadius: BorderRadius.all(Radius.circular(5))
                           )
                       ),
                       onPressed: () {

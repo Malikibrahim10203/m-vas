@@ -12,6 +12,7 @@ import "package:vas/models/document.dart";
 import "package:vas/models/user_log_activity.dart";
 import "package:vas/screens/document/document_bulk_detail.dart";
 import "package:vas/screens/document/document_single_detail.dart";
+import "package:vas/screens/pages/dashboard.dart";
 import "package:vas/widgets/components.dart";
 
 
@@ -117,7 +118,7 @@ class _StampManagementState extends State<StampManagement> {
       appBar: AppBar(
         leading: IconButton(
           onPressed: () {
-            Navigator.pop(context);
+            Navigator.push(context, MaterialPageRoute(builder: (context)=>Dashboard(token: token)));
           },
           icon: Icon(Icons.close, color: Colors.black,),
         ),

@@ -229,10 +229,10 @@ packages:
     dependency: transitive
     description:
       name: file_selector_macos
-      sha256: f42eacb83b318e183b1ae24eead1373ab1334084404c8c16e0354f9a3e55d385
+      sha256: cb284e267f8e2a45a904b5c094d2ba51d0aabfc20b1538ab786d9ef7dc2bf75c
       url: "https://pub.dev"
     source: hosted
-    version: "0.9.4"
+    version: "0.9.4+1"
   file_selector_platform_interface:
     dependency: transitive
     description:
@@ -576,6 +576,70 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.0"
+  open_file:
+    dependency: "direct main"
+    description:
+      name: open_file
+      sha256: "865fcdf2f6876f8265d6a99a642df7d244e8ee979f8a5d2650b1d8eb3c70e273"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.5.6"
+  open_file_android:
+    dependency: transitive
+    description:
+      name: open_file_android
+      sha256: b5e1a2e9c5ea8e256b015403e94299039627c7205c2a5e6bb426c33235b6ca9a
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.2"
+  open_file_ios:
+    dependency: transitive
+    description:
+      name: open_file_ios
+      sha256: "8d9c03495cf14ca70bdbf191894b822ba3b2629cc0046ee311cbbe504db66c44"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.2"
+  open_file_linux:
+    dependency: transitive
+    description:
+      name: open_file_linux
+      sha256: cd2088722048b9c40f8615c6d83005fe0726e0e447e9cdfb40c2b65477291f7d
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.4"
+  open_file_mac:
+    dependency: transitive
+    description:
+      name: open_file_mac
+      sha256: "9d809f528cccc6dc9390caf50893eae9a6944e0f3b8a2558c7ad19e91c9244a1"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.1"
+  open_file_platform_interface:
+    dependency: transitive
+    description:
+      name: open_file_platform_interface
+      sha256: "14c50efb1a9667cb96e4fa68d601e6ad348fe337b02789834029b37ae3631498"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.2"
+  open_file_web:
+    dependency: transitive
+    description:
+      name: open_file_web
+      sha256: cfc9d6091a844e305a3698c45f47f5cd88aabb143665dcfb0f5fd6f7524d357e
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.3"
+  open_file_windows:
+    dependency: transitive
+    description:
+      name: open_file_windows
+      sha256: "2f4318d2d3958ec8d63b6dd4430c15b1fcb2fe7a2113e83c734584501a5c6d81"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.2"
   path:
     dependency: "direct main"
     description:
@@ -886,7 +950,7 @@ packages:
     source: hosted
     version: "26.2.14"
   syncfusion_flutter_pdf:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: syncfusion_flutter_pdf
       sha256: "59a1173dc34a1fac0a41aff7a2bb6f3c1578f1bfd749ea8b24379018434ba5a5"
@@ -1025,10 +1089,10 @@ packages:
     dependency: transitive
     description:
       name: url_launcher_macos
-      sha256: "9a1a42d5d2d95400c795b2914c36fdcb525870c752569438e4ebb09a2b5d90de"
+      sha256: "769549c999acdb42b8bcfa7c43d72bf79a382ca7441ab18a808e101149daf672"
       url: "https://pub.dev"
     source: hosted
-    version: "3.2.0"
+    version: "3.2.1"
   url_launcher_platform_interface:
     dependency: transitive
     description:
@@ -1057,10 +1121,10 @@ packages:
     dependency: transitive
     description:
       name: uuid
-      sha256: f33d6bb662f0e4f79dcd7ada2e6170f3b3a2530c28fc41f49a411ddedd576a77
+      sha256: a5be9ef6618a7ac1e964353ef476418026db906c4facdedaa299b7a2e71690ff
       url: "https://pub.dev"
     source: hosted
-    version: "4.5.0"
+    version: "4.5.1"
   vector_math:
     dependency: transitive
     description:
@@ -1081,10 +1145,10 @@ packages:
     dependency: transitive
     description:
       name: web
-      sha256: d43c1d6b787bf0afad444700ae7f4db8827f701bc61c255ac8d328c6f4d52062
+      sha256: cd3543bd5798f6ad290ea73d210f423502e71900302dde696f8bff84bf89a1cb
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.0"
+    version: "1.1.0"
   win32:
     dependency: transitive
     description:

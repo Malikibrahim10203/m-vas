@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
@@ -809,7 +810,7 @@ class EventDB {
       }
 
     } catch (e) {
-      print(e);
+      print("Get doctype error: $token");
     }
 
     return docType;
@@ -840,9 +841,11 @@ class EventDB {
     return fileBase64;
   }
 
-  static Future<void> StampingSingleDocument(String token, int docId, String docType, String city, String? otp, Map<String, dynamic> stampData) async {
+  static Future<Map<String, dynamic>> StampingSingleDocument(String token, int docId, String docType, String city, String? otp, double llx, double lly, double urx, double ury, int page) async {
     List<Map<String, dynamic>> stampsData = [];
-    stampsData.insert(0, stampData);
+    stampsData.insert(0, {'llx': llx, 'lly': lly, 'urx': urx, 'ury': ury, 'page': page});
+
+    Map<String, dynamic> result = {};
 
     try {
       // Construct the URL
@@ -872,13 +875,78 @@ class EventDB {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         print("Document stamped successfully.");
+        result = jsonDecode(response.body);
       } else {
         print("Failed to stamp document. Status code: ${response.statusCode}");
         print("Response: ${response.body}");
+        result = jsonDecode(response.body);
       }
     } catch (e) {
       print("Error during stamping: $e");
     }
+
+    return result;
+  }
+
+  static Future<String?> RetrySingleStampDocument(token,docId) async {
+
+    String? result;
+
+    try {
+      var response = await http.post(Uri.parse("${Api.retry_single_stamp_document}/$docId").replace(
+        queryParameters: {
+          'retry': '1'
+        }
+      ),
+      headers: {
+        'token': token
+      });
+
+      if (response.statusCode == 200) {
+        var responseBody = jsonDecode(response.body);
+        if (responseBody['status'] != null) {
+          result = responseBody['status'];
+        } else {
+          print("Failed to stamp document. Status : Null");
+        }
+      } else {
+        print("Failed to stamp document. Status code: ${response.statusCode}");
+      }
+    } catch(e) {
+      print(e);
+    }
+    return result;
+  }
+  
+  static Future<String?> DownloadDocument(token, id) async {
+
+    String? base64Pdf;
+
+    try {
+      var response = await http.get(Uri.parse("${Api.download_document}").replace(
+        queryParameters: {
+          'id': '$id'
+        }
+      ),
+        headers: {
+          'token': token
+        }
+      );
+      
+      if (response.statusCode == 200) {
+        var responseBody = jsonDecode(response.body);
+        if (responseBody['data'] != null) {
+          base64Pdf = responseBody['data']['document'];
+        } else {
+          print("Error response body data null");
+        }
+      } else {
+        print("Error download document: ${response.statusCode}");
+      }
+    } catch(e) {
+      print(e);
+    }
+    return base64Pdf;
   }
 
 

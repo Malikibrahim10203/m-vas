@@ -56,4 +56,12 @@ class Api {
   // Stamping Single Doc
   static String stamp_single_document = "$_host/api/v1/peruri/stamp";
 
+  // Check Retry Single Stamp Document
+  static String checkRetryStampSingleDocument = "$_host/api/v1/stamp-status";
+
+  // Retry Single Stamp Document
+  static String retry_single_stamp_document = "$_host/api/v1/peruri/stamp";
+
+  // Download Document
+  static String download_document = "$_host/api/v1/document/download/v2";
 }

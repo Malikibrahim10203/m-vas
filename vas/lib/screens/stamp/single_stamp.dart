@@ -4,15 +4,18 @@ import 'dart:typed_data';
 
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:vas/event/event_db.dart';
 import 'package:vas/event/event_pref.dart';
+import 'package:vas/screens/document/document_single_detail.dart';
+import 'package:vas/screens/management_doc/stamp_management.dart';
 import 'package:vas/widgets/components.dart';
 
 class SingleStamp extends StatefulWidget {
-  const SingleStamp({super.key, required this.docType, required this.docId});
+  const SingleStamp({super.key, required this.docType, required this.docId, required this.isfolder, required this.statuschips});
 
-  final docType, docId;
+  final docType, docId, isfolder, statuschips;
 
   @override
   State<SingleStamp> createState() => _SingleStampState();
@@ -21,13 +24,69 @@ class SingleStamp extends StatefulWidget {
 class _SingleStampState extends State<SingleStamp> {
   late PdfViewerController _pdfViewerController;
   int _currentPage = 1;
-  final int _totalPages = 10;
-  double _scale = 30;
 
-  double _pageHeight = 0.0;
-  double _pageWidth = 0.0;
+  Size? pageSize;
+  Size? viewSize;
+  Size? renderedSize;
 
-  List<Stamp> stamps = [];
+  double containerWidth = 0;
+  double containerHeight = 0;
+
+  int _totalPage = 0;
+  bool isDisable = false;
+  
+  List<StampData> coordinateActive = [];
+
+  List<Map<String, double>> stamps = [];
+
+  Size? calculateRenderedSize() {
+    if (pageSize != null && viewSize != null) {
+      double scaleFactorWidth = viewSize!.width / pageSize!.width;
+      double scaleFactorHeight = viewSize!.height / pageSize!.height;
+      double scaleFactor = scaleFactorWidth < scaleFactorHeight ? scaleFactorWidth : scaleFactorHeight;
+
+      double renderedWidth = pageSize!.width * scaleFactor;
+      double renderedHeight = pageSize!.height * scaleFactor;
+
+      return Size(renderedWidth, renderedHeight);
+    }
+    return null;
+  }
+
+  double getScaledX(double x) {
+    if (renderedSize == null || pageSize == null) return 0;
+    return (x / renderedSize!.width) * pageSize!.width;
+  }
+
+  double getScaledY(double y) {
+    if (renderedSize == null || pageSize == null) return 0;
+    return (y / renderedSize!.height) * pageSize!.height;
+  }
+
+  double getLLX(Map<String, double> stamp) => getScaledX(stamp['x']!);
+  double getLLY(Map<String, double> stamp) => getScaledY(containerHeight - stamp['y']! - stamp['height']!);
+  double getURX(Map<String, double> stamp) => getScaledX(stamp['x']! + stamp['width']!);
+  double getURY(Map<String, double> stamp) => getScaledY(containerHeight - stamp['y']!);
+
+  String printCoordinates(int index) {
+    double llx = getLLX(stamps[index]);
+    double lly = getLLY(stamps[index]);
+    double urx = getURX(stamps[index]);
+    double ury = getURY(stamps[index]);
+    return 'Stamp $index -> llx = $llx, lly = $lly, urx = $urx, ury = $ury';
+  }
+
+  void addStamp() {
+    setState(() {
+      stamps.add({
+        'x': (containerWidth - 100) / 2,
+        'y': (containerHeight - 100) / 2,
+        'width': 100,
+        'height': 100,
+      });
+    });
+  }
+
   int stampCount = 0;
   bool isButtonEnabled = true;
 
@@ -46,7 +105,7 @@ class _SingleStampState extends State<SingleStamp> {
 
     });
   }
-  
+
   List<Map<String, dynamic>> stampList = [];
 
   @override
@@ -91,120 +150,155 @@ class _SingleStampState extends State<SingleStamp> {
           Expanded(
             child: Stack(
               children: [
-                filePdf!=null?Container(
-                  height: 650,
-                  child: SfPdfViewer.memory(
-                    filePdf!,
-                    controller: _pdfViewerController,
-                    scrollDirection: PdfScrollDirection.horizontal,
-                    enableDoubleTapZooming: false,
-                    onDocumentLoaded: (PdfDocumentLoadedDetails details) {
-                      // Set total pages dynamically if needed
-                      final page = details.document.pages[_currentPage - 1];
-                      _pageHeight = page.size.height;
-                      _pageWidth = page.size.width;
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    viewSize = Size(constraints.maxWidth, constraints.maxHeight);
 
-                      setState(() {
+                    if (filePdf != null) {
+                      return SfPdfViewer.memory(
+                        filePdf!,
+                        controller: _pdfViewerController,
+                        scrollDirection: PdfScrollDirection.horizontal,
+                        enableDoubleTapZooming: false,
+                        onDocumentLoaded: (PdfDocumentLoadedDetails details) {
+                          pageSize = details.document.pages[0].size;
 
-                      });
-                    },
-                    onPageChanged: (PdfPageChangedDetails details) {
+                          _totalPage =  details.document.pages.count;
 
-                      setState(() {
-                        _currentPage = details.newPageNumber;
-                      });
-                    },
-                  ),
-                ):Center(
-                  child: CircularProgressIndicator(),
+                          renderedSize = calculateRenderedSize();
+                          if (renderedSize != null) {
+                            containerWidth = renderedSize!.width;
+                            containerHeight = renderedSize!.height;
+                            print('Rendered PDF Size on Screen: ${renderedSize?.width} x ${renderedSize?.height}');
+                          }
+
+                          setState(() {
+
+                          });
+                        },
+                      );
+                    } else {
+                      return Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    }
+                  },
                 ),
-                ...stamps.map((stamp) {
-                  return Positioned(
-                    left: stamp.left,
-                    top: stamp.top,
-                    child: Container(
-                        child: Stack(
-                          children: [
-                            Container(
-                              padding: EdgeInsets.all(15),
-                              child: GestureDetector(
-                                onPanUpdate: (details) {
-                                  setState(() {
-                                    if(stamp.isDisable == false){
-                                      stamp.left = max(0, stamp.left + details.delta.dx);
-                                      stamp.top = max(0, stamp.top + details.delta.dy);
-                                      print(stamp.getBoundingBox(_pageHeight, _pageWidth, widgetHeight, widgetWidth));
-                                      print("left: ${stamp.left}");
-                                      print("top: ${stamp.top}");
-                                      print("x: ${stamp.x}");
-                                      print("y: ${stamp.y}");
-                                    }
-                                  });
-                                },
-                                child: Container(
-                                    width: stamp.x,
-                                    height: stamp.x,
-                                    decoration: BoxDecoration(),
-                                    child: Stack(
-                                      children: [
-                                        Visibility(
-                                          visible: !stamp.isDisable,
-                                          child: Container(
-                                            child: DottedBorder(
-                                              child: Image.asset("assets/images/materai.jpg", width: stamp.x, height: stamp.x,),
-                                            ),
-                                          )
+                Positioned(
+                  left: (viewSize?.width ?? 0) / 2 - (containerWidth / 2),
+                  top: (viewSize?.height ?? 0) / 2 - (containerHeight / 2),
+                  child: Container(
+                    width: containerWidth,
+                    height: containerHeight,
+                    color: Colors.transparent,
+                    child: Stack(
+                      children: List.generate(stamps.length, (index) {
+                        final stamp = stamps[index];
+                        if (isDisable == false) {
+                          return Positioned(
+                            left: stamp['x'],
+                            top: stamp['y'],
+                            child: GestureDetector(
+                              onPanUpdate: (details) {
+                                setState(() {
+                                  // Move the stamp
+                                  stamp['x'] = (stamp['x']! + details.delta.dx).clamp(0, containerWidth - stamp['width']!);
+                                  stamp['y'] = (stamp['y']! + details.delta.dy).clamp(0, containerHeight - stamp['height']!);
+                                  printCoordinates(index);
+                                });
+                              },
+                              child: Container(
+                                width: stamp['width']!+10,
+                                height: stamp['height']!+10,
+
+                                child: Stack(
+                                  children: [
+                                    Container(
+                                      child: DottedBorder(
+                                        child: Image.asset(
+                                          "assets/images/materai.jpg",
+                                          width: stamp['width'],
+                                          height: stamp['height'],
                                         ),
-                                        Visibility(
-                                          visible: stamp.isDisable,
-                                          child: Image.asset("assets/images/materai.jpg", width: stamp.x, height: stamp.x,),
-                                        ),
-                                      ],
-                                    )
-                                ),
-                              ),
-                            ),
-                            SizedBox(
-                              height: 10,
-                            ),
-                            Positioned(
-                              left: stamp.x,
-                              top: stamp.x,
-                              child: Visibility(
-                                visible: !stamp.isDisable,
-                                child: GestureDetector(
-                                    onPanUpdate: (details) {
-                                      setState(() {
-                                        stamp.x += details.delta.dx;
-                                        stamp.y += details.delta.dy;
-                                        if(stamp.x >=  100 || stamp.y >= 100)  {
-                                          stamp.x = 100;
-                                          stamp.y = 100;
-                                        };
-                                        if(stamp.x <= 20 || stamp.y <= 20) {
-                                          stamp.x = 20;
-                                          stamp.y = 20;
-                                        };
-                                      });
-                                    },
-                                    child: Container(
-                                      width: 30,
-                                      height: 30,
-                                      padding: EdgeInsets.all(5),
-                                      decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(50),
-                                          color: Colors.red
                                       ),
-                                      child: Image.asset("assets/images/maximize.png"),
-                                    )
+                                    ),
+                                    Positioned(
+                                      right: 0,
+                                      bottom: 0,
+                                      child: GestureDetector(
+                                        onPanUpdate: (details) {
+                                          setState(() {
+
+                                            double aspectRatio = stamp['width']! / stamp['height']!;
+
+                                            double newWidth = stamp['width']! + details.delta.dx;
+                                            double newHeight = newWidth / aspectRatio;
+
+                                            newWidth = newWidth.clamp(20.0, containerWidth - stamp['x']!);
+                                            newHeight = newHeight.clamp(20.0, containerHeight - stamp['y']!);
+
+                                            stamp['width'] = newWidth;
+                                            stamp['height'] = newHeight;
+
+                                            if (stamp['x']! + stamp['width']! > containerWidth) {
+                                              stamp['x'] = containerWidth - stamp['width']!;
+                                            }
+                                            if (stamp['y']! + stamp['height']! > containerHeight) {
+                                              stamp['y'] = containerHeight - stamp['height']!;
+                                            }
+
+                                            printCoordinates(index);
+                                          });
+                                        },
+                                        child: Container(
+                                          width: 30,
+                                          height: 30,
+                                          padding: EdgeInsets.all(5),
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(50),
+                                            color: Colors.red,
+                                          ),
+                                          child: Image.asset("assets/images/maximize.png"),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
-                          ],
-                        )
+                          );
+                        } else {
+                          return Positioned(
+                            left: stamp['x'],
+                            top: stamp['y'],
+                            child: GestureDetector(
+                              onPanUpdate: (details) {
+                                setState(() {
+
+                                });
+                              },
+                              child: Container(
+                                width: stamp['width']!,
+                                height: stamp['height']!,
+                                child: Stack(
+                                  children: [
+                                    Container(
+                                      child: Image.asset(
+                                        "assets/images/materai.jpg",
+                                        width: stamp['width'],
+                                        height: stamp['height'],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+                      }),
                     ),
-                  );
-                }).toList(),
+                  ),
+                ),
               ],
             ),
           ),
@@ -219,13 +313,16 @@ class _SingleStampState extends State<SingleStamp> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    isButtonEnabled?GestureDetector(
+                    isButtonEnabled?
+                    GestureDetector(
                       onTap: () {
                         setState(() {
                           if(stamps.length > 0 && isButtonEnabled == true){
                             stampCount--;
                             stamps.clear();
+                            coordinateActive.clear();
                           }
+                          isDisable = false;
                         });
                       },
                       child: Container(
@@ -251,10 +348,9 @@ class _SingleStampState extends State<SingleStamp> {
                         setState(() {
                           isButtonEnabled = true;
                           isConfirm = false;
-                          stamps[stampCount-1].isDisable = true;
-                          print(stamps[stampCount-1].x);
-                          print(stamps[stampCount-1].y);
-                          stampList.insert(0, stamps[0].getBoundingBox(_pageHeight, _pageHeight, widgetHeight, widgetWidth));
+                          isDisable = true;
+                          coordinateActive.insert(0, StampData(llx: getLLX(stamps[stampCount-1]), lly: getLLY(stamps[stampCount-1]), urx: getURX(stamps[stampCount-1]), ury: getURY(stamps[stampCount-1]), page: 1));
+                          print("llx = ${coordinateActive[0].llx}, lly = ${coordinateActive[0].lly}, urx = ${coordinateActive[0].urx}, ury = ${coordinateActive[0].ury}");
                         });
                       },
                       child: Container(
@@ -343,7 +439,7 @@ class _SingleStampState extends State<SingleStamp> {
                         ],
                       ),
                       child: Center(
-                        child: Text('Page $_currentPage of $_totalPages'),
+                        child: Text('Page $_currentPage of $_totalPage'),
                       ),
                     ),
                     Container(
@@ -371,7 +467,11 @@ class _SingleStampState extends State<SingleStamp> {
                               onPressed: () {
                                 if (_currentPage > 1) {
                                   _pdfViewerController.jumpToPage(_currentPage - 1);
+                                  _currentPage -= 1;
                                 }
+                                setState(() {
+
+                                });
                               },
                             ),
                           ),
@@ -393,9 +493,13 @@ class _SingleStampState extends State<SingleStamp> {
                             child: IconButton(
                               icon: const Icon(Icons.navigate_next),
                               onPressed: () {
-                                if (_currentPage < _totalPages) {
+                                if (_currentPage < _totalPage) {
                                   _pdfViewerController.jumpToPage(_currentPage + 1);
+                                  _currentPage += 1;
                                 }
+                                setState(() {
+
+                                });
                               },
                             ),
                           ),
@@ -420,7 +524,7 @@ class _SingleStampState extends State<SingleStamp> {
               onPressed: () {
                 if(stamps.length < 1) {
                   setState(() {
-                    stamps.add(Stamp(left: 104.376, top: 161.919, x: _scale, y: _scale));
+                    addStamp();
                     stampCount++;
                     isButtonEnabled = false;
                     isConfirm = true;
@@ -454,7 +558,9 @@ class _SingleStampState extends State<SingleStamp> {
           height: 50,
           child: ElevatedButton(
             onPressed: () {
-              EventDB.StampingSingleDocument(token, widget.docId, widget.docType, "jakarta", null, stamps[0].getBoundingBox(_pageHeight, _pageWidth, widgetHeight, widgetWidth));
+              if(coordinateActive.length>=1) {
+                ModalConfirmLocation(context, "route", "Confirmation Location", "For a more accurate data certificate in the document, turn on the device location.", token, widget.docId, widget.docType, "jakarta", null, coordinateActive[0].llx, coordinateActive[0].lly, coordinateActive[0].urx, coordinateActive[0].ury, coordinateActive[0].page);
+              }
             },
             child: Text('Submit'),
           ),
@@ -464,42 +570,310 @@ class _SingleStampState extends State<SingleStamp> {
   }
 }
 
-class Stamp {
-  double left;
-  double top;
-  double x;
-  double y;
-  bool isDisable = false;
+class StampData {
+  double llx;
+  double lly;
+  double urx;
+  double ury;
+  int page;
 
-  Stamp({
-    required this.left,
-    required this.top,
-    required this.x,  // width
-    required this.y,  // height
+  StampData({
+    required this.llx,
+    required this.lly,
+    required this.urx,
+    required this.ury,
+    required this.page,
   });
+}
 
-  Map<String, dynamic> getBoundingBox(double pageHeight, double pageWidth, double widgetHeight, double widgetWidth) {
-    // Hitung rasio skala
-    double scaleFactorX = widgetWidth / pageWidth;
-    double scaleFactorY = widgetHeight / pageHeight;
+Future<void> ModalConfirmLocation(context, route, labelText, contentText, token, docId, docType, city, otp, llx, lly, urx, ury, page,) {
+  return showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return Dialog(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10)
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.topCenter,
+          children: <Widget>[
+            Container(
+              padding: const EdgeInsets.all(20.0),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: tertiaryColor50, width: 10)),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(10))
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  SizedBox(height: 30.0), // Add spacing for the floating icon
+                  Text(
+                    labelText,
+                    style: GoogleFonts.roboto(
+                        fontSize: 16.5,
+                        fontWeight: FontWeight.w600
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 20.0),
+                  Container(
+                    width: 300,
+                    height: 50,
+                    padding: EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: tertiaryColor4,
+                      border: Border.all(color: tertiaryColor50, width: 1)
+                    ),
+                    child: Text(
+                      "$contentText",
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w300
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  SizedBox(height: 20.0),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        width: 150,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.all(Radius.circular(5)),
+                                  side: BorderSide(width: 1, color: bluePrimary)
+                              )
+                          ),
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          child: Text(
+                            'Back',
+                            style: TextStyle(
+                                color: bluePrimary
+                            ),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        width: 150,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: bluePrimary,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.all(Radius.circular(5))
+                              )
+                          ),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            ModalConfirmSubmit(context, "route", "Are you sure?", "Document Information", token, docId, docType, city, otp, llx, lly, urx, ury, page);
+                          },
+                          child: Text(
+                            'Confirm',
+                            style: TextStyle(
+                                color: Colors.white
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            // Floating Icon
+            Positioned(
+              top: -30.0,
+              child: CircleAvatar(
+                  backgroundColor: tertiaryColor100,
+                  radius: 30.0,
+                  child: Image.asset("assets/images/alert.png", width: 50,)
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
 
-    // Penyesuaian jika ada padding atau margin
-    double horizontalPadding = (widgetWidth - (pageWidth * scaleFactorX)) / 2;
-
-    // Konversi koordinat dengan skala dan padding
-    double llx = (left - horizontalPadding) / scaleFactorX;
-    double lly = (pageHeight - top - y) / scaleFactorY;
-    double urx = (left + x - horizontalPadding) / scaleFactorX;
-    double ury = (pageHeight - top) / scaleFactorY;
-
-    Map<String, dynamic> result = {
-      'llx': llx,
-      'lly': lly,
-      'page': 1,
-      'urx': urx,
-      'ury': ury,
-    };
-
-    return result;
-  }
+Future<void> ModalConfirmSubmit(context, route, labelText, contentText, token, docId, docType, city, otp, llx, lly, urx, ury, page) {
+  return showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return Dialog(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10)
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.topCenter,
+          children: <Widget>[
+            Container(
+              padding: const EdgeInsets.all(20.0),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: tertiaryColor50, width: 10)),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(10))
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  SizedBox(height: 30.0), // Add spacing for the floating icon
+                  Text(
+                    labelText,
+                    style: GoogleFonts.roboto(
+                        fontSize: 16.5,
+                        fontWeight: FontWeight.w600
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 20.0),
+                  Container(
+                    width: 300,
+                    height: 50,
+                    padding: EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                        color: tertiaryColor4,
+                        border: Border.all(color: tertiaryColor50, width: 1)
+                    ),
+                    child: Text(
+                      "$contentText",
+                      style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w300
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  SizedBox(height: 20.0),
+                  Container(
+                    padding: EdgeInsets.all(10),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Document Name : ",
+                              style: TextStyle(
+                                  color: Colors.black.withOpacity(0.5)
+                              ),
+                            ),
+                            Text("Single Document v8"),
+                          ],
+                        ),
+                        SizedBox(
+                          height: 10,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Stamp Category : ",
+                              style: TextStyle(
+                                  color: Colors.black.withOpacity(0.5)
+                              ),
+                            ),
+                            Text("Single Stamp"),
+                          ],
+                        ),
+                        SizedBox(
+                          height: 10,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Document Type : ",
+                              style: TextStyle(
+                                  color: Colors.black.withOpacity(0.5)
+                              ),
+                            ),
+                            Text("Other Letter"),
+                          ],
+                        )
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 20.0),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        width: 150,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.all(Radius.circular(5)),
+                                  side: BorderSide(width: 1, color: bluePrimary)
+                              )
+                          ),
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          child: Text(
+                            'Back',
+                            style: TextStyle(
+                                color: bluePrimary
+                            ),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        width: 150,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: bluePrimary,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.all(Radius.circular(5))
+                              )
+                          ),
+                          onPressed: () async {
+                            Map<String, dynamic> data = await EventDB.StampingSingleDocument(token, docId, docType, city, otp, llx, lly, urx, ury, page);
+                            Navigator.pop(context);
+                            if(data['status'] == 'error') {
+                              AlertFailed(context, "Error", data['error']);
+                            } else {
+                              // statuschip[0] = true;
+                              // Navigator.push(context, MaterialPageRoute(builder: (context)=>DocumentSingleDetail(docId: docId.toString(), isFolder: isfolder, statusChip: statuschip)));
+                              Navigator.pop(context);
+                              Navigator.push(context, MaterialPageRoute(builder: (context)=>StampManagement()));
+                            }
+                          },
+                          child: Text(
+                            'Submit',
+                            style: TextStyle(
+                                color: Colors.white
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            // Floating Icon
+            Positioned(
+              top: -30.0,
+              child: CircleAvatar(
+                  backgroundColor: tertiaryColor100,
+                  radius: 30.0,
+                  child: Image.asset("assets/images/alert.png", width: 50,)
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
 }
