@@ -324,9 +324,6 @@ class _UploadBulkState extends State<UploadBulk> {
                           hint: Text("Select Office"),
                           items:
                           officeController!.map((office) {
-                            setState(() {
-                              nameOffice = office.officeName;
-                            });
                             return DropdownMenuItem<int>(
                               value: office.officeId,
                               child: Text(office.officeName,
@@ -337,6 +334,17 @@ class _UploadBulkState extends State<UploadBulk> {
                           }).toList(),
                           onChanged: (newValue) async {
                             setState(() {
+
+                              if (newValue == 382) {
+                                nameOffice = "Bank Jateng Pusat";
+                              } else if (newValue == 664) {
+                                nameOffice = "Bank Jateng Cabang Tegal";
+                              } else if (newValue == 550) {
+                                nameOffice = "Bank Jateng Cabang Jakarta";
+                              } else {
+                                nameOffice = "Bank Jateng Cabang Bandung";
+                              }
+
                               selectedOffice = newValue;
                               if (selectedOffice != null) {
                                 _fetchOffice();

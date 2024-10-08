@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:open_file/open_file.dart';
 import 'package:vas/event/event_pref.dart';
 import 'package:vas/models/credential.dart';
 import 'package:vas/screens/auth/change_password.dart';
@@ -17,10 +18,41 @@ import 'package:vas/services/UserProvider.dart';
 import 'package:vas/widgets/components.dart';
 import 'package:vas/widgets/wait_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
-void main() {
+void main() async {
+
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize settings for Android
+  final AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('vas_logo');
+
+
+  // Initialize settings for iOS
+  final DarwinInitializationSettings initializationSettingsDarwin = DarwinInitializationSettings(
+    onDidReceiveLocalNotification: (int id, String? title, String? body, String? payload) async {
+      // Handle iOS notification received while app is in the foreground
+    },
+  );
+
+  // Combine settings
+  final InitializationSettings initializationSettings = InitializationSettings(
+    android: initializationSettingsAndroid,
+    iOS: initializationSettingsDarwin,
+  );
+
+  await flutterLocalNotificationsPlugin.initialize(
+    initializationSettings,
+    onDidReceiveNotificationResponse: (NotificationResponse response) async {
+      // Handle when a user taps on a notification
+      if (response.payload != null) {
+        OpenFile.open(response.payload!);
+      }
+    },
+  );
+
   runApp(
     ChangeNotifierProvider(
       create: (_) => Userprovider(),
@@ -44,6 +76,7 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     initUniLinks();
   }
+
 
   void initUniLinks() async {
     try {

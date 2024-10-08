@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:another_stepper/another_stepper.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:flutter_stepindicator/flutter_stepindicator.dart';
@@ -11,6 +12,7 @@ import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:vas/event/event_db.dart';
 import 'package:vas/event/event_pref.dart';
 import 'package:vas/models/activity.dart';
@@ -19,7 +21,43 @@ import 'package:vas/models/document_type.dart';
 import 'package:vas/models/single_document.dart';
 import 'package:vas/screens/loading.dart';
 import 'package:vas/screens/stamp/single_stamp.dart';
+import 'package:vas/screens/view_document/view_single_document.dart';
 import 'package:vas/widgets/components.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
+import '../../main.dart';
+
+Future<void> requestNotificationPermission() async {
+  if (await Permission.notification.isDenied) {
+    await Permission.notification.request();
+  }
+}
+
+Future<void> showNotification(String? payload) async {
+  // Android notification details
+  const AndroidNotificationDetails androidNotificationDetails =
+  AndroidNotificationDetails(
+    icon: ('vas_logo'),
+    'channel_id',             // Required for Android 8.0+ (Oreo) and above
+    'channel_name',           // Name of the notification channel
+    importance: Importance.max,
+    priority: Priority.high,
+    ticker: 'ticker',
+  );
+
+  // Platform-specific notification details
+  const NotificationDetails platformChannelSpecifics =
+  NotificationDetails(android: androidNotificationDetails);
+
+  // Show notification
+  await flutterLocalNotificationsPlugin.show(
+    0,
+    'Download Success',
+    'The file has been downloaded successfully. You can find it in your library.',
+    platformChannelSpecifics,
+    payload: payload,
+  );
+}
 
 
 class DocumentSingleDetail extends StatefulWidget {
@@ -38,17 +76,37 @@ class _DocumentSingleDetailState extends State<DocumentSingleDetail> {
   List listSteps = [1,2,3];
   Singledocument? singleDoc;
 
-  Future<Activity?>? activityList;
+  Future<Activity?>? fetchActivity;
+  List<ActivityElement> activityData = [];
+
+  int lastIndex = 0;
+  int? lastPage = null;
+
+  final ItemScrollController scrollController = ItemScrollController();
+  final ItemPositionsListener itemPositionsListener = ItemPositionsListener.create();
+
   List<ListTypeDocument>? docType;
   var selectedDocTypeId;
   var selectedDocType;
+
+  bool isLoading = false;
+
   List<Map<String, dynamic>> docVersion = [];
+
+  bool isLoadData = false;
+
+
 
 
   Future<void> getData() async {
+
+    setState(() {
+      isLoading = true;
+    });
+
     token = (await EventPref.getCredential())?.data.token;
     singleDoc = await EventDB.getDetailDocument(token, widget.docId, widget.isFolder);
-    activityList = EventDB.getActivity(token, singleDoc!.docId, null);
+    fetchActivity = EventDB.getActivity(token, singleDoc!.docId, null, page);
 
     if (singleDoc!.versions.isNotEmpty) {
       docVersion = List<Map<String, dynamic>>.from(singleDoc!.versions);
@@ -57,7 +115,7 @@ class _DocumentSingleDetailState extends State<DocumentSingleDetail> {
     docType = await EventDB.getDocumentType(token);
 
     setState(() {
-
+      isLoading = false;
     });
   }
 
@@ -65,6 +123,7 @@ class _DocumentSingleDetailState extends State<DocumentSingleDetail> {
   void initState() {
     // TODO: implement initState
     getData();
+
     super.initState();
   }
 
@@ -262,7 +321,7 @@ class _DocumentSingleDetailState extends State<DocumentSingleDetail> {
                                     backgroundColor: Colors.white
                                 ),
                                 onPressed: () {
-
+                                  Navigator.push(context, MaterialPageRoute(builder: (context)=>ViewSingleDocument(docId: widget.docId)));
                                 },
                                 child: Icon(Icons.remove_red_eye, color: primaryColor2, size: 20,),
                               ),
@@ -464,13 +523,33 @@ class _DocumentSingleDetailState extends State<DocumentSingleDetail> {
                               children: [
                                 Expanded(
                                   child: FutureBuilder<Activity?>(
-                                    future: activityList,
+                                    future: fetchActivity,
                                     builder: (BuildContext context, snapshot) {
                                       if(snapshot.connectionState == ConnectionState.waiting) {
                                         return Center(child: CircularProgressIndicator());
                                       } else if(snapshot.hasError) {
                                         return Center(child: Text('Error: ${snapshot.error}'));
                                       } else if(!snapshot.hasData || snapshot.data!.data.isEmpty) {
+
+
+                                        if (isLoadData == true) {
+                                          print("P:${activityData.length}-lastIndex");
+                                          if(stepperData.length > lastIndex) {
+                                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                                              if (scrollController.isAttached) {
+                                                scrollController.jumpTo(index: lastIndex);
+                                                isLoadData = false;
+                                              }
+                                            });
+                                          }
+                                        } else {
+                                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                                            if (scrollController.isAttached) {
+                                              scrollController.jumpTo(index: 0);
+                                            }
+                                          });
+                                        }
+
                                         return Center(
                                           child: Stack(
                                             children: [
@@ -492,40 +571,92 @@ class _DocumentSingleDetailState extends State<DocumentSingleDetail> {
                                           ),
                                         );
                                       } else {
-                                        for(var i = 0; i < snapshot.data!.data.length; i++) {
+
+                                        for (var i = 0; i < snapshot.data!.data.length; i++) {
                                           ActivityElement activityData = snapshot.data!.data[i];
-                                          // print(activityData.createdAt);
-                                          stepperData.add(
-                                            StepperData(
-                                              title: StepperText(
-                                                "${activityData.activity??''} - ${activityData.docName??''}",
-                                                textStyle: const TextStyle(
-                                                  color: Colors.grey,
+
+                                          bool alreadyExists = stepperData.any((step) =>
+                                          step.title!.text == "${activityData.activity ?? ''} - ${activityData.docName ?? ''}" &&
+                                              step.subtitle!.text == DateFormat('yyyy-MM-dd, HH:mm:ss').format(activityData.createdAt!.toLocal())
+                                          );
+
+                                          if (!alreadyExists) {
+                                            stepperData.add(
+                                              StepperData(
+                                                title: StepperText(
+                                                  "${activityData.activity ?? ''} - ${activityData.docName ?? ''}",
+                                                  textStyle: const TextStyle(
+                                                    color: Colors.grey,
+                                                  ),
                                                 ),
-                                              ),
-                                              subtitle: StepperText(DateFormat('yyyy-MM-dd, HH:mm:ss').format(activityData.createdAt!)),
-                                              iconWidget: Container(
-                                                padding: const EdgeInsets.all(8),
-                                                decoration: const BoxDecoration(
-                                                  color: Color(0xff07418C),
-                                                  borderRadius: BorderRadius.all(Radius.circular(30),
+                                                subtitle: StepperText(
+                                                  DateFormat('yyyy-MM-dd, HH:mm:ss').format(activityData.createdAt!.toLocal()),
+                                                ),
+                                                iconWidget: Container(
+                                                  padding: const EdgeInsets.all(8),
+                                                  decoration: const BoxDecoration(
+                                                    color: Color(0xff07418C),
+                                                    borderRadius: BorderRadius.all(Radius.circular(30)),
                                                   ),
                                                 ),
                                               ),
-                                            ),
-                                          );
+                                            );
+                                          }
                                         }
-                                        return Scrollbar(
-                                          child: ListView.builder(
+
+                                        return NotificationListener<ScrollNotification>(
+                                          onNotification: (ScrollNotification scrollInfo) {
+                                            if (scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent && !isLoading && lastPage != page) {
+                                              setState(() {
+                                                isLoading = true;
+                                                page++;
+                                                print("Page: $page");
+                                                print("${stepperData.length} . ${lastIndex}");
+                                              });
+
+                                              EventDB.getActivity(token, singleDoc!.docId, null, page).then((checkActivity) {
+                                                if (checkActivity != null && checkActivity.data.isNotEmpty) {
+                                                  setState(() {
+                                                    fetchActivity = Future.value(checkActivity);
+                                                    lastIndex+= 10;
+                                                    print(lastIndex);
+                                                    isLoadData = true;
+
+                                                    isLoading = false;
+                                                  });
+                                                } else {
+                                                  setState(() {
+                                                    page--;
+                                                    isLoading = false;
+                                                    lastPage = page;
+                                                  });
+
+                                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                                    if (scrollController.isAttached) {
+                                                      scrollController.jumpTo(index: stepperData.length - 1);
+                                                    }
+                                                  });
+                                                }
+                                              }).catchError((error) {
+                                                setState(() {
+                                                  isLoading = false;
+                                                });
+                                              });
+                                            }
+                                            return true;
+                                          },
+                                          child: Scrollbar(
+                                            child: ListView.builder(
                                             itemCount: 1,
-                                            itemBuilder: (context, index) {
-                                              return AnotherStepper(
-                                                stepperList: stepperData,
-                                                stepperDirection: Axis.vertical,
-                                                verticalGap: 25,
-                                                inActiveBarColor: Colors.black.withOpacity(0.1),
-                                              );
-                                            },
+                                              itemBuilder: (context, index) {
+                                                return AnotherStepper(
+                                                  stepperList: stepperData,
+                                                  stepperDirection: Axis.vertical,
+                                                  verticalGap: 25,
+                                                  inActiveBarColor: Colors.black.withOpacity(0.1),
+                                                );
+                                              },
+                                            ),
                                           ),
                                         );
                                       }
@@ -716,7 +847,7 @@ class _DocumentSingleDetailState extends State<DocumentSingleDetail> {
                                 onPressed: () {
                                   if (selectedDocType != null) {
                                     Navigator.pop(context);
-                                    Navigator.push(context, MaterialPageRoute(builder: (context)=>SingleStamp(docType: "Surat Berharga", docId: singleDoc!.docId, isfolder: widget.isFolder, docName: singleDoc!.docName, statuschips: widget.statusChip,)));
+                                    Navigator.push(context, MaterialPageRoute(builder: (context)=>SingleStamp(docType: selectedDocType, docId: singleDoc!.docId, isfolder: widget.isFolder, docName: singleDoc!.docName, statuschips: widget.statusChip,)));
                                   }
                                 },
                                 child: Text("Yes"),
@@ -750,7 +881,8 @@ class _DocumentSingleDetailState extends State<DocumentSingleDetail> {
 
 }
 
-Future<void> savePdfFromBase64(String base64String, String fileName) async {
+
+Future<String?> savePdfFromBase64(String base64String, String fileName) async {
   // Request permission to write to external storage
   var status = await Permission.storage.request();
 
@@ -770,10 +902,10 @@ Future<void> savePdfFromBase64(String base64String, String fileName) async {
       await file.writeAsBytes(decodedBytes);
 
       // Print success message
-      print('PDF saved at: $filePath');
+      return filePath;
     } catch (e) {
       // Handle exceptions and print error message
-      print('Error saving PDF: $e');
+      return null;
     }
   } else {
     print('Permission denied to write to external storage');
@@ -787,189 +919,232 @@ Future<void> ModalDownload(token, BuildContext context, List<Map<String, dynamic
     builder: (BuildContext context) {
       return Dialog(
         child: Container(
-          width: MediaQuery.of(context).size.width * 0.9,
-          height: MediaQuery.of(context).size.height * 0.35,
-          child: Scrollbar(
-            child: SingleChildScrollView(
-              child: Column(
+          height: docVersions.length <= 2? MediaQuery.of(context).size.height * 0.3: MediaQuery.of(context).size.height * 0.5,
+          padding: EdgeInsets.all(25),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      IconButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        icon: Icon(Icons.close),
+                      Text(
+                        "Document Now",
+                        style: GoogleFonts.roboto(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500
+                        ),
                       ),
                     ],
                   ),
-                  DataTable(
-                    dataTextStyle: TextStyle(fontSize: 12),
-                    columns: [
-                      DataColumn(label: Text("Document Now", style: TextStyle(fontSize: 14))),
-                      DataColumn(label: Text("Action", style: TextStyle(fontSize: 14))),
-                    ],
-                    rows: docVersions.map((item) {
-                      return DataRow(
-                        cells: [
-                          DataCell(
-                            Container(
-                              width: 200,
-                              child: Row(
-                                children: [
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(10),
-                                      color: Colors.grey[200],
+                  SizedBox(
+                    height: 15,
+                  ),
+                  Container(
+                    height: MediaQuery.of(context).size.height * 0.08,
+                    child: ListView.builder(
+                      itemCount: 1,
+                      itemBuilder: (context, index) {
+                        var dataDocVersions = docVersions[index];
+                        return Container(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Container(
+                                width: 200,
+                                height: 40,
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(10),
+                                        color: Colors.grey[200],
+                                      ),
+                                      padding: EdgeInsets.all(8),
+                                      child: Image.asset(
+                                        "assets/images/pdf.png",
+                                        width: 25,
+                                      ),
                                     ),
-                                    padding: EdgeInsets.all(8),
-                                    child: Image.asset(
-                                      "assets/images/pdf.png",
-                                      width: 24,
+                                    SizedBox(width: 20),
+                                    Expanded(
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              dataDocVersions['doc_name'],
+                                              overflow: TextOverflow.ellipsis,
+                                              style: GoogleFonts.roboto(
+                                                  fontSize: 12
+                                              ),
+                                            ),
+                                            Row(
+                                              children: [
+                                                Text(
+                                                  dataDocVersions['date'],
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: GoogleFonts.roboto(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w400,
+                                                    color: Colors.grey,
+                                                  ),
+                                                ),
+                                                SizedBox(
+                                                  width: 5,
+                                                ),
+                                                Icon(Icons.circle, size: 5,),
+                                                SizedBox(
+                                                  width: 5,
+                                                ),
+                                                Text(
+                                                  "STAMPED",
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: GoogleFonts.roboto(
+                                                      fontSize: 12
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        )
                                     ),
-                                  ),
-                                  SizedBox(width: 10),
-                                  Expanded(
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            item['doc_name'],
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-                                          ),
-                                          Row(
-                                            children: [
-                                              Text(
-                                                item['date'],
-                                                overflow: TextOverflow.ellipsis,
-                                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-                                              ),
-                                              SizedBox(
-                                                width: 5,
-                                              ),
-                                              Icon(Icons.circle, size: 5,),
-                                              SizedBox(
-                                                width: 5,
-                                              ),
-                                              Text(
-                                                "STAMPED",
-                                                overflow: TextOverflow.ellipsis,
-                                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      )
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                          ),
-                          DataCell(
-                            Container(
-                              width: 80,
-                              child: IconButton(
-                                onPressed: () async {
-                                    String? base64StringData = await EventDB.DownloadDocument(token, item['doc_id']);
-                                    savePdfFromBase64(base64StringData!, item['doc_name']);
+                              Container(
+                                width: 50,
+                                child: IconButton(
+                                  onPressed: () async {
+                                    String? base64StringData = await EventDB.DownloadDocument(token, dataDocVersions['doc_id']);
+                                    if (base64StringData != null) {
+                                      String? locatePdf = await savePdfFromBase64(base64StringData!, dataDocVersions['doc_name']);
+                                      showNotification(locatePdf);
+                                    }
                                   },
-                                icon: Icon(Icons.download),
+                                  icon: Icon(CupertinoIcons.cloud_download, color: Colors.black.withOpacity(0.5),),
+                                ),
                               ),
-                            ),
+                            ],
                           ),
-                        ],
-                      );
-                    }).toList(),
+                        );
+                      },
+                    ),
+                  )
+                ],
+              ),
+              Column(
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        "Version History",
+                        style: GoogleFonts.roboto(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500
+                        ),
+                      ),
+                    ],
                   ),
                   SizedBox(
-                    height: 20,
+                    height: 15,
                   ),
-                  DataTable(
-                    dataTextStyle: TextStyle(fontSize: 12),
-                    columns: [
-                      DataColumn(label: Text("Version History", style: TextStyle(fontSize: 14))),
-                      DataColumn(label: Text("Action", style: TextStyle(fontSize: 14))),
-                    ],
-                    rows: docVersions.map((item) {
-                      return DataRow(
-                        cells: [
-                          DataCell(
-                            Container(
-                              width: 200,
-                              child: Row(
-                                children: [
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(10),
-                                      color: Colors.grey[200],
+                  Container(
+                    height: docVersions.length<= 1? MediaQuery.of(context).size.height * 0.08: MediaQuery.of(context).size.height * 0.25,
+                    child: ListView.builder(
+                      itemCount: docVersions.length,
+                      itemBuilder: (context, index) {
+                        var dataDocVersions = docVersions[index];
+                        return Container(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Container(
+                                width: 200,
+                                height: 40,
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(10),
+                                        color: Colors.grey[200],
+                                      ),
+                                      padding: EdgeInsets.all(8),
+                                      child: Image.asset(
+                                        "assets/images/pdf.png",
+                                        width: 25,
+                                      ),
                                     ),
-                                    padding: EdgeInsets.all(8),
-                                    child: Image.asset(
-                                      "assets/images/pdf.png",
-                                      width: 24,
+                                    SizedBox(width: 20),
+                                    Expanded(
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              dataDocVersions['doc_name'],
+                                              overflow: TextOverflow.ellipsis,
+                                              style: GoogleFonts.roboto(
+                                                  fontSize: 12
+                                              ),
+                                            ),
+                                            Row(
+                                              children: [
+                                                Text(
+                                                  dataDocVersions['date'],
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: GoogleFonts.roboto(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w400,
+                                                    color: Colors.grey,
+                                                  ),
+                                                ),
+                                                SizedBox(
+                                                  width: 5,
+                                                ),
+                                                Icon(Icons.circle, size: 5,),
+                                                SizedBox(
+                                                  width: 5,
+                                                ),
+                                                Text(
+                                                  "STAMPED",
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: GoogleFonts.roboto(
+                                                      fontSize: 12
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        )
                                     ),
-                                  ),
-                                  SizedBox(width: 10),
-                                  Expanded(
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            item['doc_name'],
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-                                          ),
-                                          Row(
-                                            children: [
-                                              Text(
-                                                item['date'],
-                                                overflow: TextOverflow.ellipsis,
-                                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-                                              ),
-                                              SizedBox(
-                                                width: 5,
-                                              ),
-                                              Icon(Icons.circle, size: 5,),
-                                              SizedBox(
-                                                width: 5,
-                                              ),
-                                              Text(
-                                                "STAMPED",
-                                                overflow: TextOverflow.ellipsis,
-                                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      )
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                          ),
-                          DataCell(
-                            Container(
-                              width: 80, // Set desired width for the Action cell
-                              child: IconButton(
-                                onPressed: () {
-                                  // Define your download action here
-                                },
-                                icon: Icon(Icons.download),
+                              Container(
+                                width: 50,
+                                child: IconButton(
+                                  onPressed: () async {
+                                    String? base64StringData = await EventDB.DownloadDocument(token, dataDocVersions['doc_id']);
+                                    if (base64StringData != null) {
+                                      String? locatePdf = await savePdfFromBase64(base64StringData!, dataDocVersions['doc_name']);
+                                      showNotification(locatePdf);
+                                    }
+                                  },
+                                  icon: Icon(CupertinoIcons.cloud_download, color: Colors.black.withOpacity(0.5),),
+                                ),
                               ),
-                            ),
+                            ],
                           ),
-                        ],
-                      );
-                    }).toList(),
-                  ),
+                        );
+                      },
+                    ),
+                  )
                 ],
               )
-            ),
-          ),
+            ],
+          )
         ),
       );
     },

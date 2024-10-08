@@ -223,6 +223,7 @@ class _LoginState extends State<Login> {
 
                   if (token != null && token.isNotEmpty) {
                     ModalWait(context);
+
                     Future.delayed(
                       Duration(seconds: 2), () {
                       Get.off(Dashboard(token: token!));

@@ -481,7 +481,7 @@ class _SignManagementState extends State<SignManagement> {
                                   },
                                   child: Container(
                                     padding: EdgeInsets.all(10),
-                                    child: cardListDocument(widthScreen, heightScreen, datum.docName, datum.createdAt.toString(), datum.isFolder, datum.isStamped, datum.isSigned, datum.isTera),
+                                    child: cardListDocument(widthScreen, heightScreen, datum.docName, datum.createdAt.toString(), datum.isFolder, datum.isStamped, datum.isSigned, datum.isTera, datum.stampStatus),
                                   ),
                                 );
                               },

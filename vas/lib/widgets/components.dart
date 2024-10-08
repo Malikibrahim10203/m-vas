@@ -942,7 +942,7 @@ Widget chipTag(String nameTag, status) {
   );
 }
 
-Widget cardListDocument(widthScreen, heightScreen, docName, date, isFolder, isStamped, isSign, isTera) {
+Widget cardListDocument(widthScreen, heightScreen, docName, date, isFolder, isStamped, isSign, isTera, stampStatus) {
   return Container(
     width: widthScreen * 0.87,
     height: heightScreen * 0.14,
@@ -993,7 +993,7 @@ Widget cardListDocument(widthScreen, heightScreen, docName, date, isFolder, isSt
                     ),
                   ),
                   Text(
-                    "draf",
+                    stampStatus == 0? "draft": "",
                     style: TextStyle(
                         fontSize: 12,
                         fontStyle: FontStyle.italic,
@@ -1008,7 +1008,7 @@ Widget cardListDocument(widthScreen, heightScreen, docName, date, isFolder, isSt
               Row(
                 children: [
                   Text(
-                    date,
+                    '$date',
                     style: TextStyle(
                         fontSize: 10
                     ),

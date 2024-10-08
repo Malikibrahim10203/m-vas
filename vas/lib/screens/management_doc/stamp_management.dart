@@ -2,7 +2,9 @@ import "dart:convert";
 
 import "package:flutter/cupertino.dart";
 import "package:flutter/material.dart";
+import "package:google_fonts/google_fonts.dart";
 import "package:intl/intl.dart";
+import "package:ionicons/ionicons.dart";
 import "package:modal_bottom_sheet/modal_bottom_sheet.dart";
 import "package:scrollable_positioned_list/scrollable_positioned_list.dart";
 import "package:vas/event/event_db.dart";
@@ -12,9 +14,8 @@ import "package:vas/models/document.dart";
 import "package:vas/models/user_log_activity.dart";
 import "package:vas/screens/document/document_bulk_detail.dart";
 import "package:vas/screens/document/document_single_detail.dart";
-import "package:vas/screens/pages/dashboard.dart";
 import "package:vas/widgets/components.dart";
-
+import "package:vas/models/office.dart";
 
 class StampManagement extends StatefulWidget {
   const StampManagement({super.key});
@@ -55,6 +56,11 @@ class _StampManagementState extends State<StampManagement> {
 
   List<Datum> filteredData = [];
 
+  List<Office>? fetchOffice = [];
+
+  var selectedStatus;
+  var selectedOffice;
+
 
 
 
@@ -87,6 +93,8 @@ class _StampManagementState extends State<StampManagement> {
 
     saldoEMet = (await quotaFuture)?.remaining;
 
+    fetchOffice = await EventDB.getOffice(token);
+
     setState(() {
       isLoading = false;
     });
@@ -118,7 +126,7 @@ class _StampManagementState extends State<StampManagement> {
       appBar: AppBar(
         leading: IconButton(
           onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context)=>Dashboard(token: token)));
+            Navigator.pop(context);
           },
           icon: Icon(Icons.close, color: Colors.black,),
         ),
@@ -233,20 +241,16 @@ class _StampManagementState extends State<StampManagement> {
                         controller: searchController,
                         onSubmitted: (value) {
                           searchController.text = value!;
-                          document = EventDB.getDocuments(token, page,searchController.text, filterOrderByController.text, filterOrderByTypeController.text, filterOfficeController.text, '', filterStatusController.text);
-                          setState(() {
-
-                          });
-                        },
-                        onChanged: (value) {
-                          searchController.text = value!;
+                          fetchedData.clear();
+                          document = EventDB.getDocuments(token, 1,searchController.text, filterOrderByController.text, filterOrderByTypeController.text, filterOfficeController.text, '', filterStatusController.text);
                           setState(() {
 
                           });
                         },
                         onSuffixTap: () {
                           searchController.clear();
-                          document = EventDB.getDocuments(token, page,searchController.text, filterOrderByController.text, filterOrderByTypeController.text, filterOfficeController.text, '', filterStatusController.text);
+                          fetchedData.clear();
+                          document = EventDB.getDocuments(token, 1,searchController.text, filterOrderByController.text, filterOrderByTypeController.text, filterOfficeController.text, '', filterStatusController.text);
                           setState(() {
 
                           });
@@ -279,165 +283,204 @@ class _StampManagementState extends State<StampManagement> {
                               ),
                               context: context,
                               builder: (context) {
-                                return Container(
-                                  height: 550,
-                                  padding: EdgeInsets.all(20),
-                                  child: Column(
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                return StatefulBuilder(
+                                  builder: (context, StateSetter setSetter) {
+                                    return Container(
+                                      height: 570,
+                                      padding: EdgeInsets.all(20),
+                                      child: Column(
                                         children: [
-                                          Text(
-                                            "search",
-                                            style: TextStyle(
-                                                fontSize: 30,
-                                                fontWeight: FontWeight.w500
-                                            ),
-                                          ),
-                                          Text(
-                                            "Reset",
-                                            style: TextStyle(
-                                                fontSize: 30,
-                                                fontWeight: FontWeight.w400,
-                                                color: Colors.black.withOpacity(0.2)
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      SizedBox(
-                                        height: 20,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text("Office"),
-                                        ],
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      Container(
-                                        height: 55,
-                                        child: TextFormField(
-                                          controller: filterOfficeController,
-                                          decoration: InputDecoration(
-                                              border: OutlineInputBorder(
-                                                  borderSide: BorderSide(
-                                                      width: 1
-                                                  ),
-                                                  borderRadius: BorderRadius.circular(10)
-                                              )
-                                          ),
-                                          onTapOutside: (value) {
-                                            setState(() {
-
-                                            });
-                                          },
-                                        ),
-                                      ),
-                                      SizedBox(
-                                        height: 20,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text("Status"),
-                                        ],
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      Container(
-                                        height: 55,
-                                        child: DropdownButtonFormField(
-                                          decoration: InputDecoration(
-                                              border: OutlineInputBorder(
-                                                  borderSide: BorderSide(
-                                                      width: 1
-                                                  ),
-                                                  borderRadius: BorderRadius.circular(10)
-                                              )
-                                          ),
-                                          items: <String>['Draft', 'On Progress', 'Done', 'Un Done'].map((String value) {
-                                            return DropdownMenuItem<String>(
-                                              value: value,
-                                              child: Text(value),
-                                            );
-                                          }).toList(),
-                                          hint: Text("-- Status Document --"),
-                                          onChanged: (value) {
-                                            if (value == 'Draft') {
-                                              filterStatusController.text = '0';
-                                            } else if (value == 'On Progress') {
-                                              filterStatusController.text = '1';
-                                            } else if (value == 'Done') {
-                                              filterStatusController.text = '2';
-                                            } else {
-                                              filterStatusController.text = '3';
-                                            }
-                                            setState(() {
-                                              print(filterStatusController.text);
-                                            });
-                                          },
-                                        ),
-                                      ),
-                                      SizedBox(
-                                        height: 20,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text("Order By"),
-                                        ],
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      Container(
-                                        height: 55,
-                                        child: DropdownButtonFormField(
-                                          decoration: InputDecoration(
-                                              border: OutlineInputBorder(
-                                                  borderSide: BorderSide(
-                                                      width: 1
-                                                  ),
-                                                  borderRadius: BorderRadius.circular(10)
-                                              )
-                                          ),
-                                          items: <String>['created_at','doc_name', 'status'].map((String value) {
-                                            return DropdownMenuItem<String>(
-                                              value: value,
-                                              child: Text(value),
-                                            );
-                                          }).toList(),
-                                          hint: Text("-- Status Document --"),
-                                          onChanged: (value) {
-                                            filterOrderByController.text = value as String;
-                                          },
-                                        ),
-                                      ),
-                                      SizedBox(
-                                        height: 20,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text("Order By Type"),
-                                        ],
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      StatefulBuilder(
-                                        builder: (BuildContext context, StateSetter setState) {
-                                          return Row(
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                             children: [
-                                              // Ascending Radio Button
-                                              // Ascending Radio Button
+                                              Row(
+                                                children: [
+                                                  Icon(
+                                                      Ionicons.filter
+                                                  ),
+                                                  SizedBox(
+                                                    width: 10,
+                                                  ),
+                                                  Text(
+                                                    'FILTER',
+                                                    style: GoogleFonts.roboto(
+                                                        fontSize: 16
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              IconButton(
+                                                onPressed: () {
+                                                  Navigator.pop(context);
+                                                },
+                                                icon: Icon(Icons.close),
+                                              ),
+                                            ],
+                                          ),
+                                          SizedBox(
+                                            height: 20,
+                                          ),
+                                          Row(
+                                            children: [
+                                              Text(
+                                                "Office",
+                                                style: GoogleFonts.roboto(
+                                                    fontWeight: FontWeight.w500
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          SizedBox(
+                                            height: 10,
+                                          ),
+                                          Container(
+                                            height: 55,
+                                            child: DropdownButtonFormField<int>(
+                                              value: selectedOffice,
+                                              decoration: InputDecoration(
+                                                  border: OutlineInputBorder(
+                                                      borderSide: BorderSide(width: 1),
+                                                      borderRadius: BorderRadius.circular(10))),
+                                              items: fetchOffice!.map((value) {
+                                                return DropdownMenuItem<int>(
+                                                  value: value.officeId,
+                                                  child: Text(
+                                                    value.officeName,
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                      FontWeight.w400,
+                                                    ),
+                                                  ),
+                                                );
+                                              }).toList(),
+                                              hint: Text("-- Status Document --"),
+                                              onChanged: (newValue) {
+                                                setSetter(() {
+                                                  selectedOffice = newValue;
+                                                  filterOfficeController.text = selectedOffice.toString();
+                                                  print(selectedOffice);
+                                                });
+                                              },
+                                            ),
+                                          ),
+                                          SizedBox(
+                                            height: 20,
+                                          ),
+                                          Row(
+                                            children: [
+                                              Text(
+                                                "Status",
+                                                style: GoogleFonts.roboto(
+                                                    fontWeight: FontWeight.w500
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          SizedBox(
+                                            height: 10,
+                                          ),
+                                          Container(
+                                            height: 55,
+                                            child: DropdownButtonFormField<String>(
+                                              value: selectedStatus,
+                                              decoration: InputDecoration(
+                                                  border: OutlineInputBorder(
+                                                      borderSide: BorderSide(width: 1),
+                                                      borderRadius: BorderRadius.circular(10))),
+                                              items: <String>['Draft', 'On Progress', 'Done', 'Un Done']
+                                                  .map((String value) {
+                                                return DropdownMenuItem<String>(
+                                                  value: value,
+                                                  child: Text(value),
+                                                );
+                                              }).toList(),
+                                              hint: Text("-- Status Document --"),
+                                              onChanged: (value) {
+                                                setSetter(() {
+                                                  selectedStatus = value; // Update the state variable on selection
+                                                  if (value == 'Draft') {
+                                                    filterStatusController.text = '0';
+                                                  } else if (value == 'On Progress') {
+                                                    filterStatusController.text = '1';
+                                                  } else if (value == 'Done') {
+                                                    filterStatusController.text = '2';
+                                                  } else {
+                                                    filterStatusController.text = '3';
+                                                  }
+                                                  print(filterStatusController.text);
+                                                });
+                                              },
+                                            ),
+                                          ),
+                                          SizedBox(
+                                            height: 20,
+                                          ),
+                                          Row(
+                                            children: [
+                                              Text(
+                                                "Order By",
+                                                style: GoogleFonts.roboto(
+                                                    fontWeight: FontWeight.w500
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          SizedBox(
+                                            height: 10,
+                                          ),
+                                          Container(
+                                            height: 55,
+                                            child: DropdownButtonFormField(
+                                              value: filterOrderByController.text.isEmpty? null:filterOrderByController.text,
+                                              decoration: InputDecoration(
+                                                  border: OutlineInputBorder(
+                                                      borderSide: BorderSide(
+                                                          width: 1
+                                                      ),
+                                                      borderRadius: BorderRadius.circular(10)
+                                                  )
+                                              ),
+                                              items: <String>['created_at','doc_name', 'status'].map((String value) {
+                                                return DropdownMenuItem<String>(
+                                                  value: value,
+                                                  child: Text(value),
+                                                );
+                                              }).toList(),
+                                              hint: Text("-- Order By --"),
+                                              onChanged: (value) {
+                                                setSetter(() {
+                                                  filterOrderByController.text = value!;
+                                                });
+                                              },
+                                            ),
+                                          ),
+                                          SizedBox(
+                                            height: 20,
+                                          ),
+                                          Row(
+                                            children: [
+                                              Text(
+                                                "Order By Type",
+                                                style: GoogleFonts.roboto(
+                                                    fontWeight: FontWeight.w500
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          SizedBox(
+                                            height: 10,
+                                          ),
+                                          Row(
+                                            children: [
                                               Radio<String>(
                                                 value: "asc",
                                                 groupValue: radioType,
                                                 onChanged: (String? value) {
-                                                  setState(() {
+                                                  setSetter(() {
                                                     radioType = value;
                                                     ascType = true;  // Set ascending to true
                                                     descType = false; // Set descending to false
+                                                    print(radioType);
                                                     filterOrderByTypeController.text = value!; // Set the controller text
                                                   });
                                                 },
@@ -448,58 +491,108 @@ class _StampManagementState extends State<StampManagement> {
                                                 value: "desc",
                                                 groupValue: radioType,
                                                 onChanged: (String? value) {
-                                                  setState(() {
+                                                  setSetter(() {
                                                     radioType = value;
-                                                    ascType = false;  // Set ascending to false
-                                                    descType = true;  // Set descending to true
+                                                    ascType = false;
+                                                    descType = true;
+                                                    print(radioType);
                                                     filterOrderByTypeController.text = value!; // Set the controller text
                                                   });
                                                 },
                                               ),
                                               Text("Desc"),
                                             ],
-                                          );
-                                        },
-                                      ),
-                                      SizedBox(
-                                        height: 20,
-                                      ),
-                                      Container(
-                                        width: 300,
-                                        height: 50,
-                                        child: ElevatedButton(
-                                          style: ElevatedButton.styleFrom(
-                                              shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(10)
-                                              )
                                           ),
-                                          onPressed: () {
-                                            Navigator.of(context).pop();  // Close the modal
+                                          SizedBox(
+                                            height: 20,
+                                          ),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Container(
+                                                width: widthScreen * 0.25,
+                                                height: 50,
+                                                child: ElevatedButton(
+                                                  style: ElevatedButton.styleFrom(
+                                                      shape: RoundedRectangleBorder(
+                                                          borderRadius: BorderRadius.circular(10),
+                                                          side: BorderSide(width: 1, color: Colors.black.withOpacity(0.1))
+                                                      ),
+                                                      backgroundColor: Colors.white
+                                                  ),
+                                                  onPressed: () {
+                                                    setSetter(() {
+                                                      filterOfficeController.clear();
+                                                      filterStatusController.clear();
+                                                      filterOrderByController.clear();
+                                                      filterOrderByTypeController.clear();
+                                                      selectedStatus = null;
+                                                      selectedOffice = null;
+                                                      radioType = null;
+                                                    });
 
-                                            setState(() {
-                                              // Apply office filter
+                                                    setState(() {
+                                                      page = 1;
+                                                      fetchedData.clear();
+                                                      document = EventDB.getDocuments(token, page,searchController.text, filterOrderByController.text, filterOrderByTypeController.text, filterOfficeController.text, '', filterStatusController.text);
+                                                    });
+                                                  },
+                                                  child: Text(
+                                                    "Reset",
+                                                    style: GoogleFonts.roboto(
+                                                        fontSize: 12,
+                                                        color: Colors.black
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              Container(
+                                                width: widthScreen * 0.6,
+                                                height: 50,
+                                                child: ElevatedButton(
+                                                  style: ElevatedButton.styleFrom(
+                                                      shape: RoundedRectangleBorder(
+                                                          borderRadius: BorderRadius.circular(10)
+                                                      )
+                                                  ),
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();  // Close the modal
 
-                                              // Apply status filter
-                                              if (filterStatusController.text.isNotEmpty) {
-                                                document = EventDB.getDocuments(token, page,searchController.text, filterOrderByController.text, filterOrderByTypeController.text, filterOfficeController.text, '', filterStatusController.text);
-                                              }
+                                                    setState(() {
 
-                                              // Apply sorting based on filterOrderByController
-                                              if (filterOrderByController.text.isNotEmpty) {
-                                                String orderBy = filterOrderByController.text.toLowerCase();
+                                                      page = 1;
 
-                                                if(filterOrderByTypeController.text.isNotEmpty) {
-                                                  document = EventDB.getDocuments(token, page,searchController.text, orderBy, filterOrderByTypeController.text, filterOfficeController.text, '', filterStatusController.text);
-                                                }
-                                                print(orderBy);
-                                              }
-                                            });
-                                          },
-                                          child: Text("Apply"),
-                                        ),
+                                                      // Apply office filter
+                                                      fetchedData.clear();
+
+                                                      if (filterOfficeController.text.isNotEmpty) {
+                                                        document = EventDB.getDocuments(token, page,searchController.text, filterOrderByController.text, filterOrderByTypeController.text, filterOfficeController.text, '', filterStatusController.text);
+                                                      }
+
+                                                      // Apply status filter
+                                                      if (filterStatusController.text.isNotEmpty) {
+                                                        document = EventDB.getDocuments(token, page,searchController.text, filterOrderByController.text, filterOrderByTypeController.text, filterOfficeController.text, '', filterStatusController.text);
+                                                      }
+
+                                                      // Apply sorting based on filterOrderByController
+                                                      if (filterOrderByController.text.isNotEmpty) {
+                                                        String orderBy = filterOrderByController.text.toLowerCase();
+
+                                                        if(filterOrderByTypeController.text.isNotEmpty) {
+                                                          document = EventDB.getDocuments(token, page,searchController.text, orderBy, filterOrderByTypeController.text, filterOfficeController.text, '', filterStatusController.text);
+                                                        }
+                                                      }
+                                                    });
+                                                  },
+                                                  child: Text("Apply"),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
+                                    );
+                                  },
                                 );
                               },
                             );
@@ -533,6 +626,10 @@ class _StampManagementState extends State<StampManagement> {
                             return Center(child: Text('No documents available.'));
                           } else {
                             List<Datum> newDocData = snapshot.data!.data;
+
+                            // if (searchController.text.isNotEmpty || filterOfficeController.text.isNotEmpty || filterStatusController.text.isNotEmpty || filterOrderByController.text.isNotEmpty) {
+                            //   fetchedData.clear();
+                            // }
 
                             // Update fetchedData to include new documents without duplicates
                             for (var datum in newDocData) {
@@ -668,11 +765,12 @@ class _StampManagementState extends State<StampManagement> {
                                         widthScreen,
                                         heightScreen,
                                         datum.docName,
-                                        datum.createdAt.toString(),
+                                        datum.createdAt.toLocal(),
                                         datum.isFolder,
                                         datum.isStamped,
                                         datum.isSigned,
                                         datum.isTera,
+                                        datum.stampStatus
                                       ),
                                     ),
                                   );
@@ -703,7 +801,7 @@ class _StampManagementState extends State<StampManagement> {
               shape: CircleBorder(),
               onPressed: () async {
                 searchController.text==null?
-                  print("null"):print("not null");
+                print("null"):print("not null");
                 print(searchController.text);
               },
               child: Container(

@@ -19,15 +19,12 @@ import 'package:vas/models/peruri_jwt_token.dart';
 import 'package:vas/models/quota.dart';
 import 'package:vas/models/province.dart';
 import 'package:vas/models/single_document.dart';
+import 'package:vas/models/stamp_data.dart';
 import 'package:vas/models/user_log_activity.dart';
 import 'package:vas/models/users.dart';
-import 'package:vas/screens/auth/change_password.dart';
 import 'package:vas/screens/auth/login.dart';
-import 'package:vas/screens/pages/dashboard.dart';
-import 'package:vas/screens/stamp/single_stamp.dart';
 import 'package:vas/services/api.dart';
 import 'package:get/get.dart';
-import 'package:vas/widgets/components.dart';
 
 class EventDB {
   static Future<Credential?> getlogin(String email, String password) async {
@@ -571,32 +568,36 @@ class EventDB {
 
     return data;
   }
+
   static Future<List> UploadDocBulk(String token, String docName, String officeId, String description, List<Map<String, dynamic>> tags, String date, List fileBulk) async {
     List data = [false, ""];
     try {
-
       var request = http.MultipartRequest('POST', Uri.parse(Api.upload_bulk));
 
-      request.headers['Content-Type'] = 'multipart/form-data';
+      // Headers, except 'Content-Type' which MultipartRequest manages
       request.headers['token'] = token;
 
+      // Fields
       request.fields['folder_name'] = docName;
       request.fields['office_id'] = officeId;
       request.fields['description'] = description;
       request.fields['tags'] = jsonEncode(tags);
       request.fields['date'] = date;
 
-
-      for(File file in fileBulk) {
+      // Add files to the request
+      for (File file in fileBulk) {
         String filePath = file.path;
+        String newFileName = "${DateTime.now().millisecondsSinceEpoch}_${filePath.split("/").last}";
+        print("Uploading file: $newFileName, size: ${file.lengthSync()} bytes");
+
         request.files.add(
           http.MultipartFile(
             'docs',
             file.readAsBytes().asStream(),
             file.lengthSync(),
-            filename: filePath.split("/").last,
+            filename: newFileName,
             contentType: MediaType('application', 'pdf'),
-          )
+          ),
         );
       }
 
@@ -612,7 +613,7 @@ class EventDB {
         data[1] = error['error'];
       }
     } catch (e) {
-      print("Error Fetch Upload Single: $e");
+      print("Error Fetch Upload Bulk: $e");
     }
 
     return data;
@@ -639,7 +640,7 @@ class EventDB {
     if (response.statusCode == 200) {
       try {
         final jsonResponse = json.decode(response.body);
-
+        print({'data': jsonResponse['data']});
         // Wrap the 'data' into a map with a 'data' key to match the Document.fromJson structure
         return Document.fromJson({'data': jsonResponse['data']});
 
@@ -689,11 +690,11 @@ class EventDB {
         print("URL: ${Api.get_one_document}$docId");
       }
     } catch (e) {
-      print("Error: $e");
+      print("Error Get Detail Doc: $e");
     }
   }
 
-  static Future<Activity?> getActivity(String token, docId, folderId,) async {
+  static Future<Activity?> getActivity(String token, docId, folderId, page) async {
 
     Activity? activityData;
 
@@ -703,7 +704,7 @@ class EventDB {
         response = await http.get(
             Uri.parse(Api.get_document_activity).replace(
                 queryParameters: {
-                  'page': '1',
+                  'page': page.toString(),
                   'sort_by': 'created_at',
                   'order': 'desc',
                   'doc_id': docId.toString(),
@@ -718,7 +719,7 @@ class EventDB {
         response = await http.get(
             Uri.parse(Api.get_document_activity).replace(
                 queryParameters: {
-                  'page': '1',
+                  'page': page,
                   'sort_by': 'created_at',
                   'order': 'desc',
                   'row': '10',
@@ -736,9 +737,7 @@ class EventDB {
       if (response.statusCode == 200) {
         if (responseBody.containsKey('data') && responseBody['data'] is List) {
           final jsonResponse = json.decode(response.body);
-          activityData = Activity.fromJson({'data': jsonResponse['data']});
-
-          return activityData;
+          return  Activity.fromJson({'data': jsonResponse['data']});;
 
         } else {
           print("Data not in expected format or missing 'data' field.");
@@ -754,13 +753,12 @@ class EventDB {
     return null;
   }
 
-  static Future<UserLogActivity?> getLogActivity(token) async {
-
-    UserLogActivity? userLogActivity;
+  static Future<UserLogActivity?> getLogActivity(token, page) async {
 
     try {
       var response = await http.get(Uri.parse(Api.get_log_activity).replace(
         queryParameters: {
+          'page': '$page',
           'sort_by': 'created_at',
           'order': 'desc'
         }
@@ -773,9 +771,10 @@ class EventDB {
 
       if(response.statusCode == 200) {
         if(responseBody.containsKey('data') && responseBody['data'] is List) {
-          userLogActivity = UserLogActivity.fromJson({'data': responseBody['data']});
+          return UserLogActivity.fromJson({'data': responseBody['data']});
         } else {
           print("Data not in expected format or missing 'data' field.");
+          return null;
         }
       } else {
         print("Failed to get activity data. Status code: ${response.statusCode}");
@@ -784,8 +783,6 @@ class EventDB {
     } catch(e) {
       print(e);
     }
-
-    return userLogActivity;
   }
 
   static Future<List<ListTypeDocument>?> getDocumentType(token) async {
@@ -958,6 +955,59 @@ class EventDB {
     return base64Pdf;
   }
 
+  static Future<Map<String, dynamic>> StampingBulkDocument(String token, int docId, String docType, String city, String? otp, List<StampData> coordinateDoc) async {
+
+    List<Map<String, dynamic>> stampsData = [];
+
+    for (var stamp in coordinateDoc) {
+      stampsData.add({
+        "llx": stamp.llx,
+        "lly": stamp.lly,
+        "urx": stamp.urx,
+        "ury": stamp.ury,
+        "page": stamp.page,
+      });
+    }
+
+    Map<String, dynamic> result = {};
+
+    try {
+      var url = Uri.parse("${Api.stamp_bulk_document}/$docId");
+
+      var requestBody = jsonEncode({
+        "jenis_doc": docType,
+        "city": city,
+        "otp": otp ?? "",
+        "stamps": stampsData
+      });
+
+      var response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "token": token,
+        },
+        body: requestBody,
+      );
+
+      // Decode and handle the response
+      var responseBody = jsonDecode(response.body);
+      print(responseBody);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print("Document stamped successfully.");
+        result = jsonDecode(response.body);
+      } else {
+        print("Failed to stamp document. Status code: ${response.statusCode}");
+        print("Response: ${response.body}");
+        result = jsonDecode(response.body);
+      }
+    } catch (e) {
+      print("Error during stamping: $e");
+    }
+
+    return result;
+  }
 
   static Future<void> LogOut() async {
     EventPref.clear();

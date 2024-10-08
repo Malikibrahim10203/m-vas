@@ -67,6 +67,7 @@ dependencies:
   pdf: ^3.11.1
   scrollable_positioned_list: ^0.3.8
   open_file: ^3.5.6
+  flutter_local_notifications: ^17.2.3
 
 dev_dependencies:
   flutter_test:

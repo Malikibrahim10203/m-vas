@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:dotted_border/dotted_border.dart';
@@ -8,22 +7,24 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:vas/event/event_db.dart';
 import 'package:vas/event/event_pref.dart';
-import 'package:vas/screens/document/document_single_detail.dart';
+import 'package:vas/models/bulk_document.dart';
 import 'package:vas/screens/management_doc/stamp_management.dart';
 import 'package:vas/widgets/components.dart';
 import 'package:vas/models/stamp_data.dart';
 
-class SingleStamp extends StatefulWidget {
-  const SingleStamp({super.key, required this.docType, required this.docId, required this.isfolder, required this.docName, required this.statuschips});
+class BulkStamp extends StatefulWidget {
+  const BulkStamp({super.key, required this.docType, required this.docId, required this.isfolder});
 
-  final docType, docId, isfolder, docName, statuschips;
+  final docType, docId, isfolder;
 
   @override
-  State<SingleStamp> createState() => _SingleStampState();
+  State<BulkStamp> createState() => _BulkStampState();
 }
 
-class _SingleStampState extends State<SingleStamp> {
+class _BulkStampState extends State<BulkStamp> {
+
   late PdfViewerController _pdfViewerController;
+
   int _currentPage = 1;
 
   Size? pageSize;
@@ -37,10 +38,13 @@ class _SingleStampState extends State<SingleStamp> {
 
   int _totalPage = 0;
   bool isDisable = false;
-  
+
+
   List<StampData> coordinateActive = [];
 
   List<Map<String, dynamic>> stamps = [];
+
+  List<Doc> documentList = [];
 
   Size? calculateRenderedSize() {
     if (pageSize != null && viewSize != null) {
@@ -106,11 +110,26 @@ class _SingleStampState extends State<SingleStamp> {
   Uint8List? filePdf;
   var token;
 
+  Bulkdocument? bulkdocument;
+  var docIdSelected = 0;
+  var docId;
+  var selectedDocument;
+
+  Future<void> getDocument() async {
+    fileBase64 = await EventDB.getPreviewDocument(token, docId);
+    filePdf = base64Decode(fileBase64);
+    setState(() {
+
+    });
+  }
+
+
   Future<void> getData() async {
     token = (await EventPref.getCredential())?.data.token;
-    fileBase64 = await EventDB.getPreviewDocument(token, widget.docId);
-    filePdf = base64Decode(fileBase64);
-
+    bulkdocument = await EventDB.getDetailDocument(token, widget.docId, widget.isfolder);
+    documentList = bulkdocument!.docs!;
+    docId = bulkdocument!.docs![docIdSelected].docId;
+    getDocument();
     setState(() {
 
     });
@@ -122,16 +141,12 @@ class _SingleStampState extends State<SingleStamp> {
   void initState() {
     super.initState();
     getData();
+    print(widget.docType);
     _pdfViewerController = PdfViewerController();
   }
 
   @override
   Widget build(BuildContext context) {
-
-    double widgetHeight = MediaQuery.of(context).size.height;
-    double widgetWidth = MediaQuery.of(context).size.width;
-
-
     return Scaffold(
       backgroundColor: Color(0xffF6FAFF),
       appBar: AppBar(
@@ -397,61 +412,56 @@ class _SingleStampState extends State<SingleStamp> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      width: 100,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.1),
-                                  spreadRadius: 5,
-                                  blurRadius: 7,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: IconButton(
-                              icon: const Icon(Icons.zoom_out),
-                              onPressed: () {
-                                setState(() {
-                                  zoomLevel = (zoomLevel - 0.5).clamp(1.0, 4.0);
-                                  _pdfViewerController.zoomLevel = zoomLevel; // Update the PDF viewer's zoom level
-                                });
-                              },
-                            ),
-                          ),
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.1),
-                                  spreadRadius: 5,
-                                  blurRadius: 7,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: IconButton(
-                              icon: const Icon(Icons.zoom_in),
-                              onPressed: () {
-                                setState(() {
-                                  zoomLevel = (zoomLevel + 0.5).clamp(1.0, 4.0);
-                                  _pdfViewerController.zoomLevel = zoomLevel; // Update the PDF viewer's zoom level
-                                });
-                              },
-                            ),
+                      width: 120,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.1),
+                            spreadRadius: 5,
+                            blurRadius: 7,
+                            offset: const Offset(0, 3),
                           ),
                         ],
+                      ),
+                      child: DropdownButtonFormField<int>(
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10)
+                          ),
+                          contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                        ),
+                        isExpanded: true,
+                        isDense: true,
+                        value: selectedDocument,
+                        hint: Text(
+                          "--Select District--",
+                          style: TextStyle(fontSize: 7),
+                        ),
+                        items: documentList.map((document) {
+                          return DropdownMenuItem<int>(
+                            value: document.docId,
+                            child: Text(
+                              "${document.docName}",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w400,
+                                fontSize: 10,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (newValue) {
+                          setState(() {
+                            selectedDocument = newValue;
+                            _currentPage = 1;
+                            docId = selectedDocument;
+                            getDocument();
+                            print(selectedDocument);
+                          });
+                        },
                       ),
                     ),
                     Container(
@@ -589,7 +599,7 @@ class _SingleStampState extends State<SingleStamp> {
           child: ElevatedButton(
             onPressed: () {
               if(coordinateActive.length>=1) {
-                ModalConfirmLocation(context, "route", "Confirmation Location", "For a more accurate data certificate in the document, turn on the device location.", token, widget.docId, widget.docType, "jakarta", null, widget.docName, coordinateActive);
+                ModalConfirmLocation(context, "route", "Confirmation Location", "For a more accurate data certificate in the document, turn on the device location.", token, widget.docId, widget.docType, "jakarta", null, bulkdocument!.name, coordinateActive);
               }
             },
             child: Text('Submit'),
@@ -599,7 +609,6 @@ class _SingleStampState extends State<SingleStamp> {
     );
   }
 }
-
 
 Future<void> ModalConfirmLocation(context, route, labelText, contentText, token, docId, docType, city, otp, docName, coordinateDoc) {
   return showDialog(
@@ -638,15 +647,15 @@ Future<void> ModalConfirmLocation(context, route, labelText, contentText, token,
                     height: 50,
                     padding: EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: tertiaryColor4,
-                      border: Border.all(color: tertiaryColor50, width: 1)
+                        color: tertiaryColor4,
+                        border: Border.all(color: tertiaryColor50, width: 1)
                     ),
                     child: Text(
                       "$contentText",
                       style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w300
+                          color: Colors.black,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w300
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -782,7 +791,7 @@ Future<void> ModalConfirmSubmit(context, route, labelText, contentText, token, d
                                   color: Colors.black.withOpacity(0.5)
                               ),
                             ),
-                            Text(docName),
+                            Text(docName, style: TextStyle(overflow: TextOverflow.ellipsis, fontSize: 10),),
                           ],
                         ),
                         SizedBox(
@@ -853,7 +862,8 @@ Future<void> ModalConfirmSubmit(context, route, labelText, contentText, token, d
                               )
                           ),
                           onPressed: () async {
-                            Map<String, dynamic> data = await EventDB.StampingSingleDocument(token, docId, docType, city, otp, coordinateDoc);
+
+                            Map<String, dynamic> data = await EventDB.StampingBulkDocument(token, int.parse(docId), docType, city, otp, coordinateDoc);
                             Navigator.pop(context);
                             if(data['status'] == 'error') {
                               AlertFailed(context, "Error", data['error']);
@@ -892,3 +902,4 @@ Future<void> ModalConfirmSubmit(context, route, labelText, contentText, token, d
     },
   );
 }
+

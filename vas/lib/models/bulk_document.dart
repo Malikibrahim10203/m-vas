@@ -1,5 +1,5 @@
 class Bulkdocument {
-  dynamic? versionFrom;
+  String? versionFrom;
   String? id;
   String? name;
   String? description;
@@ -11,6 +11,7 @@ class Bulkdocument {
   List<Doc>? docs;
   List<dynamic>? receipts;
   List<dynamic>? tags;
+  StampInProgress? stampInProgress;
   List<Version>? versions;
   bool? isAuthentic;
   String? totalDocs;
@@ -28,6 +29,7 @@ class Bulkdocument {
     required this.docs,
     required this.receipts,
     required this.tags,
+    required this.stampInProgress,
     required this.versions,
     required this.isAuthentic,
     required this.totalDocs,
@@ -43,10 +45,11 @@ class Bulkdocument {
     creator: json["creator"],
     email: json["email"],
     version: json["version"],
-    docs: List<Doc>.from(json["docs"].map((x) => Doc.fromJson(x))),
-    receipts: List<dynamic>.from(json["receipts"].map((x) => x)),
-    tags: List<dynamic>.from(json["tags"].map((x) => x)),
-    versions: List<Version>.from(json["versions"].map((x) => Version.fromJson(x))),
+    docs: json["docs"] != null ? List<Doc>.from(json["docs"].map((x) => Doc.fromJson(x))) : null,
+    receipts: json["receipts"] != null ? List<dynamic>.from(json["receipts"].map((x) => x)) : null,
+    tags: json["tags"] != null ? List<dynamic>.from(json["tags"].map((x) => x)) : null,
+    stampInProgress: json["stamp_in_progress"] != null ? StampInProgress.fromJson(json["stamp_in_progress"]) : null,
+    versions: json["versions"] != null ? List<Version>.from(json["versions"].map((x) => Version.fromJson(x))) : null,
     isAuthentic: json["is_authentic"],
     totalDocs: json["total_docs"],
   );
@@ -61,21 +64,22 @@ class Bulkdocument {
     "creator": creator,
     "email": email,
     "version": version,
-    "docs": List<dynamic>.from(docs!.map((x) => x.toJson())),
-    "receipts": List<dynamic>.from(receipts!.map((x) => x)),
-    "tags": List<dynamic>.from(tags!.map((x) => x)),
-    "versions": List<dynamic>.from(versions!.map((x) => x.toJson())),
+    "docs": docs != null ? List<dynamic>.from(docs!.map((x) => x.toJson())) : null,
+    "receipts": receipts != null ? List<dynamic>.from(receipts!) : null,
+    "tags": tags != null ? List<dynamic>.from(tags!) : null,
+    "stamp_in_progress": stampInProgress?.toJson(),
+    "versions": versions != null ? List<dynamic>.from(versions!.map((x) => x.toJson())) : null,
     "is_authentic": isAuthentic,
     "total_docs": totalDocs,
   };
 }
 
 class Doc {
-  int? docId;
-  String? docName;
-  String? date;
-  String? bcAddress;
-  String? file;
+  int docId;
+  String docName;
+  String date;
+  dynamic bcAddress;
+  String file;
   String? description;
 
   Doc({
@@ -106,6 +110,46 @@ class Doc {
   };
 }
 
+class StampInProgress {
+  String id;
+  DateTime createdAt;
+  int version;
+  String versionFrom;
+  int stampStatus;
+  String stampedDocs;
+  String failedDocs;
+
+  StampInProgress({
+    required this.id,
+    required this.createdAt,
+    required this.version,
+    required this.versionFrom,
+    required this.stampStatus,
+    required this.stampedDocs,
+    required this.failedDocs,
+  });
+
+  factory StampInProgress.fromJson(Map<String, dynamic> json) => StampInProgress(
+    id: json["id"],
+    createdAt: DateTime.parse(json["created_at"]),
+    version: json["version"],
+    versionFrom: json["version_from"],
+    stampStatus: json["stamp_status"],
+    stampedDocs: json["stamped_docs"],
+    failedDocs: json["failed_docs"],
+  );
+
+  Map<String, dynamic> toJson() => {
+    "id": id,
+    "created_at": createdAt.toIso8601String(),
+    "version": version,
+    "version_from": versionFrom,
+    "stamp_status": stampStatus,
+    "stamped_docs": stampedDocs,
+    "failed_docs": failedDocs,
+  };
+}
+
 class Version {
   String? id;
   String? name;
@@ -132,7 +176,7 @@ class Version {
     createdAt: DateTime.parse(json["created_at"]),
     version: json["version"],
     stampStatus: json["stamp_status"],
-    docs: List<Doc>.from(json["docs"].map((x) => Doc.fromJson(x))),
+    docs: json["docs"] != null ? List<Doc>.from(json["docs"].map((x) => Doc.fromJson(x))) : null,
   );
 
   Map<String, dynamic> toJson() => {
@@ -142,6 +186,6 @@ class Version {
     "created_at": createdAt.toIso8601String(),
     "version": version,
     "stamp_status": stampStatus,
-    "docs": List<dynamic>.from(docs!.map((x) => x.toJson())),
+    "docs": docs != null ? List<dynamic>.from(docs!.map((x) => x.toJson())) : null,
   };
 }

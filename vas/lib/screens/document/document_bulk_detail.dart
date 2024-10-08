@@ -2,13 +2,16 @@ import 'package:another_stepper/another_stepper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:flutter_stepindicator/flutter_stepindicator.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:vas/event/event_db.dart';
 import 'package:vas/event/event_pref.dart';
 import 'package:vas/models/activity.dart';
 import 'package:vas/models/bulk_document.dart';
+import 'package:vas/models/document_type.dart';
 import 'package:vas/models/single_document.dart';
 import 'package:vas/screens/loading.dart';
+import 'package:vas/screens/stamp/bulk_stamp.dart';
 import 'package:vas/widgets/components.dart';
 
 class DocumentBulkDetail extends StatefulWidget {
@@ -29,10 +32,19 @@ class _DocumentBulkDetailState extends State<DocumentBulkDetail> {
 
   Future<Activity?>? activityList;
 
+  var selectedDocTypeId;
+  var selectedDocType;
+
+  List<ListTypeDocument>? docType;
+
   Future<void> getData() async {
     token = (await EventPref.getCredential())?.data.token;
     bulkdocument = await EventDB.getDetailDocument(token, widget.docId, widget.isFolder);
-    activityList = EventDB.getActivity(token, null, bulkdocument!.id);
+    if(bulkdocument != null) {
+      activityList = EventDB.getActivity(token, null, bulkdocument!.id, '1');
+    }
+    docType = await EventDB.getDocumentType(token);
+
     setState(() {
 
     });
@@ -49,6 +61,10 @@ class _DocumentBulkDetailState extends State<DocumentBulkDetail> {
 
   @override
   Widget build(BuildContext context) {
+
+    double widgetHeight = MediaQuery.of(context).size.height;
+    double widgetWidth = MediaQuery.of(context).size.width;
+
     return bulkdocument != null?
     Scaffold(
         backgroundColor: Colors.white,
@@ -62,7 +78,7 @@ class _DocumentBulkDetailState extends State<DocumentBulkDetail> {
             },
             icon: Icon(Icons.close, color: Colors.black,),
           ),
-          title: Text("Document Detail Single", style: TextStyle(color: Colors.black, fontWeight: FontWeight.w400, fontSize: 16),),
+          title: Text("Document Detail Bulk", style: TextStyle(color: Colors.black, fontWeight: FontWeight.w400, fontSize: 16),),
           shadowColor: Colors.black,
           elevation: 2.0,
           backgroundColor: Colors.white,
@@ -254,7 +270,7 @@ class _DocumentBulkDetailState extends State<DocumentBulkDetail> {
                   ),
                   Container(
                     width: 450,
-                    height: 110,
+                    height: 120,
                     padding: EdgeInsets.all(20),
                     decoration: BoxDecoration(
                         boxShadow: [
@@ -271,6 +287,7 @@ class _DocumentBulkDetailState extends State<DocumentBulkDetail> {
                     child: Column(
                       children: [
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
                               "Last Stamp Activity",
@@ -279,6 +296,41 @@ class _DocumentBulkDetailState extends State<DocumentBulkDetail> {
                                   fontWeight: FontWeight.w500
                               ),
                             ),
+                            bulkdocument!.stampInProgress != null?
+                            bulkdocument!.stampInProgress!.stampStatus == 3?
+                            Container(
+                              width: 120,
+                              height: 25,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      side: BorderSide(
+                                          width: 1,
+                                          color: bluePrimary
+                                      ),
+                                    ),
+                                    backgroundColor: Colors.white
+                                ),
+                                onPressed: () async {
+                                  String? result = await EventDB.RetrySingleStampDocument(token, bulkdocument!.id);
+                                  if (result == 'success') {
+                                    bulkdocument = await EventDB.getDetailDocument(token, widget.docId, widget.isFolder);
+                                  }
+                                  setState(() {
+
+                                  });
+                                  print(result);
+                                },
+                                child: Text(
+                                  "Retry Stamp",
+                                  style: TextStyle(
+                                      fontSize: 10,
+                                      color: bluePrimary
+                                  ),
+                                ),
+                              ),
+                            ):Container():Container(),
                           ],
                         ),
                         Row(
@@ -304,6 +356,8 @@ class _DocumentBulkDetailState extends State<DocumentBulkDetail> {
                         SizedBox(
                           height: 20,
                         ),
+                        bulkdocument!.stampInProgress != null?
+                        bulkdocument!.stampInProgress!.stampStatus == 2 && bulkdocument!.stampInProgress != null ?
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -312,7 +366,61 @@ class _DocumentBulkDetailState extends State<DocumentBulkDetail> {
                               height: 15,
                               child: LinearProgressIndicator(
                                 borderRadius: BorderRadius.circular(5),
-                                value: 90/100,
+                                value: 100/100,
+                                color: Colors.green,
+                                backgroundColor: Colors.green.withOpacity(0.3),
+                              ),
+                            ),
+                            Text(
+                              "2/2",
+                            ),
+                          ],
+                        ): bulkdocument!.stampInProgress!.stampStatus == 1 && bulkdocument!.stampInProgress != null ?
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.7,
+                              height: 15,
+                              child: LinearProgressIndicator(
+                                borderRadius: BorderRadius.circular(5),
+                                color: Colors.green,
+                                backgroundColor: Colors.green.withOpacity(0.3),
+                              ),
+                            ),
+                            Text(
+                              "2/2",
+                            ),
+                          ],
+                        ):
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.7,
+                              height: 15,
+                              child: LinearProgressIndicator(
+                                borderRadius: BorderRadius.circular(5),
+                                value: 0/100,
+                                color: Colors.green,
+                                backgroundColor: Colors.green.withOpacity(0.3),
+                              ),
+                            ),
+                            Text(
+                              "2/2",
+                            ),
+                          ],
+                        ): Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.7,
+                              height: 15,
+                              child: LinearProgressIndicator(
+                                borderRadius: BorderRadius.circular(5),
+                                value: 0/100,
+                                color: Colors.green,
+                                backgroundColor: Colors.green.withOpacity(0.3),
                               ),
                             ),
                             Text(
@@ -448,7 +556,7 @@ class _DocumentBulkDetailState extends State<DocumentBulkDetail> {
             children: [
               SpeedDialChild(
                 onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context)=>Loading()));
+                  DocumentType();
                 },
                 child: Icon(Icons.person),
                 label: "Single Stamp",
@@ -472,4 +580,165 @@ class _DocumentBulkDetailState extends State<DocumentBulkDetail> {
       ),
     );
   }
+
+  Future<void> DocumentType() {
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setStateModal) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)
+              ),
+              child: Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.topCenter,
+                children: <Widget>[
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                        border: Border(top: BorderSide(color: tertiaryColor50, width: 10)),
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(10))
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        SizedBox(height: 30.0),
+                        Text(
+                          "Document Type",
+                          style: GoogleFonts.roboto(
+                              fontSize: 16.5,
+                              fontWeight: FontWeight.w600
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: 20.0),
+                        Container(
+                          width: 300,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            border: Border.all(width: 1,color: tertiaryColor50),
+                            color: tertiaryColor4,
+                          ),
+                          child: Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(5),
+                                child: Text(
+                                  "Select Document Type",
+                                  style: GoogleFonts.roboto(
+                                      fontSize: 10,
+                                      color: tertiaryColor100
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              )
+                          ),
+                        ),
+                        SizedBox(height: 20.0),
+                        Container(
+                          width: 300,
+                          height: 55,
+                          child: DropdownButtonFormField<ListTypeDocument>(
+                            items: docType?.map((ListTypeDocument value) {
+                              return DropdownMenuItem<ListTypeDocument>(
+                                value: value,
+                                child: Text(
+                                  value.nama,
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                              );
+                            }).toList(),
+                            decoration: InputDecoration(
+                              border: OutlineInputBorder(
+                                borderSide: BorderSide(width: 1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            onChanged: (ListTypeDocument? value) {
+                              // Handle dropdown selection
+                              if (value != null) {
+                                selectedDocType = value.nama;
+                                print('Selected ID: ${value.id}, Name: ${value.nama}');
+                              }
+                              setState(() {
+
+                              });
+                            },
+                            hint: Text('Select document type', style: TextStyle(fontSize: 12),),
+                            value: selectedDocTypeId,
+                          ),
+                        ),
+                        SizedBox(height: 20.0),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            Container(
+                              width: 130,
+                              height: 35,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        side: BorderSide(width: 1, color: bluePrimary)
+                                    ),
+                                    backgroundColor: Colors.white
+                                ),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  selectedDocTypeId = null;
+                                  selectedDocType   = null;
+                                },
+                                child: Text("No", style: TextStyle(color: bluePrimary),),
+                              ),
+                            ),
+                            Container(
+                              width: 130,
+                              height: 35,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        side: BorderSide(width: 1, color: bluePrimary)
+                                    ),
+                                    backgroundColor: bluePrimary
+                                ),
+                                onPressed: () {
+                                  if (selectedDocType != null) {
+                                    Navigator.pop(context);
+                                    Navigator.push(context, MaterialPageRoute(builder: (context)=>BulkStamp(docType: selectedDocType, docId: widget.docId, isfolder: widget.isFolder,)));
+                                  }
+                                },
+                                child: Text("Yes"),
+                              ),
+                            )
+                          ],
+                        ),
+                        SizedBox(
+                          height: 20,
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Floating Icon
+                  Positioned(
+                    top: -30.0,
+                    child: CircleAvatar(
+                        backgroundColor: tertiaryColor100,
+                        radius: 30.0,
+                        child: Image.asset("assets/images/alert.png", width: 50,)
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+
 }

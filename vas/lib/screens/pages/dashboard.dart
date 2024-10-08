@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:provider/provider.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:vas/event/event_camerapref.dart';
 import 'package:vas/event/event_db.dart';
 import 'package:vas/event/event_pref.dart';
@@ -50,6 +51,16 @@ class _DashboardState extends State<Dashboard> {
 
   var heightMenu;
 
+  var isLoadData = false;
+  var isLoading = false;
+  var lastIndex;
+  var page = 1;
+  int? lastPage;
+
+
+  final ItemScrollController scrollController = ItemScrollController();
+  final ItemPositionsListener itemPositionsListener = ItemPositionsListener.create();
+
   NumberFormat numberFormat = NumberFormat.decimalPattern('hi');
 
   int certificate = 0;
@@ -58,7 +69,10 @@ class _DashboardState extends State<Dashboard> {
 
   int _selectedIndex = 2;
 
-  Future<UserLogActivity?>? dataLog;
+  bool _isLoading = true;
+
+  Future<UserLogActivity?>? fetchDataLog;
+  List<DataLogActivity> activityData = [];
   List<StepperData> stepperData = [];
 
   void _onItemTapped(int index) {
@@ -80,7 +94,7 @@ class _DashboardState extends State<Dashboard> {
       }
     });
 
-    dataLog = EventDB.getLogActivity(token);
+    fetchDataLog = EventDB.getLogActivity(token, page);
 
 
     print("statusRegistrationPeruri: $statusRegistrationPeruri");
@@ -93,6 +107,8 @@ class _DashboardState extends State<Dashboard> {
     signM = module!.signM;
     stampM = module!.stampM;
 
+    _loadUserData();
+
     // Get Quota
     // token = (await EventPref.getCredential())?.data.token;
     saldoEMet = (await EventDB.getQuota(token??'', "1"))?.remaining;
@@ -103,6 +119,19 @@ class _DashboardState extends State<Dashboard> {
     if (mounted) {
       setState(() {});
     }
+  }
+
+  Future<void> _loadUserData() async {
+    final userProvider = Provider.of<Userprovider>(context, listen: false);
+
+    // If user data is not available, fetch it
+    if (userProvider.user == null) {
+      await userProvider.fetchUser(token??'', email??'', password??'');
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override
@@ -122,19 +151,14 @@ class _DashboardState extends State<Dashboard> {
   @override
   Widget build(BuildContext context) {
 
+    final userProvider = Provider.of<Userprovider>(context);
+
     size = MediaQuery.of(context).size;
     widthScreen = size.width;
     heightScreen = size.height;
 
     Widget certificateStatusWidget;
 
-    final userProvider = Provider.of<Userprovider>(context);
-
-    if (userProvider.user == null || module == null) {
-      return Center(
-        child: Loading(),
-      );
-    }
 
     fullName = userProvider.user?.fullName;
     officeName = userProvider.user?.officeName;
@@ -167,7 +191,9 @@ class _DashboardState extends State<Dashboard> {
 
     return WillPopScope(
       onWillPop: () async => true,
-      child: Scaffold(
+      child: _isLoading?
+      Loading():
+      Scaffold(
         backgroundColor: Color(0xffF4F4F4),
         body: SingleChildScrollView(
           child: Column(
@@ -540,13 +566,33 @@ class _DashboardState extends State<Dashboard> {
                         children: [
                           Expanded(
                             child: FutureBuilder<UserLogActivity?>(
-                              future: dataLog,
+                              future: fetchDataLog,
                               builder: (BuildContext context, snapshot) {
                                 if(snapshot.connectionState == ConnectionState.waiting) {
                                   return Center(child: CircularProgressIndicator());
                                 } else if(snapshot.hasError) {
                                   return Center(child: Text('Error: ${snapshot.error}'));
                                 } else if(!snapshot.hasData || snapshot.data!.data.isEmpty) {
+
+
+                                  if (isLoadData == true) {
+                                    print("P:${activityData.length}-lastIndex");
+                                    if(stepperData.length > lastIndex) {
+                                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                                        if (scrollController.isAttached) {
+                                          scrollController.jumpTo(index: lastIndex);
+                                          isLoadData = false;
+                                        }
+                                      });
+                                    }
+                                  } else {
+                                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                                      if (scrollController.isAttached) {
+                                        scrollController.jumpTo(index: 0);
+                                      }
+                                    });
+                                  }
+
                                   return Center(
                                     child: Stack(
                                       children: [
@@ -568,40 +614,92 @@ class _DashboardState extends State<Dashboard> {
                                     ),
                                   );
                                 } else {
-                                  for(var i = 0; i < snapshot.data!.data.length; i++) {
-                                    DataLogActivity dataLogActivity = snapshot.data!.data[i];
-                                    stepperData.add(
-                                      StepperData(
-                                        title: StepperText(
-                                          "${dataLogActivity.activity??''} - ${dataLogActivity.creator??''}",
-                                          textStyle: const TextStyle(
-                                            color: Colors.grey,
+
+                                  for (var i = 0; i < snapshot.data!.data.length; i++) {
+                                    DataLogActivity activityData = snapshot.data!.data[i];
+
+                                    bool alreadyExists = stepperData.any((step) =>
+                                    step.title!.text == "${activityData.activity ?? ''} - ${activityData.creator ?? ''}" &&
+                                        step.subtitle!.text == DateFormat('yyyy-MM-dd, HH:mm:ss').format(activityData.createdAt!.toLocal())
+                                    );
+
+                                    if (!alreadyExists) {
+                                      stepperData.add(
+                                        StepperData(
+                                          title: StepperText(
+                                            "${activityData.activity ?? ''} - ${activityData.creator ?? ''}",
+                                            textStyle: const TextStyle(
+                                              color: Colors.grey,
+                                            ),
                                           ),
-                                        ),
-                                        subtitle: StepperText(DateFormat('yyyy-MM-dd, HH:mm:ss').format(dataLogActivity.createdAt!)),
-                                        iconWidget: Container(
-                                          padding: const EdgeInsets.all(8),
-                                          decoration: const BoxDecoration(
-                                            color: Color(0xff07418C),
-                                            borderRadius: BorderRadius.all(Radius.circular(30),
+                                          subtitle: StepperText(
+                                            DateFormat('yyyy-MM-dd, HH:mm:ss').format(activityData.createdAt!.toLocal()),
+                                          ),
+                                          iconWidget: Container(
+                                            padding: const EdgeInsets.all(8),
+                                            decoration: const BoxDecoration(
+                                              color: Color(0xff07418C),
+                                              borderRadius: BorderRadius.all(Radius.circular(30)),
                                             ),
                                           ),
                                         ),
-                                      ),
-                                    );
+                                      );
+                                    }
                                   }
-                                  return Scrollbar(
-                                    child: ListView.builder(
-                                      itemCount: 1,
-                                      itemBuilder: (context, index) {
 
-                                        return AnotherStepper(
-                                          stepperList: stepperData,
-                                          stepperDirection: Axis.vertical,
-                                          verticalGap: 25,
-                                          inActiveBarColor: Colors.black.withOpacity(0.1)
-                                        );
-                                      },
+                                  return NotificationListener<ScrollNotification>(
+                                    onNotification: (ScrollNotification scrollInfo) {
+                                      if (scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent && !isLoading && lastPage != page) {
+                                        setState(() {
+                                          isLoading = true;
+                                          page++;
+                                          print("Page: $page");
+                                          print("${stepperData.length} . ${lastIndex}");
+                                        });
+
+                                        EventDB.getLogActivity(token, page).then((checkActivity) {
+                                          if (checkActivity != null && checkActivity.data.isNotEmpty) {
+                                            setState(() {
+                                              fetchDataLog = Future.value(checkActivity);
+                                              lastIndex+= 10;
+                                              print(lastIndex);
+                                              isLoadData = true;
+
+                                              isLoading = false;
+                                            });
+                                          } else {
+                                            setState(() {
+                                              page--;
+                                              isLoading = false;
+                                              lastPage = page;
+                                            });
+
+                                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                                              if (scrollController.isAttached) {
+                                                scrollController.jumpTo(index: stepperData.length - 1);
+                                              }
+                                            });
+                                          }
+                                        }).catchError((error) {
+                                          setState(() {
+                                            isLoading = false;
+                                          });
+                                        });
+                                      }
+                                      return true;
+                                    },
+                                    child: Scrollbar(
+                                      child: ListView.builder(
+                                        itemCount: 1,
+                                        itemBuilder: (context, index) {
+                                          return AnotherStepper(
+                                            stepperList: stepperData,
+                                            stepperDirection: Axis.vertical,
+                                            verticalGap: 25,
+                                            inActiveBarColor: Colors.black.withOpacity(0.1),
+                                          );
+                                        },
+                                      ),
                                     ),
                                   );
                                 }
@@ -624,7 +722,7 @@ class _DashboardState extends State<Dashboard> {
             showMaterialModalBottomSheet(
                 context: context,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)
+                    borderRadius: BorderRadius.circular(10)
                 ),
                 builder: (context) {
                   return Column(
