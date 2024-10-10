@@ -90,10 +90,9 @@ class _DocumentSingleDetailState extends State<DocumentSingleDetail> {
   var selectedDocType;
 
   bool isLoading = false;
+  bool isLoadData = false;
 
   List<Map<String, dynamic>> docVersion = [];
-
-  bool isLoadData = false;
 
 
 

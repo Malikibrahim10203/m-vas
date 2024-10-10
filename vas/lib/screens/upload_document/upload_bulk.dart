@@ -49,6 +49,7 @@ class _UploadBulkState extends State<UploadBulk> {
 
   var tagKey = TextEditingController();
   var tagInformation = TextEditingController();
+  var stringTagList;
 
   Map<String, dynamic> tagsMap = {};
   List<Map<String, dynamic>> tagsList = [];
@@ -480,7 +481,7 @@ class _UploadBulkState extends State<UploadBulk> {
                     ),
                   ),
                   SizedBox(
-                    height: 50,
+                    height: 20,
                   ),
                   fileList != null?
                   Column(
@@ -568,7 +569,7 @@ class _UploadBulkState extends State<UploadBulk> {
               ),
             ),
             SizedBox(
-              height: 30,
+              height: 10,
             ),
             Container(
               padding: EdgeInsets.all(10),
@@ -724,11 +725,11 @@ class _UploadBulkState extends State<UploadBulk> {
                           builder: (BuildContext context) {
                             return Dialog(
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15.0),
+                                borderRadius: BorderRadius.circular(10.0),
                               ),
                               child: Container(
                                 width: size.width * 0.9,
-                                height: size.height * 0.33,
+                                height: size.height * 0.35,
                                 child: Padding(
                                   padding: const EdgeInsets.all(20.0),
                                   child: Column(
@@ -739,13 +740,12 @@ class _UploadBulkState extends State<UploadBulk> {
                                         children: [
                                           Row(
                                             children: [
-                                              Icon(Icons.add),
                                               Text(
-                                                " Add Tags",
-                                                style: TextStyle(
-                                                  fontSize: 22,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
+                                                  "Add Tags",
+                                                  style: GoogleFonts.roboto(
+                                                      fontSize: 16,
+                                                      fontWeight: FontWeight.w500
+                                                  )
                                               ),
                                             ],
                                           ),
@@ -757,7 +757,29 @@ class _UploadBulkState extends State<UploadBulk> {
                                           ),
                                         ],
                                       ),
-                                      SizedBox(height: 30),
+                                      Divider(
+                                        color: Colors.black.withOpacity(0.2),
+                                        height: 10,
+                                      ),
+                                      SizedBox(height: 10),
+                                      Row(
+                                        children: [
+                                          Container(
+                                            width: MediaQuery.of(context).size.width * 0.72,
+                                            child: Text(
+                                              "You can replace the tags of all selected resources or add new tags to them",
+                                              style: GoogleFonts.roboto(
+                                                  fontSize: 12,
+                                                  color: Colors.black.withOpacity(0.5)
+                                              ),
+                                              maxLines: null,
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                      SizedBox(
+                                        height: 20,
+                                      ),
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
@@ -876,6 +898,11 @@ class _UploadBulkState extends State<UploadBulk> {
                                               'tag_key': tagKey.text,
                                               'tag_value': tagInformation.text,
                                             });
+                                            stringTagList = tagsList.map((map) {
+                                              return map.entries.map((entries) {
+                                                return "${entries.value}";
+                                              }).join(", ");
+                                            }).join("\n\n");
 
                                             Navigator.pop(context);
                                             setState(() {
@@ -936,299 +963,302 @@ class _UploadBulkState extends State<UploadBulk> {
       ),
       bottomNavigationBar: Padding(
         padding: EdgeInsets.all(15),
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-              backgroundColor: bluePrimary,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)
-              )
-          ),
-          onPressed: () async {
-            print("$token ${docNameController.text} $selectedOffice ${descriptionController.text} $tagsList ${dateController.text} $fileController");
-            return showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return Dialog(
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)
-                  ),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    alignment: Alignment.topCenter,
-                    children: <Widget>[
-                      Container(
-                        padding: const EdgeInsets.all(20.0),
-                        width: double.infinity,
-                        height: 420,
-                        decoration: BoxDecoration(
-                            border: Border(top: BorderSide(color: tertiaryColor50, width: 10)),
-                            borderRadius: BorderRadius.vertical(top: Radius.circular(10))
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            SizedBox(height: 20.0),
-                            Text(
-                              "Are you sure?",
-                              style: GoogleFonts.roboto(
-                                  fontSize: 16.5,
-                                  fontWeight: FontWeight.w600
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            SizedBox(height: 20.0),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  width: 300,
-                                  height: 60,
-                                  padding: EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                      border: Border.all(width: 2,color: tertiaryColor100),
-                                      color: tertiaryColor4
-                                  ),
-                                  child: Center(
-                                      child: Column(
-                                        children: [
-                                          Text(
-                                            "Once a document is uploaded, you cannot change the document data. Make sure the data is correct.",
-                                            style: GoogleFonts.roboto(
-                                                fontSize: 10,
-                                                color: Colors.black
-                                            ),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ],
-                                      )
-                                  ),
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.05,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: bluePrimary,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)
+                )
+            ),
+            onPressed: () async {
+              print("$token ${docNameController.text} $selectedOffice ${descriptionController.text} $tagsList ${dateController.text} $fileController");
+              return showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return Dialog(
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)
+                    ),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      alignment: Alignment.topCenter,
+                      children: <Widget>[
+                        Container(
+                          padding: const EdgeInsets.all(20.0),
+                          width: double.infinity,
+                          height: 420,
+                          decoration: BoxDecoration(
+                              border: Border(top: BorderSide(color: tertiaryColor50, width: 10)),
+                              borderRadius: BorderRadius.vertical(top: Radius.circular(10))
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              SizedBox(height: 20.0),
+                              Text(
+                                "Are you sure?",
+                                style: GoogleFonts.roboto(
+                                    fontSize: 16.5,
+                                    fontWeight: FontWeight.w600
                                 ),
-                              ],
-                            ),
-                            Container(
-                              width: 350,
-                              height: 165,
-                              padding: EdgeInsets.all(10),
-                              child: Center(
-                                  child: Column(
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            "Document Name",
-                                            style: TextStyle(
-                                                fontSize: 12
-                                            ),
-                                          ),
-                                          Container(
-                                            width: 200,
-                                            alignment: Alignment.centerRight,
-                                            child: Text(
-                                              docNameController.text,
-                                              style: TextStyle(
-                                                  fontSize: 12
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      SizedBox(
-                                        height: 5,
-                                      ),
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            "Tag",
-                                            style: TextStyle(
-                                                fontSize: 12
-                                            ),
-                                          ),
-                                          Text(
-                                            " - ",
-                                            style: TextStyle(
-                                                fontSize: 12
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      SizedBox(
-                                        height: 5,
-                                      ),
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            "File Attachments",
-                                            style: TextStyle(
-                                                fontSize: 12
-                                            ),
-                                          ),
-                                          Container(
-                                            width: 200,
-                                            alignment: Alignment.centerRight,
-                                            child: Text(
-                                              fileName,
-                                              style: TextStyle(
-                                                  fontSize: 12
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      SizedBox(
-                                        height: 5,
-                                      ),
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            "Date",
-                                            style: TextStyle(
-                                                fontSize: 12
-                                            ),
-                                          ),
-                                          Text(
-                                            dateController.text,
-                                            style: TextStyle(
-                                                fontSize: 12
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      SizedBox(
-                                        height: 5,
-                                      ),
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            "Office",
-                                            style: TextStyle(
-                                                fontSize: 12
-                                            ),
-                                          ),
-                                          Text(
-                                            nameOffice,
-                                            style: TextStyle(
-                                                fontSize: 12
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      SizedBox(
-                                        height: 5,
-                                      ),
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            "Description",
-                                            style: TextStyle(
-                                                fontSize: 12
-                                            ),
-                                          ),
-                                          Container(
-                                            width: 200,
-                                            alignment: Alignment.centerRight,
-                                            child: Text(
-                                              descriptionController.text,
-                                              style: TextStyle(
-                                                  fontSize: 12
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  )
+                                textAlign: TextAlign.center,
                               ),
-                            ),
-                            SizedBox(height: 20.0),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Container(
-                                  width: 160,
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.all(Radius.circular(10)),
-                                            side: BorderSide(width: 1, color: bluePrimary)
+                              SizedBox(height: 20.0),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    width: 300,
+                                    height: 60,
+                                    padding: EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                        border: Border.all(width: 2,color: tertiaryColor100),
+                                        color: tertiaryColor4
+                                    ),
+                                    child: Center(
+                                        child: Column(
+                                          children: [
+                                            Text(
+                                              "Once a document is uploaded, you cannot change the document data. Make sure the data is correct.",
+                                              style: GoogleFonts.roboto(
+                                                  fontSize: 10,
+                                                  color: Colors.black
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ],
                                         )
                                     ),
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                    },
-                                    child: Text(
-                                      'Back',
-                                      style: TextStyle(
-                                          color: bluePrimary,
-                                          fontSize: 12
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                width: 350,
+                                height: 165,
+                                padding: EdgeInsets.all(10),
+                                child: Center(
+                                    child: Column(
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              "Document Name",
+                                              style: TextStyle(
+                                                  fontSize: 12
+                                              ),
+                                            ),
+                                            Container(
+                                              width: 200,
+                                              alignment: Alignment.centerRight,
+                                              child: Text(
+                                                docNameController.text,
+                                                style: TextStyle(
+                                                    fontSize: 12
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(
+                                          height: 5,
+                                        ),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              "Tag",
+                                              style: TextStyle(
+                                                  fontSize: 12
+                                              ),
+                                            ),
+                                            Text(
+                                              stringTagList,
+                                              style: TextStyle(
+                                                  fontSize: 12
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(
+                                          height: 5,
+                                        ),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              "File Attachments",
+                                              style: TextStyle(
+                                                  fontSize: 12
+                                              ),
+                                            ),
+                                            Container(
+                                              width: 200,
+                                              alignment: Alignment.centerRight,
+                                              child: Text(
+                                                fileName,
+                                                style: TextStyle(
+                                                    fontSize: 12
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(
+                                          height: 5,
+                                        ),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              "Date",
+                                              style: TextStyle(
+                                                  fontSize: 12
+                                              ),
+                                            ),
+                                            Text(
+                                              dateController.text,
+                                              style: TextStyle(
+                                                  fontSize: 12
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(
+                                          height: 5,
+                                        ),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              "Office",
+                                              style: TextStyle(
+                                                  fontSize: 12
+                                              ),
+                                            ),
+                                            Text(
+                                              nameOffice,
+                                              style: TextStyle(
+                                                  fontSize: 12
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(
+                                          height: 5,
+                                        ),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              "Description",
+                                              style: TextStyle(
+                                                  fontSize: 12
+                                              ),
+                                            ),
+                                            Container(
+                                              width: 200,
+                                              alignment: Alignment.centerRight,
+                                              child: Text(
+                                                descriptionController.text,
+                                                style: TextStyle(
+                                                    fontSize: 12
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    )
+                                ),
+                              ),
+                              SizedBox(height: 20.0),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Container(
+                                    width: 160,
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.all(Radius.circular(10)),
+                                              side: BorderSide(width: 1, color: bluePrimary)
+                                          )
+                                      ),
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                      },
+                                      child: Text(
+                                        'Back',
+                                        style: TextStyle(
+                                            color: bluePrimary,
+                                            fontSize: 12
 
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                                SizedBox(
-                                  height: 10,
-                                ),
-                                Container(
-                                  width: 150,
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                        backgroundColor: bluePrimary,
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.all(Radius.circular(10))
-                                        )
-                                    ),
-                                    onPressed: () async {
+                                  SizedBox(
+                                    height: 10,
+                                  ),
+                                  Container(
+                                    width: 150,
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                          backgroundColor: bluePrimary,
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.all(Radius.circular(10))
+                                          )
+                                      ),
+                                      onPressed: () async {
 
-                                      List status = await EventDB.UploadDocBulk(token, docNameController.text, selectedOffice.toString(), descriptionController.text, tagsList, dateController.text, fileList);
-                                      if(status[0] == true) {
-                                        Navigator.pop(context);
-                                        ModalSuccessUpload(context, Dashboard(token: token), "labelText", "contentText");
-                                      } else {
-                                        Navigator.pop(context);
-                                        AlertFailed(context, "Upload File", "Error: ${status[1]}");
-                                      }
-                                    },
-                                    child: Text(
-                                      'Upload',
-                                      style: TextStyle(
-                                        color: Colors.white,
+                                        List status = await EventDB.UploadDocBulk(token, docNameController.text, selectedOffice.toString(), descriptionController.text, tagsList, dateController.text, fileList);
+                                        if(status[0] == true) {
+                                          Navigator.pop(context);
+                                          ModalSuccessUpload(context, Dashboard(token: token), "Upload Successful!", "Documents have been added! You can now view document details or continue browsing");
+                                        } else {
+                                          Navigator.pop(context);
+                                          AlertFailed(context, "Upload File", "Error: ${status[1]}");
+                                        }
+                                      },
+                                      child: Text(
+                                        'Upload',
+                                        style: TextStyle(
+                                          color: Colors.white,
 
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      // Floating Icon
-                      Positioned(
-                        top: -30.0,
-                        child: CircleAvatar(
-                            backgroundColor: tertiaryColor50,
-                            radius: 30.0,
-                            child: Image.asset("assets/images/alert.png", width: 50,)
+                        // Floating Icon
+                        Positioned(
+                          top: -30.0,
+                          child: CircleAvatar(
+                              backgroundColor: tertiaryColor50,
+                              radius: 30.0,
+                              child: Image.asset("assets/images/alert.png", width: 50,)
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            );
+                      ],
+                    ),
+                  );
+                },
+              );
 
-          },
-          child: Text(
-            "Kirim",
-            style: TextStyle(
-                color: Colors.white
+            },
+            child: Text(
+              "Kirim",
+              style: TextStyle(
+                  color: Colors.white
+              ),
             ),
           ),
         ),

@@ -1,15 +1,22 @@
 import 'package:another_stepper/another_stepper.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:flutter_stepindicator/flutter_stepindicator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:vas/event/event_db.dart';
 import 'package:vas/event/event_pref.dart';
+import 'package:vas/main.dart';
 import 'package:vas/models/activity.dart';
 import 'package:vas/models/bulk_document.dart';
+import 'package:vas/models/document/document_folder_version.dart';
 import 'package:vas/models/document_type.dart';
 import 'package:vas/models/single_document.dart';
+import 'package:vas/screens/document/document_single_detail.dart';
 import 'package:vas/screens/loading.dart';
 import 'package:vas/screens/stamp/bulk_stamp.dart';
 import 'package:vas/widgets/components.dart';
@@ -22,6 +29,39 @@ class DocumentBulkDetail extends StatefulWidget {
   State<DocumentBulkDetail> createState() => _DocumentBulkDetailState();
 }
 
+Future<void> requestNotificationPermission() async {
+  if (await Permission.notification.isDenied) {
+    await Permission.notification.request();
+  }
+}
+
+Future<void> showNotification(String? payload) async {
+  // Android notification details
+  const AndroidNotificationDetails androidNotificationDetails =
+  AndroidNotificationDetails(
+    icon: ('vas_logo'),
+    'channel_id',             // Required for Android 8.0+ (Oreo) and above
+    'channel_name',           // Name of the notification channel
+    importance: Importance.max,
+    priority: Priority.high,
+    ticker: 'ticker',
+  );
+
+  // Platform-specific notification details
+  const NotificationDetails platformChannelSpecifics =
+  NotificationDetails(android: androidNotificationDetails);
+
+  // Show notification
+  await flutterLocalNotificationsPlugin.show(
+    0,
+    'Download Success',
+    'The file has been downloaded successfully. You can find it in your library.',
+    platformChannelSpecifics,
+    payload: payload,
+  );
+}
+
+
 class _DocumentBulkDetailState extends State<DocumentBulkDetail> {
   var page = 1;
 
@@ -30,19 +70,59 @@ class _DocumentBulkDetailState extends State<DocumentBulkDetail> {
   List listSteps = [1,2,3];
   Bulkdocument? bulkdocument;
 
-  Future<Activity?>? activityList;
+  Future<Activity?>? fetchActivity;
+  List<ActivityElement> activityData = [];
+
+  bool isLoading = false;
+  bool isLoadData = false;
+
+  final ItemScrollController scrollController = ItemScrollController();
+  final ItemPositionsListener itemPositionsListener = ItemPositionsListener.create();
+
+  int lastIndex = 0;
+  int? lastPage = null;
 
   var selectedDocTypeId;
   var selectedDocType;
 
+  var heightModal = 0.3;
+
   List<ListTypeDocument>? docType;
+
+  List<Map<String, dynamic>> docVersion = [];
+
+  List<DocumentFolderVersionElement>? docVersionFolder;
 
   Future<void> getData() async {
     token = (await EventPref.getCredential())?.data.token;
     bulkdocument = await EventDB.getDetailDocument(token, widget.docId, widget.isFolder);
+    docVersionFolder = await EventDB.getDocumentFolderVersion(token, widget.docId);
+
     if(bulkdocument != null) {
-      activityList = EventDB.getActivity(token, null, bulkdocument!.id, '1');
+      fetchActivity = EventDB.getActivity(token, null, widget.docId, page);
     }
+
+    if (bulkdocument!.versions!.isNotEmpty) {
+      for (var version in bulkdocument!.versions!) {
+        // Add the version to the list as a map
+        docVersion.add({
+          'id': version.id,
+          'name': version.name,
+          'description': version.description,
+          'created_at': version.createdAt.toLocal(),
+          'version': version.version,
+          'stamp_status': version.stampStatus,
+          'docs': version.docs,
+        });
+      }
+    }
+
+    if (docVersion.length >= 2) {
+      setState(() {
+        heightModal += 0.5;
+      });
+    }
+
     docType = await EventDB.getDocumentType(token);
 
     setState(() {
@@ -234,7 +314,7 @@ class _DocumentBulkDetailState extends State<DocumentBulkDetail> {
                                   padding: EdgeInsets.all(10),
                                 ),
                                 onPressed: () {
-
+                                  ModalDownload(token, context, docVersionFolder, widget.docId);
                                 },
                                 child: Icon(Icons.download, color: Colors.white, size: 20,),
                               ),
@@ -254,7 +334,7 @@ class _DocumentBulkDetailState extends State<DocumentBulkDetail> {
                                     padding: EdgeInsets.all(10),
                                     backgroundColor: Colors.white
                                 ),
-                                onPressed: () {
+                                onPressed: () async {
 
                                 },
                                 child: Icon(Icons.remove_red_eye, color: primaryColor2, size: 20,),
@@ -476,49 +556,140 @@ class _DocumentBulkDetailState extends State<DocumentBulkDetail> {
                               children: [
                                 Expanded(
                                   child: FutureBuilder<Activity?>(
-                                    future: activityList,
+                                    future: fetchActivity,
                                     builder: (BuildContext context, snapshot) {
                                       if(snapshot.connectionState == ConnectionState.waiting) {
                                         return Center(child: CircularProgressIndicator());
                                       } else if(snapshot.hasError) {
                                         return Center(child: Text('Error: ${snapshot.error}'));
                                       } else if(!snapshot.hasData || snapshot.data!.data.isEmpty) {
-                                        return Center(child: Text('No documents available.'));
-                                      } else {
-                                        for(var i = 0; i < snapshot.data!.data.length; i++) {
-                                          ActivityElement activityData = snapshot.data!.data[i];
-                                          print(activityData.createdAt);
-                                          stepperData.add(
-                                            StepperData(
-                                              title: StepperText(
-                                                "${activityData.activity??''} - ${activityData.docName??''}",
-                                                textStyle: const TextStyle(
-                                                  color: Colors.grey,
-                                                ),
+
+
+                                        if (isLoadData == true) {
+                                          print("P:${activityData.length}-lastIndex");
+                                          if(stepperData.length > lastIndex) {
+                                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                                              if (scrollController.isAttached) {
+                                                scrollController.jumpTo(index: lastIndex);
+                                                isLoadData = false;
+                                              }
+                                            });
+                                          }
+                                        } else {
+                                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                                            if (scrollController.isAttached) {
+                                              scrollController.jumpTo(index: 0);
+                                            }
+                                          });
+                                        }
+
+                                        return Center(
+                                          child: Stack(
+                                            children: [
+                                              Column(
+                                                children: [
+                                                  Image.asset(
+                                                    "assets/images/history.png",
+                                                    width: 100,
+                                                  ),
+                                                  Text(
+                                                    "No Activity History",
+                                                    style: TextStyle(
+                                                        color: Colors.black12
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
-                                              subtitle: StepperText(DateFormat('yyyy-MM-dd, HH:mm:ss').format(activityData.createdAt!.toLocal())),
-                                              iconWidget: Container(
-                                                padding: const EdgeInsets.all(8),
-                                                decoration: const BoxDecoration(
-                                                  color: Color(0xff07418C),
-                                                  borderRadius: BorderRadius.all(Radius.circular(30),
+                                            ],
+                                          ),
+                                        );
+                                      } else {
+
+                                        for (var i = 0; i < snapshot.data!.data.length; i++) {
+                                          ActivityElement activityData = snapshot.data!.data[i];
+
+                                          bool alreadyExists = stepperData.any((step) =>
+                                          step.title!.text == "${activityData.activity ?? ''} - ${activityData.docName ?? ''}" &&
+                                              step.subtitle!.text == DateFormat('yyyy-MM-dd, HH:mm:ss').format(activityData.createdAt!.toLocal())
+                                          );
+
+                                          if (!alreadyExists) {
+                                            stepperData.add(
+                                              StepperData(
+                                                title: StepperText(
+                                                  "${activityData.activity ?? ''} - ${activityData.docName ?? ''}",
+                                                  textStyle: const TextStyle(
+                                                    color: Colors.grey,
+                                                  ),
+                                                ),
+                                                subtitle: StepperText(
+                                                  DateFormat('yyyy-MM-dd, HH:mm:ss').format(activityData.createdAt!.toLocal()),
+                                                ),
+                                                iconWidget: Container(
+                                                  padding: const EdgeInsets.all(8),
+                                                  decoration: const BoxDecoration(
+                                                    color: Color(0xff07418C),
+                                                    borderRadius: BorderRadius.all(Radius.circular(30)),
                                                   ),
                                                 ),
                                               ),
-                                            ),
-                                          );
+                                            );
+                                          }
                                         }
-                                        return Scrollbar(
-                                          child: ListView.builder(
-                                            itemCount: 1,
-                                            itemBuilder: (context, index) {
-                                              return AnotherStepper(
-                                                stepperList: stepperData,
-                                                stepperDirection: Axis.vertical,
-                                                verticalGap: 25,
-                                                inActiveBarColor: Colors.black.withOpacity(0.1),
-                                              );
-                                            },
+
+                                        return NotificationListener<ScrollNotification>(
+                                          onNotification: (ScrollNotification scrollInfo) {
+                                            if (scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent && !isLoading && lastPage != page) {
+                                              setState(() {
+                                                isLoading = true;
+                                                page++;
+                                                print("Page: $page");
+                                                print("${stepperData.length} . ${lastIndex}");
+                                              });
+
+                                              EventDB.getActivity(token, null, widget.docId, page).then((checkActivity) {
+                                                if (checkActivity != null && checkActivity.data.isNotEmpty) {
+                                                  setState(() {
+                                                    fetchActivity = Future.value(checkActivity);
+                                                    lastIndex+= 10;
+                                                    print(lastIndex);
+                                                    isLoadData = true;
+
+                                                    isLoading = false;
+                                                  });
+                                                } else {
+                                                  setState(() {
+                                                    page--;
+                                                    isLoading = false;
+                                                    lastPage = page;
+                                                  });
+
+                                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                                    if (scrollController.isAttached) {
+                                                      scrollController.jumpTo(index: stepperData.length - 1);
+                                                    }
+                                                  });
+                                                }
+                                              }).catchError((error) {
+                                                setState(() {
+                                                  isLoading = false;
+                                                });
+                                              });
+                                            }
+                                            return true;
+                                          },
+                                          child: Scrollbar(
+                                            child: ListView.builder(
+                                              itemCount: 1,
+                                              itemBuilder: (context, index) {
+                                                return AnotherStepper(
+                                                  stepperList: stepperData,
+                                                  stepperDirection: Axis.vertical,
+                                                  verticalGap: 25,
+                                                  inActiveBarColor: Colors.black.withOpacity(0.1),
+                                                );
+                                              },
+                                            ),
                                           ),
                                         );
                                       }
@@ -739,6 +910,155 @@ class _DocumentBulkDetailState extends State<DocumentBulkDetail> {
       },
     );
   }
+  Future<void> ModalDownload(token, BuildContext context, List<DocumentFolderVersionElement>? docVersions, id) {
+    return showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.56,
+          decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20)
+          ),
+          child: ListView.builder(
+            itemCount: docVersions?.length ?? 0,
+            itemBuilder: (context, index) {
+              var listDocVersion = docVersions?[index];
 
+              print(docVersions?.length??0);
 
+              List<Map<String,dynamic>> datumListDocVersion = [];
+
+              if (docVersions!.isNotEmpty) {
+                for (var version in listDocVersion!.docs) {
+                  datumListDocVersion.add({
+                    "doc_id": version.docId,
+                    "doc_name": version.docName,
+                    "description": version.description,
+                    "date": version.date,
+                    "created_at": version.createdAt,
+                    "updated_at": version.updatedAt,
+                    "version": version.version,
+                    "version_from": version.versionFrom,
+                    "original_name": version.originalName
+                  });
+                }
+              }
+              return Column(
+                children: [
+                  Container(
+                    height: MediaQuery.of(context).size.height * 0.28,
+                    padding: EdgeInsets.all(20),
+                    color: Colors.white,
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              "${listDocVersion!.name} ${listDocVersion!.version}",
+                              style: GoogleFonts.roboto(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(
+                          height: 15,
+                        ),
+                        Container(
+                          height: MediaQuery.of(context).size.height * 0.2,
+                          child: ListView.builder(
+                            itemCount: datumListDocVersion.length,
+                            itemBuilder: (context, index) {
+                              Map<String, dynamic> dataDocMap = datumListDocVersion[index];
+                              return Container(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Container(
+                                      width: 200,
+                                      height: 60,
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(10),
+                                              color: Colors.grey[200],
+                                            ),
+                                            padding: EdgeInsets.all(8),
+                                            child: Image.asset(
+                                              "assets/images/pdf.png",
+                                              width: 25,
+                                            ),
+                                          ),
+                                          SizedBox(width: 20),
+                                          Expanded(
+                                              child: Column(
+                                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    dataDocMap['doc_name'],
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: GoogleFonts.roboto(
+                                                        fontSize: 12
+                                                    ),
+                                                  ),
+                                                  Row(
+                                                    children: [
+                                                      Text(
+                                                        "${dataDocMap['description']}",
+                                                        overflow: TextOverflow.ellipsis,
+                                                        style: GoogleFonts.roboto(
+                                                          fontSize: 12,
+                                                          fontWeight: FontWeight.w400,
+                                                          color: Colors.grey,
+                                                        ),
+                                                      ),
+                                                      SizedBox(
+                                                        width: 5,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              )
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Container(
+                                      width: 50,
+                                      child: IconButton(
+                                        onPressed: () async {
+                                          String? base64StringData = await EventDB.DownloadDocument(token, dataDocMap['doc_id']);
+                                          if (base64StringData != null) {
+                                            String? locatePdf = await savePdfFromBase64(base64StringData!, dataDocMap['doc_name']);
+                                            showNotification(locatePdf);
+                                          }
+                                        },
+                                        icon: Icon(CupertinoIcons.cloud_download, color: Colors.black.withOpacity(0.5),),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(
+                    height: 10,
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
 }
+
+

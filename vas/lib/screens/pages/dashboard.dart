@@ -756,6 +756,7 @@ class _DashboardState extends State<Dashboard> {
                         leading: Image.asset("assets/images/upload_single.png", width: 30,),
                         title: new Text('Single File'),
                         onTap: (){
+                          Navigator.pop(context);
                           Navigator.push(context, MaterialPageRoute(builder: (context)=>UploadSingle()));
                         },
                       ),
@@ -767,6 +768,7 @@ class _DashboardState extends State<Dashboard> {
                         leading: Image.asset("assets/images/upload_bulk.png", width: 30,),
                         title: new Text('Bulk File'),
                         onTap: () async {
+                          Navigator.pop(context);
                           Navigator.push(context, MaterialPageRoute(builder: (context)=>UploadBulk()));
                         },
                       ),

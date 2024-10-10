@@ -67,4 +67,7 @@ class Api {
 
   // Download Document
   static String download_document = "$_host/api/v1/document/download/v2";
+
+  // Document Version
+  static String document_folder_version = "$_host/api/v1/document/folder/versions";
 }

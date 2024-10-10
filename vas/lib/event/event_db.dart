@@ -12,6 +12,7 @@ import 'package:vas/models/bulk_document.dart';
 import 'package:vas/models/credential.dart';
 import 'package:vas/models/district.dart';
 import 'package:vas/models/document.dart';
+import 'package:vas/models/document/document_folder_version.dart';
 import 'package:vas/models/document_type.dart';
 import 'package:vas/models/module.dart';
 import 'package:vas/models/office.dart';
@@ -695,7 +696,6 @@ class EventDB {
   }
 
   static Future<Activity?> getActivity(String token, docId, folderId, page) async {
-
     Activity? activityData;
 
     try {
@@ -719,11 +719,11 @@ class EventDB {
         response = await http.get(
             Uri.parse(Api.get_document_activity).replace(
                 queryParameters: {
-                  'page': page,
+                  'page': page.toString(),
                   'sort_by': 'created_at',
                   'order': 'desc',
+                  'folder_id': folderId.toString(),
                   'row': '10',
-                  'folder_id': folderId.toString()
                 }
             ),
             headers: {
@@ -1008,6 +1008,40 @@ class EventDB {
 
     return result;
   }
+
+  static Future<List<DocumentFolderVersionElement>?> getDocumentFolderVersion(String token, String folderId) async {
+    List<DocumentFolderVersionElement>? result;
+    try {
+      var response = await http.get(Uri.parse(Api.document_folder_version).replace(
+          queryParameters: {
+            'folder_id': folderId
+          }
+      ), headers: {
+        'token': token,
+      });
+
+      if (response.statusCode == 200) {
+        var responseBody = jsonDecode(response.body);
+
+        print(responseBody['data']);
+
+        if (responseBody['data'] != null && responseBody['data'] is List) {
+          var documentFolderVersions = responseBody['data'] as List;
+          result = documentFolderVersions.map((data) => DocumentFolderVersionElement.fromJson(data)).toList();
+        } else {
+          print("Error: No valid 'data' found in response body.");
+        }
+
+      } else {
+        print("Error: Received status code ${response.statusCode} - ${response.body}");
+      }
+    } catch (e) {
+      print("Exception Document Folder Version error: $e");
+    }
+
+    return result;
+  }
+
 
   static Future<void> LogOut() async {
     EventPref.clear();

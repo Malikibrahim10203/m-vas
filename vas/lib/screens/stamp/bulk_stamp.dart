@@ -632,7 +632,7 @@ Future<void> ModalConfirmLocation(context, route, labelText, contentText, token,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  SizedBox(height: 30.0), // Add spacing for the floating icon
+                  SizedBox(height: 30.0),
                   Text(
                     labelText,
                     style: GoogleFonts.roboto(
@@ -749,7 +749,7 @@ Future<void> ModalConfirmSubmit(context, route, labelText, contentText, token, d
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  SizedBox(height: 30.0), // Add spacing for the floating icon
+                  SizedBox(height: 30.0),
                   Text(
                     labelText,
                     style: GoogleFonts.roboto(
@@ -791,7 +791,11 @@ Future<void> ModalConfirmSubmit(context, route, labelText, contentText, token, d
                                   color: Colors.black.withOpacity(0.5)
                               ),
                             ),
-                            Text(docName, style: TextStyle(overflow: TextOverflow.ellipsis, fontSize: 10),),
+                            Flexible(
+                              child: Container(
+                                child: Text(docName, style: TextStyle(overflow: TextOverflow.ellipsis),),
+                              ),
+                            )
                           ],
                         ),
                         SizedBox(
@@ -806,7 +810,7 @@ Future<void> ModalConfirmSubmit(context, route, labelText, contentText, token, d
                                   color: Colors.black.withOpacity(0.5)
                               ),
                             ),
-                            Text("Single Stamp"),
+                            Text("Bulk Stamp"),
                           ],
                         ),
                         SizedBox(
@@ -821,7 +825,11 @@ Future<void> ModalConfirmSubmit(context, route, labelText, contentText, token, d
                                   color: Colors.black.withOpacity(0.5)
                               ),
                             ),
-                            Text(docType),
+                            Flexible(
+                              child: Container(
+                                child: Text(docType, style: TextStyle(overflow: TextOverflow.ellipsis),),
+                              ),
+                            )
                           ],
                         )
                       ],
